@@ -1,0 +1,57 @@
+{
+    "$schema": "https://json-schema.org/draft-07/schema",
+    "$id": "https://example.com/schemas/scorecard.schema.json",
+    "title": "Scorecard Upload Response",
+    "type": "object",
+    "required": ["success", "data"],
+    "properties": {
+      "success": { "type": "boolean" },
+      "data": {
+        "type": "object",
+        "additionalProperties": {
+          "type": "object",
+          "required": ["rows"],
+          "properties": {
+            "rows": {
+              "type": "array",
+              "items": { "$ref": "#/$defs/QuestionnaireRow" }
+            }
+          }
+        }
+      }
+    },
+    "$defs": {
+      "QuestionnaireRow": {
+        "type": "object",
+        "required": ["sdg_number", "sustainability_dimension", "sector", "score"],
+        "properties": {
+          "sdg_number": { "type": ["integer", "null"], "minimum": 1, "maximum": 17 },
+          "sustainability_dimension": {
+            "type": ["string", "null"],
+            "enum": [
+              "Economic Performance",
+              "Circular Performance",
+              "Environmental Performance",
+              "Social Performance",
+              null
+            ]
+          },
+          "sector": { "type": ["string", "null"] },
+          "score": { "type": ["integer", "null"], "minimum": 0, "maximum": 5 },
+  
+          "sdg_description": { "type": ["string", "null"] },
+          "sdg_target": { "type": ["string", "null"] },
+          "kpi": { "type": ["string", "null"] },
+          "question": { "type": ["string", "null"] },
+          "score_description": { "type": ["string", "null"] },
+          "source": { "type": ["string", "null"] },
+          "notes": { "type": ["string", "null"] },
+          "status": { "type": ["string", "null"] },
+          "comment": { "type": ["string", "null"] }
+        },
+        "additionalProperties": false
+      }
+    },
+    "additionalProperties": false
+  }
+  
