@@ -1,4 +1,4 @@
 {
   "/page": "app/page.js",
-  "/api/upload-excel/route": "app/api/upload-excel/route.js"
+  "/api/questionnaire/calculate/route": "app/api/questionnaire/calculate/route.js"
 }

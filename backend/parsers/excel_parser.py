@@ -423,6 +423,56 @@ def parse_excel_questionnaire(file_path: str, sheet_names: Optional[List[str]] =
     parser = QuestionnaireParser(file_path, sheet_names)
     return parser.parse_all_data()
 
+
+# Add this NEW function at the end of backend/parsers/excel_parser.py
+
+def extract_questions_for_interactive(file_path: str, sheet_name: str = "Textile_revised") -> Dict[str, Any]:
+    """
+    Extract ONLY questions (no scores) from Excel for interactive questionnaire.
+    Returns: {
+        "questions": [
+            {
+                "id": "q_1", 
+                "sdg_number": 1,
+                "sdg_description": "No Poverty",
+                "sdg_target": "...",
+                "sustainability_dimension": "Circular",
+                "kpi": "...",
+                "question": "...",
+                "sector": "Textiles"
+            }, ...
+        ],
+        "sector": "Textiles"
+    }
+    """
+    parser = QuestionnaireParser(file_path, [sheet_name])
+    data = parser.extract_questionnaire_data(sheet_name)
+    
+    questions = []
+    for idx, row in enumerate(data["rows"]):
+        if row.get("question"):  # Only include rows with actual questions
+            questions.append({
+                "id": f"q_{idx + 1}",
+                "sdg_number": row.get("sdg_number"),
+                "sdg_description": row.get("sdg_description"),
+                "sdg_target": row.get("sdg_target"),
+                "sustainability_dimension": row.get("sustainability_dimension"),
+                "kpi": row.get("kpi"),
+                "question": row.get("question"),
+                "sector": row.get("sector")
+            })
+    
+    # Get sector from first SDG or fallback
+    sector = "Unknown"
+    if data["sector_by_sdg"]:
+        sector = list(data["sector_by_sdg"].values())[0] or "Unknown"
+    
+    return {
+        "questions": questions,
+        "sector": sector
+    }
+
+
 # ---------- CLI ----------
 if __name__ == "__main__":
     xlsx = "backend/data/IS_Questionnaires_revised_KK.xlsx"  # update as needed

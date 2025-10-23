@@ -1,25 +1,18 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import SdgGridRouletteVisualization from "./scorecard-viz";
+import QuestionCard from "./QuestionCard";
 
-/* ---------------- Types ---------------- */
-
-type SustainabilityDimension =
-  | "Economic Performance"
-  | "Circular Performance"
-  | "Environmental Performance"
-  | "Social Performance";
-
-export type QuestionnaireRow = {
+type QuestionnaireRow = {
   sdg_number: number | null;
-  sustainability_dimension: SustainabilityDimension | null;
-  sector: string | null;
-  score: number | null;
   sdg_description?: string | null;
   sdg_target?: string | null;
+  sustainability_dimension?: string | null;
   kpi?: string | null;
   question?: string | null;
+  sector?: string | null;
+  score?: number | null;
   score_description?: string | null;
   source?: string | null;
   notes?: string | null;
@@ -27,443 +20,443 @@ export type QuestionnaireRow = {
   comment?: string | null;
 };
 
-type SectorData = Record<string, { rows: QuestionnaireRow[] }>;
+type SectorRows = { rows: QuestionnaireRow[] };
+type SectorData = Record<string, SectorRows>;
 
-/* ---------------- Component ---------------- */
+type Question = {
+  id: string;
+  sdg_number: number;
+  sdg_description: string;
+  sdg_target: string;
+  sustainability_dimension: string;
+  kpi: string;
+  question: string;
+  sector: string;
+};
+
+type Step = "upload" | "questionnaire" | "results";
 
 export default function SDGAssessmentTool() {
+  // Wizard state
+  const [step, setStep] = useState<Step>("upload");
+  const [isBusy, setIsBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // Upload + questionnaire state
+  const [file, setFile] = useState<File | null>(null);
+  const [questions, setQuestions] = useState<Question[]>([]);
+  const [sector, setSector] = useState<string>("");
+
+  // Answers
+  const [responses, setResponses] = useState<Record<string, number>>({});
+  const [currentIdx, setCurrentIdx] = useState(0);
+
+  // Results
   const [data, setData] = useState<SectorData | null>(null);
   const [selectedSectorKey, setSelectedSectorKey] = useState<string | null>(null);
-  const [isProcessing, setIsProcessing] = useState(false);
 
-  // Excel upload handler (uses Next.js proxy /api/upload-excel)
-  const handleExcelUpload = async (file: File) => {
-    setIsProcessing(true);
+  const totalQuestions = questions.length;
+  const currentQuestion = totalQuestions > 0 ? questions[currentIdx] : null;
+
+  const sectorKeys = useMemo(() => (data ? Object.keys(data) : []), [data]);
+
+  const activeRows: QuestionnaireRow[] = useMemo(() => {
+    if (!data || !selectedSectorKey) return [];
+    const bucket = data[selectedSectorKey];
+    return Array.isArray(bucket?.rows) ? bucket.rows : [];
+  }, [data, selectedSectorKey]);
+
+  // Smooth scroll to top on step change for better UX
+  useEffect(() => {
     try {
-      const formData = new FormData();
-      formData.append("file", file);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } catch {
+      /* no-op */
+    }
+  }, [step]);
 
-      const res = await fetch("/api/upload-excel", { method: "POST", body: formData });
+  // Handlers
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setError(null);
+    const f = e.target.files?.[0] ?? null;
+    setFile(f);
+  };
 
-      const rawText = await res.text();
-      let payload: any = {};
-      try { payload = JSON.parse(rawText); } catch {}
-      if (!res.ok || !payload?.success) {
-        throw new Error(payload?.detail || `Upload failed (HTTP ${res.status})`);
+  const handleExcelUpload = async () => {
+    if (!file) {
+      setError("Please choose an Excel file first.");
+      return;
+    }
+    setIsBusy(true);
+    setError(null);
+    try {
+      const form = new FormData();
+      form.append("file", file);
+
+      const resp = await fetch("/api/upload-excel", { method: "POST", body: form });
+      const payload = await resp.json();
+
+      if (!resp.ok || !payload?.success) {
+        throw new Error(payload?.error || "Upload failed");
       }
+      const qs: Question[] = Array.isArray(payload?.questions) ? payload.questions : [];
+      if (qs.length === 0) throw new Error("No questions found in the uploaded Excel sheet.");
 
-      const adapted = adaptUploadResponse(payload.data);
-      const normalized = normalizeDataset(adapted);
-
-      setData(normalized);
-      setSelectedSectorKey(Object.keys(normalized)[0] ?? null);
-    } catch (error: any) {
-      console.error("Upload error:", error);
-      alert(error?.message || "Failed to process file");
+      setQuestions(qs);
+      setSector(String(payload?.sector || "General"));
+      setResponses({});
+      setCurrentIdx(0);
+      setStep("questionnaire");
+    } catch (e: any) {
+      setError(e?.message || "Failed to upload Excel.");
     } finally {
-      setIsProcessing(false);
+      setIsBusy(false);
     }
   };
 
-  // Questionnaire submit handler
-  const handleQuestionnaireSubmit = async (sector: string, rows: Partial<QuestionnaireRow>[]) => {
-    setIsProcessing(true);
+  const handleScoreSelect = (score: number) => {
+    if (!currentQuestion) return;
+    setResponses((prev) => ({ ...prev, [currentQuestion.id]: score }));
+  };
+
+  const goPrev = () => setCurrentIdx((i) => Math.max(0, i - 1));
+  const goNext = () => setCurrentIdx((i) => Math.min(totalQuestions - 1, i + 1));
+
+  const handleSubmitAnswers = async () => {
+    if (totalQuestions === 0) return;
+    setIsBusy(true);
+    setError(null);
     try {
-      const res = await fetch("/api/questionnaire", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sector, rows }),
+      const responsesArray = questions.map((q) => ({
+        question_id: q.id,
+        score: Number.isFinite(responses[q.id]) ? responses[q.id] : 0,
+      }));
+
+      const body = JSON.stringify({
+        responses: responsesArray,
+        questions,
       });
 
-      const rawText = await res.text();
-      let payload: any = {};
-      try { payload = JSON.parse(rawText); } catch {}
-      if (!res.ok || !payload?.success) {
-        throw new Error(payload?.detail || `Submission failed (HTTP ${res.status})`);
+      const resp = await fetch("/api/questionnaire/calculate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body,
+      });
+      const payload = await resp.json();
+
+      if (!resp.ok || !payload?.success) {
+        throw new Error(payload?.error || "Failed to calculate scorecard.");
       }
 
-      const adapted = adaptUploadResponse(payload.data);
-      const normalized = normalizeDataset(adapted);
+      const result: SectorData | null =
+        payload?.data && typeof payload.data === "object" ? payload.data : null;
+      if (!result || Object.keys(result).length === 0) {
+        throw new Error("No scorecard data returned.");
+      }
 
-      setData(normalized);
-      setSelectedSectorKey(Object.keys(normalized)[0] ?? null);
-    } catch (error: any) {
-      console.error("Submit error:", error);
-      alert(error?.message || "Failed to submit questionnaire");
+      setData(result);
+      const keys = Object.keys(result);
+      setSelectedSectorKey(keys[0] || null);
+      setStep("results");
+    } catch (e: any) {
+      setError(e?.message || "Failed to submit answers.");
     } finally {
-      setIsProcessing(false);
+      setIsBusy(false);
     }
   };
 
-  return (
-    <div className="min-h-screen bg-gray-50 p-8">
-      <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
-      {!data ? (
-        <DataInputSection
-          onExcelUpload={handleExcelUpload}
-          onQuestionnaireSubmit={handleQuestionnaireSubmit}
-          isProcessing={isProcessing}
-        />
-      ) : (
-        <VisualizationSection
-          data={data}
-          selectedSectorKey={selectedSectorKey}
-          onSectorChange={setSelectedSectorKey}
-          onReset={() => {
-            setData(null);
-            setSelectedSectorKey(null);
-          }}
-        />
-      )}
+  const handleReset = () => {
+    setError(null);
+    setIsBusy(false);
+    setFile(null);
+    setQuestions([]);
+    setSector("");
+    setResponses({});
+    setCurrentIdx(0);
+    setData(null);
+    setSelectedSectorKey(null);
+    setStep("upload");
+  };
+
+  // UI Sections
+  const Stepper = () => {
+    const steps: { key: Step; label: string }[] = [
+      { key: "upload", label: "Upload" },
+      { key: "questionnaire", label: "Answer" },
+      { key: "results", label: "Results" },
+    ];
+    const idx = steps.findIndex((s) => s.key === step);
+
+    return (
+      <div className="stepper">
+        {steps.map((s, i) => {
+          const done = i < idx;
+          const active = i === idx;
+          return (
+            <div key={s.key} className="step">
+              <div className={`step-dot ${done ? "done" : active ? "active" : ""}`}>
+                {done ? "✓" : i + 1}
+              </div>
+              <div className={`step-label ${active ? "lbl-active" : ""}`}>{s.label}</div>
+              {i < steps.length - 1 && <div className={`step-line ${i < idx ? "line-done" : ""}`} />}
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
+
+  const Legend = () => (
+    <div className="legend">
+      <div className="legend-title">Legend</div>
+      <div className="legend-row">
+        <span className="legend-dot" style={{ background: "#F44336" }} />
+        <span>Economic</span>
+      </div>
+      <div className="legend-row">
+        <span className="legend-dot" style={{ background: "#FF9800" }} />
+        <span>Circular</span>
+      </div>
+      <div className="legend-row">
+        <span className="legend-dot" style={{ background: "#4CAF50" }} />
+        <span>Environmental</span>
+      </div>
+      <div className="legend-row">
+        <span className="legend-dot" style={{ background: "#2196F3" }} />
+        <span>Social</span>
+      </div>
+      <div className="legend-sub">Scores 0–5 are drawn from center outward as rings.</div>
     </div>
   );
-}
 
-/* ---------------- Data input section ---------------- */
+  const UploadCard = () => (
+    <div className="card">
+      <div className="card-head">
+        <h2 className="card-title">Upload Excel</h2>
+        <p className="card-sub">Upload a questionnaire workbook to begin.</p>
+      </div>
 
-function DataInputSection({
-  onExcelUpload,
-  onQuestionnaireSubmit,
-  isProcessing,
-}: {
-  onExcelUpload: (file: File) => Promise<void>;
-  onQuestionnaireSubmit: (sector: string, rows: Partial<QuestionnaireRow>[]) => Promise<void>;
-  isProcessing: boolean;
-}) {
-  const [activeTab, setActiveTab] = useState<"upload" | "form">("form");
+      <div className="form-item">
+        <label className="label">Excel file</label>
+        <input type="file" accept=".xlsx,.xls" onChange={handleFileChange} className="file" />
+        <div className="hint">Accepted: .xlsx, .xls</div>
+      </div>
 
-  return (
-    <div className="max-w-4xl mx-auto">
-      <h1 className="text-3xl font-bold mb-8">SDG Assessment Tool</h1>
+      {error && <div className="alert">{error}</div>}
 
-      <div className="bg-white rounded-lg shadow-lg">
-        <div className="flex border-b">
-          <button
-            className={`flex-1 py-4 px-6 ${activeTab === "upload" ? "bg-blue-50 border-b-2 border-blue-500" : ""}`}
-            onClick={() => setActiveTab("upload")}
-          >
-            Upload Excel
-          </button>
-          <button
-            className={`flex-1 py-4 px-6 ${activeTab === "form" ? "bg-blue-50 border-b-2 border-blue-500" : ""}`}
-            onClick={() => setActiveTab("form")}
-          >
-            Fill Questionnaire
-          </button>
+      <div className="row end gap">
+        <button onClick={handleReset} className="btn btn-ghost">
+          Reset
+        </button>
+        <button onClick={handleExcelUpload} disabled={!file || isBusy} className="btn btn-primary">
+          {isBusy ? "Uploading..." : "Upload & Start"}
+        </button>
+      </div>
+    </div>
+  );
+
+  const QuestionnaireCard = () => {
+    const selectedScore = currentQuestion ? responses[currentQuestion.id] : undefined;
+    const canPrev = currentIdx > 0;
+    const canNext = currentIdx < totalQuestions - 1;
+    const allAnswered = totalQuestions > 0 && questions.every((q) => Number.isFinite(responses[q.id]));
+    const pct = totalQuestions > 0 ? Math.round(((currentIdx + 1) / totalQuestions) * 100) : 0;
+
+    return (
+      <div className="card">
+        <div className="card-head row between">
+          <div>
+            <h2 className="card-title">Questionnaire</h2>
+            <p className="card-sub">Sector: {sector || "General"}</p>
+          </div>
+          <div className="progress">
+            <div className="progress-bar" style={{ width: `${pct}%` }} />
+          </div>
         </div>
 
-        <div className="p-8">
-          {activeTab === "upload" ? (
-            <ExcelUploadTab onUpload={onExcelUpload} isProcessing={isProcessing} />
+        {error && <div className="alert">{error}</div>}
+
+        <div className="muted">Question {currentIdx + 1} of {totalQuestions}</div>
+
+        <div className="qcard">
+          {currentQuestion && (
+            <QuestionCard
+              question={{
+                sdg_number: currentQuestion.sdg_number,
+                sdg_description: currentQuestion.sdg_description,
+                sdg_target: currentQuestion.sdg_target,
+                sustainability_dimension: currentQuestion.sustainability_dimension,
+                kpi: currentQuestion.kpi,
+                question: currentQuestion.question,
+              }}
+              selectedScore={selectedScore}
+              onScoreSelect={handleScoreSelect}
+            />
+          )}
+        </div>
+
+        <div className="row between mt">
+          <button onClick={goPrev} disabled={!canPrev || isBusy} className="btn btn-secondary">
+            Previous
+          </button>
+          {canNext ? (
+            <button
+              onClick={goNext}
+              disabled={!Number.isFinite(selectedScore) || isBusy}
+              className="btn btn-primary"
+            >
+              Next
+            </button>
           ) : (
-            <QuestionnaireFormTab onSubmit={onQuestionnaireSubmit} isProcessing={isProcessing} />
+            <button
+              onClick={handleSubmitAnswers}
+              disabled={!allAnswered || isBusy}
+              className="btn btn-primary"
+            >
+              {isBusy ? "Submitting..." : "Submit Assessment"}
+            </button>
           )}
         </div>
       </div>
-    </div>
-  );
-}
-
-function ExcelUploadTab({
-  onUpload,
-  isProcessing,
-}: {
-  onUpload: (file: File) => Promise<void>;
-  isProcessing: boolean;
-}) {
-  const onChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const f = e.target.files?.[0];
-    if (f) onUpload(f);
-  };
-  return (
-    <div className="space-y-4">
-      <input
-        type="file"
-        accept=".xlsx,.xlsm,.xltx,.xltm"
-        onChange={onChange}
-        disabled={isProcessing}
-        className="block"
-      />
-      <p className="text-sm text-slate-600">
-        Accepted: .xlsx / .xlsm / .xltx / .xltm
-      </p>
-    </div>
-  );
-}
-
-function QuestionnaireFormTab({
-  onSubmit,
-  isProcessing,
-}: {
-  onSubmit: (sector: string, rows: Partial<QuestionnaireRow>[]) => Promise<void>;
-  isProcessing: boolean;
-}) {
-  const [sector, setSector] = useState("Textiles");
-  const [questions, setQuestions] = useState<Partial<QuestionnaireRow>[]>([
-    {
-      sdg_number: null,
-      sustainability_dimension: null,
-      score: null,
-      question: "",
-    },
-  ]);
-
-  const sustainabilityDimensions: SustainabilityDimension[] = [
-    "Economic Performance",
-    "Circular Performance",
-    "Environmental Performance",
-    "Social Performance",
-  ];
-
-  const addQuestion = () => {
-    setQuestions([
-      ...questions,
-      {
-        sdg_number: null,
-        sustainability_dimension: null,
-        score: null,
-        question: "",
-      },
-    ]);
-  };
-
-  const updateQuestion = (index: number, field: keyof QuestionnaireRow, value: any) => {
-    const updatedQuestions = [...questions];
-    updatedQuestions[index] = { ...updatedQuestions[index], [field]: value };
-    setQuestions(updatedQuestions);
-  };
-
-  const removeQuestion = (index: number) => {
-    setQuestions(questions.filter((_, i) => i !== index));
-  };
-
-  const submit = () => {
-    const validQuestions = questions.filter(
-      (q) =>
-        q.sdg_number != null &&
-        q.sustainability_dimension != null &&
-        q.score != null &&
-        q.question?.trim()
     );
-    if (validQuestions.length === 0) {
-      alert("Please add at least one valid question with all required fields.");
-      return;
-    }
-    onSubmit(sector, validQuestions);
   };
 
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-2">
-        <label className="text-sm w-16">Sector</label>
-        <input
-          className="border rounded px-2 py-1 text-sm flex-1"
-          value={sector}
-          onChange={(e) => setSector(e.target.value)}
-        />
-      </div>
-
-      <div className="space-y-4">
-        <h3 className="text-lg font-semibold">Questions</h3>
-        {questions.map((q, index) => (
-          <div key={index} className="border p-4 rounded-lg space-y-3">
-            <div className="flex items-center gap-2">
-              <label className="text-sm w-24">SDG Number</label>
-              <input
-                type="number"
-                min="1"
-                max="17"
-                className="border rounded px-2 py-1 text-sm flex-1"
-                value={q.sdg_number ?? ""}
-                onChange={(e) => updateQuestion(index, "sdg_number", parseInt(e.target.value))}
-              />
-            </div>
-            <div className="flex items-center gap-2">
-              <label className="text-sm w-24">Dimension</label>
-              <select
-                className="border rounded px-2 py-1 text-sm flex-1"
-                value={q.sustainability_dimension ?? ""}
-                onChange={(e) => updateQuestion(index, "sustainability_dimension", e.target.value as SustainabilityDimension)}
-              >
-                <option value="">Select Dimension</option>
-                {sustainabilityDimensions.map((dim) => (
-                  <option key={dim} value={dim}>
-                    {dim}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="flex items-center gap-2">
-              <label className="text-sm w-24">Score</label>
-              <input
-                type="number"
-                min="0"
-                max="5"
-                className="border rounded px-2 py-1 text-sm flex-1"
-                value={q.score ?? ""}
-                onChange={(e) => updateQuestion(index, "score", parseInt(e.target.value))}
-              />
-            </div>
-            <div className="flex items-center gap-2">
-              <label className="text-sm w-24">Question</label>
-              <input
-                className="border rounded px-2 py-1 text-sm flex-1"
-                value={q.question ?? ""}
-                onChange={(e) => updateQuestion(index, "question", e.target.value)}
-              />
-            </div>
-            <button
-              onClick={() => removeQuestion(index)}
-              className="text-red-600 text-sm hover:underline"
-            >
-              Remove Question
-            </button>
-          </div>
-        ))}
-        <button
-          onClick={addQuestion}
-          className="px-3 py-2 rounded bg-blue-600 text-white text-sm"
-        >
-          Add Question
-        </button>
-      </div>
-
-      <button
-        onClick={submit}
-        disabled={isProcessing}
-        className="px-3 py-2 rounded bg-slate-900 text-white"
-      >
-        {isProcessing ? "Submitting…" : "Visualize"}
-      </button>
-    </div>
-  );
-}
-
-/* ---------------- Visualization section ---------------- */
-
-function VisualizationSection({
-  data,
-  selectedSectorKey,
-  onSectorChange,
-  onReset,
-}: {
-  data: SectorData;
-  selectedSectorKey: string | null;
-  onSectorChange: (k: string) => void;
-  onReset: () => void;
-}) {
-  const sectorKeys = useMemo(() => Object.keys(data || {}), [data]);
-  const sectorLabel = useMemo(
-    () => (selectedSectorKey ? selectedSectorKey.replace(/_/g, " ") : ""),
-    [selectedSectorKey]
-  );
-
-  const rows = useMemo(() => {
-    if (!selectedSectorKey) return [];
-    const base = data[selectedSectorKey]?.rows ?? [];
-    return base.map((r) => ({
-      ...r,
-      sector: r.sector ?? sectorLabel,
-    })) as QuestionnaireRow[];
-  }, [data, selectedSectorKey, sectorLabel]);
-
-  return (
-    <div className="max-w-7xl mx-auto space-y-4">
-      <div className="flex items-center justify-between">
-        <div className="flex flex-wrap gap-2">
-          {sectorKeys.map((k) => {
-            const active = k === selectedSectorKey;
-            const label = k.replace(/_/g, " ");
-            return (
-              <button
-                key={k}
-                onClick={() => onSectorChange(k)}
-                className={`px-3 py-1.5 rounded border text-sm ${
-                  active
-                    ? "bg-slate-900 text-white border-slate-900"
-                    : "bg-white text-slate-700 border-slate-300 hover:bg-slate-50"
-                }`}
-              >
-                {label}
-              </button>
-            );
-          })}
+  const ResultsCard = () => (
+    <div className="card">
+      <div className="card-head row wrap between">
+        <div>
+          <h2 className="card-title">Results</h2>
+          <p className="card-sub">Explore your SDG scorecard by sector.</p>
         </div>
-        <button onClick={onReset} className="px-3 py-1.5 rounded bg-rose-600 text-white text-sm">
-          Reset
-        </button>
+        <div className="row wrap gap">
+          {sectorKeys.map((key) => (
+            <button
+              key={key}
+              onClick={() => setSelectedSectorKey(key)}
+              className={`pill ${selectedSectorKey === key ? "pill-active" : ""}`}
+            >
+              {key}
+            </button>
+          ))}
+          <button onClick={handleReset} className="btn btn-ghost">Start over</button>
+        </div>
       </div>
 
-      <div className="bg-white rounded-xl shadow-md p-6">
-        {rows.length ? (
-          <SdgGridRouletteVisualization rows={rows} sector={sectorLabel || "General"} />
-        ) : (
-          <p className="text-sm text-slate-600">No data for selected sector.</p>
-        )}
+      {error && <div className="alert">{error}</div>}
+
+      <div className="grid3">
+        <Legend />
+
+        <div className="viz">
+          {activeRows.length > 0 ? (
+            <SdgGridRouletteVisualization rows={activeRows as any} sector={selectedSectorKey || ""} />
+          ) : (
+            <div className="empty">No data for selected sector.</div>
+          )}
+        </div>
+
+        <div className="panel">
+          <div className="panel-title">Tips</div>
+          <ul className="tips">
+            <li>Hover cells to see SDG and dimension details.</li>
+            <li>Darker shades indicate higher scores.</li>
+            <li>Use the sector chips above to switch datasets.</li>
+          </ul>
+        </div>
       </div>
     </div>
   );
-}
 
-/* ---------------- Normalization helpers (client-side) ---------------- */
+  return (
+    <div className="wrap">
+      <header className="top">
+        <h1 className="title">SDG Assessment Tool</h1>
+        <p className="sub">
+          Upload your workbook, answer the questions, and view a sector scorecard.
+        </p>
+        <Stepper />
+      </header>
 
-function adaptUploadResponse(data: any): SectorData {
-  if (!data || typeof data !== "object") return {};
-  const looksA = Object.values<any>(data).some((v) => v && typeof v === "object" && Array.isArray(v.rows));
-  if (looksA) return data as SectorData;
+      {step === "upload" && <UploadCard />}
+      {step === "questionnaire" && <QuestionnaireCard />}
+      {step === "results" && <ResultsCard />}
 
-  const out: SectorData = {};
-  for (const [k, v] of Object.entries<any>(data)) {
-    out[k] = { rows: Array.isArray(v) ? v : [] };
-  }
-  return out;
-}
+      <style jsx>{`
+        /* Page */
+        .wrap { max-width: 1100px; margin: 0 auto; padding: 24px; }
+        .top { margin-bottom: 14px; }
+        .title { font-size: 24px; font-weight: 700; color: #0f172a; margin: 0; }
+        .sub { margin: 6px 0 0; color: #475569; font-size: 14px; }
 
-function sectorLabelFromKey(key: string): string {
-  const t = key.toLowerCase();
-  if (t.includes("textile")) return "Textiles";
-  if (t.includes("fertil")) return "Fertilizers";
-  return key.replace(/_/g, " ");
-}
+        /* Stepper */
+        .stepper { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0; margin-top: 12px; }
+        .step { display: grid; grid-template-columns: auto 1fr; align-items: center; position: relative; }
+        .step-dot { width: 26px; height: 26px; border-radius: 50%; background: #e2e8f0; color: #0f172a; display: grid; place-items: center; font-size: 13px; font-weight: 600; }
+        .step-dot.active { background: #0f172a; color: #fff; }
+        .step-dot.done { background: #16a34a; color: #fff; }
+        .step-label { margin-left: 8px; color: #475569; font-size: 13px; }
+        .lbl-active { color: #0f172a; font-weight: 600; }
+        .step-line { position: absolute; height: 3px; background: #e2e8f0; left: calc(26px + 8px); right: 10px; top: 12px; border-radius: 999px; }
+        .line-done { background: #16a34a; }
 
-function normalizeRow(r: any, sectorLabel: string): QuestionnaireRow {
-  const dimRaw = (r?.sustainability_dimension ?? "").toString().toLowerCase();
-  const normalizedDim: SustainabilityDimension | null =
-    dimRaw.startsWith("econ") ? "Economic Performance" :
-    dimRaw.startsWith("circ") ? "Circular Performance" :
-    dimRaw.startsWith("env")  ? "Environmental Performance" :
-    dimRaw.startsWith("soc")  ? "Social Performance" : null;
+        /* Cards */
+        .card { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); padding: 18px; margin-top: 14px; }
+        .card-head { margin-bottom: 10px; }
+        .card-title { margin: 0; font-size: 18px; font-weight: 700; color: #0f172a; }
+        .card-sub { margin: 4px 0 0; color: #64748b; font-size: 13px; }
 
-  const sdgNum = r?.sdg_number == null
-    ? null
-    : Number(String(r.sdg_number).match(/\d+/)?.[0] ?? r.sdg_number);
+        /* Form */
+        .form-item { margin-top: 10px; }
+        .label { display: block; font-size: 14px; color: #334155; margin-bottom: 6px; }
+        .file { width: 100%; font-size: 14px; }
+        .hint { font-size: 12px; color: #64748b; margin-top: 6px; }
 
-  const scoreNum = r?.score == null ? null : Number(r.score);
+        /* Alerts, text */
+        .alert { background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; border-radius: 8px; padding: 10px; margin: 10px 0; font-size: 14px; }
+        .muted { color: #475569; font-size: 14px; margin: 8px 0; }
 
-  return {
-    sdg_number: Number.isFinite(sdgNum) ? Math.min(17, Math.max(1, sdgNum)) : null,
-    sustainability_dimension: normalizedDim,
-    sector: r?.sector ?? sectorLabel,
-    score: Number.isFinite(scoreNum) ? Math.min(5, Math.max(0, scoreNum)) : null,
-    sdg_description: r?.sdg_description ?? null,
-    sdg_target: r?.sdg_target ?? null,
-    kpi: r?.kpi ?? null,
-    question: r?.question ?? null,
-    score_description: r?.score_description ?? null,
-    source: r?.source ?? null,
-    notes: r?.notes ?? null,
-    status: r?.status ?? null,
-    comment: r?.comment ?? null,
-  };
-}
+        /* Buttons */
+        .btn { display: inline-flex; align-items: center; justify-content: center; font-size: 14px; padding: 8px 14px; border-radius: 10px; border: 1px solid transparent; cursor: pointer; }
+        .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+        .btn-primary { background: #0f172a; color: #fff; }
+        .btn-secondary { background: #fff; color: #334155; border-color: #cbd5e1; }
+        .btn-ghost { background: transparent; color: #334155; border: 1px dashed #cbd5e1; }
 
-function normalizeDataset(data: SectorData): SectorData {
-  const out: SectorData = {};
-  for (const [key, obj] of Object.entries(data)) {
-    const label = sectorLabelFromKey(key);
-    const rows = (obj?.rows ?? []).map((r) => normalizeRow(r, label))
-      .filter((r) => r.sustainability_dimension && r.score !== null);
-    out[key] = { rows };
-  }
-  return out;
+        /* Layout helpers */
+        .row { display: flex; align-items: center; gap: 10px; }
+        .between { justify-content: space-between; }
+        .end { justify-content: flex-end; }
+        .wrap { flex-wrap: wrap; }
+        .gap { gap: 8px; }
+        .mt { margin-top: 12px; }
+
+        /* Progress */
+        .progress { width: 220px; height: 10px; background: #f1f5f9; border-radius: 999px; overflow: hidden; border: 1px solid #e2e8f0; }
+        .progress-bar { height: 100%; background: linear-gradient(90deg, #0f172a, #334155); }
+
+        /* Results layout */
+        .grid3 { display: grid; grid-template-columns: 230px 1fr 260px; gap: 12px; }
+        @media (max-width: 1000px) {
+          .grid3 { grid-template-columns: 1fr; }
+        }
+        .legend { border: 1px solid #e2e8f0; border-radius: 10px; padding: 12px; }
+        .legend-title { font-size: 14px; font-weight: 700; color: #0f172a; margin-bottom: 8px; }
+        .legend-row { display: flex; align-items: center; gap: 8px; margin: 6px 0; color: #334155; font-size: 13px; }
+        .legend-dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
+        .legend-sub { color: #64748b; font-size: 12px; margin-top: 8px; }
+
+        .viz { min-height: 620px; display: grid; place-items: center; border: 1px solid #e2e8f0; border-radius: 10px; padding: 8px; background: #fff; }
+        .empty { color: #475569; font-size: 14px; }
+
+        .panel { border: 1px solid #e2e8f0; border-radius: 10px; padding: 12px; }
+        .panel-title { font-size: 14px; font-weight: 700; color: #0f172a; }
+        .tips { margin: 8px 0 0; padding-left: 16px; color: #334155; font-size: 13px; }
+        .tips li { margin: 6px 0; }
+
+        /* Pills */
+        .pill { padding: 6px 12px; font-size: 13px; border-radius: 9999px; border: 1px solid #cbd5e1; background: #fff; color: #334155; }
+        .pill-active { background: #0f172a; color: #fff; border-color: #0f172a; }
+      `}</style>
+    </div>
+  );
 }
