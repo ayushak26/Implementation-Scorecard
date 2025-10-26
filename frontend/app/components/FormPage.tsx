@@ -1,7 +1,7 @@
-// frontend/components/FormPage.tsx
+// app/components/FormPage.tsx
 "use client";
 
-import React, { useState, useEffect, useMemo, useContext,useRef} from "react";
+import React, { useEffect, useMemo, useState, useContext } from "react";
 import { useRouter } from "next/navigation";
 import QuestionCard from "./QuestionCard";
 import { SDGContext } from "./SDGContext";
@@ -19,196 +19,302 @@ type Question = {
 
 type SectorData = Record<string, { rows: Question[] }>;
 
-const DEFAULT_SDGS = Array.from({ length: 17 }, (_, i) => i + 1);
-const DEFAULT_DIMENSIONS = [
-  "Economic Performance",
-  "Circular Performance",
-  "Environmental Performance",
-  "Social Performance",
-];
+const DIM_ORDER = ["Circular", "Environmental", "Economic", "Social"] as const;
+const DIM_SET = new Set(DIM_ORDER);
 
-function buildTemplateQuestions(
-  sdgs: number[] = DEFAULT_SDGS,
-  dimensions: string[] = DEFAULT_DIMENSIONS,
-  sector = "General",
-  maxQuestions = 10
-): Question[] {
-  const questions: Question[] = [];
-  for (const sdg of sdgs) {
-    for (const dim of dimensions) {
-      if (questions.length >= maxQuestions) break;
-      questions.push({
-        id: `sdg${sdg}-${dim.replace(/\s+/g, "_").toLowerCase()}`,
-        sdg_number: sdg,
-        sdg_description: `SDG ${sdg}`,
-        sdg_target: "",
-        sustainability_dimension: dim,
-        kpi: "",
-        question: `Rate ${dim} for SDG ${sdg}`,
-        sector,
-      });
-    }
-    if (questions.length >= maxQuestions) break;
-  }
-  return questions;
+// Canonical sector order
+const SECTOR_ORDER = ["Textiles", "Fertilizers", "Packaging"] as const;
+
+const DEFAULT_RUBRIC: Record<number, string> = {
+  0: "N/A",
+  1: "Issue identified, but no plans for further actions",
+  2: "Issue identified, starts planning further actions",
+  3: "Action plan with clear targets and deadlines in place",
+  4: "Action plan operational - some progress in established targets",
+  5: "Action plan operational - achieving the target set",
+};
+
+const norm = (s: string) => (s || "").trim().toLowerCase();
+const makeKey = (q: Question) => `${norm(q.sector)}|${q.sdg_number}|${norm(q.sustainability_dimension)}`;
+
+const sectorAliases: Record<string, string> = {
+  "textile": "Textiles",
+  "textiles": "Textiles",
+  "fertilizer": "Fertilizers",
+  "fertilizers": "Fertilizers",
+  "packaging": "Packaging",
+};
+
+function canonicalSector(s?: string): string {
+  const k = norm(s || "");
+  return sectorAliases[k] || (s?.trim() || "General");
 }
 
-function normalizeToQuestions(payload: any): { questions: Question[]; sector: string } {
-  if (Array.isArray(payload?.questions)) {
-    const sector = typeof payload?.sector === "string" && payload.sector.trim() ? payload.sector : "General";
-    return { questions: payload.questions as Question[], sector };
+function canonicalDim(d?: string): string {
+  const t = (d || "").trim();
+  return (DIM_SET.has(t as any) ? t : d || "").trim();
+}
+
+/** Normalize & dedupe */
+function sanitizeQuestions(qs: Question[]): Question[] {
+  const seen = new Set<string>();
+  const out: Question[] = [];
+  for (const q of qs) {
+    const sector = canonicalSector(q.sector);
+    const dim = canonicalDim(q.sustainability_dimension);
+    if (!DIM_SET.has(dim as any)) continue;
+
+    const normQ: Question = { ...q, sector, sustainability_dimension: dim };
+    const key = makeKey(normQ);
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(normQ);
   }
-  if (
-    Array.isArray(payload?.sdgs) ||
-    Array.isArray(payload?.dimensions) ||
-    typeof payload?.score_rubric === "object"
-  ) {
-    const sdgs = Array.isArray(payload?.sdgs) ? payload.sdgs : DEFAULT_SDGS;
-    const dims = Array.isArray(payload?.dimensions) ? payload.dimensions : DEFAULT_DIMENSIONS;
-    const sector = typeof payload?.sector === "string" ? payload.sector : "General";
-    return { questions: buildTemplateQuestions(sdgs, dims, sector, 10), sector };
+  return out;
+}
+
+function sortByDim(a: Question, b: Question) {
+  const ia = DIM_ORDER.indexOf(a.sustainability_dimension as any);
+  const ib = DIM_ORDER.indexOf(b.sustainability_dimension as any);
+  return (ia === -1 ? 99 : ia) - (ib === -1 ? 99 : ib);
+}
+
+function pickFourDimsFor(arr: Question[]): Question[] | null {
+  if (!arr?.length) return null;
+  const byDim = new Map<string, Question>();
+  for (const q of arr) {
+    if (DIM_SET.has(q.sustainability_dimension as any) && !byDim.has(q.sustainability_dimension)) {
+      byDim.set(q.sustainability_dimension, q);
+    }
   }
-  return { questions: buildTemplateQuestions(), sector: "General" };
+  const four: Question[] = [];
+  for (const d of DIM_ORDER) {
+    const q = byDim.get(d);
+    if (!q) return null; // all four required
+    four.push(q);
+  }
+  return four.sort(sortByDim);
+}
+
+// Build pages for a provided list of sectors (length 1, 2, or 3)
+function buildPages(questions: Question[], activeSectors: string[]) {
+  const pages: Question[][] = [];
+  const orderedSectors = SECTOR_ORDER.filter((s) => activeSectors.includes(s));
+
+  for (const sector of orderedSectors) {
+    for (let sdg = 1; sdg <= 17; sdg++) {
+      const pool = questions.filter(
+        (q) => canonicalSector(q.sector) === sector && q.sdg_number === sdg
+      );
+      const four = pickFourDimsFor(pool);
+      if (four) pages.push(four);
+    }
+  }
+  return pages;
 }
 
 export default function FormPage() {
-  const context = useContext(SDGContext);
   const router = useRouter();
-  const [isBusy, setIsBusy] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [currentIdx, setCurrentIdx] = useState(0);
-  const [responses, setResponses] = useState<Record<string, number>>({});
-  const hasFetched = useRef(false); // Add this
-
+  const context = useContext(SDGContext);
   if (!context) return null;
 
-  const { questions, sector, selectedSector, setSelectedSector } = context;
+  const {
+    questions: ctxQuestions,
+    setQuestions: setCtxQuestions,
+    sector: ctxSector,
+    setSector: setCtxSector,
+    selectedSector,
+    setSelectedSector,
+  } = context;
 
-  // Compute unique sectors and filtered questions
-  const uniqueSectors = useMemo(() => {
-    const sectors = Array.from(new Set(questions.map(q => q.sector))).filter(s => s && s.trim());
-    return ["All Sectors", ...sectors];
-  }, [questions]);
+  const [isBusy, setIsBusy] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [scoresByKey, setScoresByKey] = useState<Record<string, number>>({});
+  const [rubric, setRubric] = useState<Record<number, string>>(DEFAULT_RUBRIC);
+  const [pageIdx, setPageIdx] = useState(0);
 
-  const filteredQuestions = useMemo(() => {
-    if (!selectedSector || selectedSector === "All Sectors") return questions;
-    return questions.filter(q => q.sector.toLowerCase() === selectedSector.toLowerCase());
-  }, [questions, selectedSector]);
-
-  // Reset currentIdx and responses when filtered questions change
-  useEffect(() => {
-    setCurrentIdx(0);
-    setResponses(prev => {
-      const validIds = new Set(filteredQuestions.map(q => q.id));
-      const newResponses: Record<string, number> = {};
-      for (const [id, score] of Object.entries(prev)) {
-        if (validIds.has(id)) {
-          newResponses[id] = score;
-        }
-      }
-      return newResponses;
-    });
-  }, [filteredQuestions]);
+  // NEW: local multi-select state (up to two sectors)
+  const [selectedSectors, setSelectedSectors] = useState<string[]>([...SECTOR_ORDER]);
 
   useEffect(() => {
-    async function fetchQuestionnaire() {
-      hasFetched.current = true;
+    const fetchQ = async () => {
       setIsBusy(true);
       setError(null);
       try {
-        const response = await fetch("/api/questionnaire/template", {
+        const r = await fetch("/api/questionnaire/template", {
           method: "GET",
-          headers: { "Cache-Control": "no-store" },
           cache: "no-store",
+          headers: { "Cache-Control": "no-store" },
         });
-        const data = await response.json();
-        if (!response.ok || data?.success === false) {
-          throw new Error(data?.error || "Failed to fetch questionnaire template");
+        const data = await r.json();
+        if (!r.ok) throw new Error(data?.error || "Failed to fetch questions");
+
+        const raw: Question[] = Array.isArray(data?.questions) ? data.questions : [];
+        if (raw.length === 0) throw new Error("No questions returned from API");
+
+        const qs = sanitizeQuestions(raw);
+
+        setCtxQuestions(qs);
+        setCtxSector(typeof data?.sector === "string" ? canonicalSector(data.sector) : "General");
+
+        // default to All Sectors
+        setSelectedSector("All Sectors");
+        setSelectedSectors([...SECTOR_ORDER]);
+
+        const init: Record<string, number> = {};
+        qs.forEach((q) => (init[makeKey(q)] = 3));
+        setScoresByKey(init);
+
+        if (data?.score_rubric && typeof data.score_rubric === "object") {
+          setRubric(data.score_rubric as Record<number, string>);
+        } else {
+          setRubric(DEFAULT_RUBRIC);
         }
-        const { questions: fetchedQuestions, sector: fetchedSector } = normalizeToQuestions(data);
-        context.setQuestions(fetchedQuestions);
-        context.setSector(fetchedSector);
-        context.setSelectedSector("All Sectors"); // Default to All Sectors
-      } catch (e) {
-        setError((e as Error).message || "Failed to load questionnaire template. Please ensure the Excel file contains valid sheets with required headers.");
-        context.setQuestions(buildTemplateQuestions());
-        context.setSector("General");
-        context.setSelectedSector("All Sectors");
+      } catch (e: any) {
+        setError(e?.message || "Failed to load questionnaire");
+        setCtxQuestions([]);
+        setCtxSector("General");
+        setSelectedSector("All Sectors");
+        setSelectedSectors([...SECTOR_ORDER]);
       } finally {
         setIsBusy(false);
       }
-    }
-    fetchQuestionnaire();
+    };
+    fetchQ();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const totalQuestions = filteredQuestions.length;
-  const currentQuestion = totalQuestions > 0 ? filteredQuestions[currentIdx] : null;
+  // Build sector pills list
+  const sectors = useMemo(() => {
+    const discovered = new Set<string>();
+    ctxQuestions.forEach((q) => q.sector && discovered.add(canonicalSector(q.sector)));
+    const ordered = Array.from(new Set<string>([...SECTOR_ORDER, ...Array.from(discovered)]));
+    return ["All Sectors", ...ordered];
+  }, [ctxQuestions]);
 
-  const handleScoreSelect = (score: number) => {
-    if (!currentQuestion) return;
-    const boundedScore = Math.max(0, Math.min(5, score));
-    setResponses((prev) => ({ ...prev, [currentQuestion.id]: boundedScore }));
+  // Compute active sectors (1, 2, or 3)
+  const activeSectors = useMemo<string[]>(() => {
+    if (selectedSector === "All Sectors") return [...SECTOR_ORDER];
+    if (selectedSectors.length > 0) return selectedSectors.map(canonicalSector);
+    if (selectedSector) return [canonicalSector(selectedSector)];
+    return [...SECTOR_ORDER];
+  }, [selectedSector, selectedSectors]);
+
+  // Filter to active sectors
+  const filtered = useMemo(() => {
+    const set = new Set(activeSectors);
+    return ctxQuestions.filter((q) => set.has(canonicalSector(q.sector)));
+  }, [ctxQuestions, activeSectors]);
+
+  // Build pages for current selection
+  const pages = useMemo(() => buildPages(filtered, activeSectors), [filtered, activeSectors]);
+  const totalPages = pages.length;
+  const currentPage = totalPages > 0 ? pages[pageIdx] : [];
+
+  useEffect(() => {
+    setPageIdx(0);
+  }, [activeSectors.length, totalPages]);
+
+  const handleScoreSelect = (compositeKey: string, score: number) => {
+    const bounded = Math.max(0, Math.min(5, Number(score)));
+    setScoresByKey((prev) => ({ ...prev, [compositeKey]: bounded }));
   };
 
-  const goPrev = () => setCurrentIdx((prev) => Math.max(0, prev - 1));
+  const pageComplete =
+    currentPage.length === 4 &&
+    currentPage.every((q) => Number.isFinite(scoresByKey[makeKey(q)]));
 
+  const allComplete =
+    pages.length > 0 &&
+    pages.every((grp) => grp.every((q) => Number.isFinite(scoresByKey[makeKey(q)])));
+
+  const progress = totalPages > 0 ? Math.round(((pageIdx + 1) / totalPages) * 100) : 0;
+
+  const goPrev = () => setPageIdx((i) => Math.max(0, i - 1));
   const goNext = () => {
-    if (currentIdx === totalQuestions - 1) return;
-    if (!currentQuestion || isBusy || !Number.isFinite(responses[currentQuestion.id])) return;
-    setCurrentIdx((prev) => Math.min(totalQuestions - 1, prev + 1));
+    if (pageIdx < totalPages - 1 && pageComplete) setPageIdx((i) => i + 1);
   };
 
   const handleSubmitAnswers = async () => {
-    if (totalQuestions === 0) return;
+    if (!allComplete) return;
     setIsBusy(true);
     setError(null);
     try {
-      const responsesArray = filteredQuestions.map((q) => ({
-        question_id: q.id,
-        score: Number.isFinite(responses[q.id]) ? responses[q.id] : 0,
+      const activeQuestions = pages.flat();
+
+      const questionsWithCompositeId = activeQuestions.map((q) => ({
+        ...q,
+        id: makeKey(q),
       }));
 
-      const response = await fetch("/api/questionnaire/calculate", {
+      const responsesArray = activeQuestions.map((q) => ({
+        question_id: makeKey(q),
+        score: Number.isFinite(scoresByKey[makeKey(q)]) ? scoresByKey[makeKey(q)] : 3,
+      }));
+
+      const resp = await fetch("/api/questionnaire/calculate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ responses: responsesArray, questions: filteredQuestions, sector: selectedSector || sector }),
+        body: JSON.stringify({
+          responses: responsesArray,
+          questions: questionsWithCompositeId,
+          sector:
+            selectedSector === "All Sectors"
+              ? "All Sectors"
+              : activeSectors.length > 1
+              ? activeSectors.join(" + ")
+              : activeSectors[0] || ctxSector || "General",
+        }),
       });
 
-      const data = await response.json();
-      if (!response.ok || data?.success === false) {
-        throw new Error(data?.error || "Failed to calculate scorecard");
+      const payload = await resp.json().catch(() => ({}));
+      if (!resp.ok || payload?.success === false) {
+        throw new Error(payload?.error || "Failed to calculate scorecard");
       }
 
-      const result: SectorData | null = data?.data && typeof data.data === "object" ? data.data : null;
+      const result: SectorData | null =
+        payload?.data && typeof payload.data === "object" ? payload.data : null;
       if (!result || !Object.keys(result).length) {
         throw new Error("No scorecard data returned");
       }
 
-      try {
-        sessionStorage.setItem("scorecard", JSON.stringify(result));
-      } catch {
-        await fetch("/api/result/save", {
-          method: "POST",
-          body: JSON.stringify(result),
-        });
-      }
-
+      sessionStorage.setItem("scorecard", JSON.stringify(result));
       router.push("/visualization");
-    } catch (e) {
-      setError((e as Error).message || "Failed to submit answers");
+    } catch (e: any) {
+      setError(e?.message || "Failed to submit answers");
     } finally {
       setIsBusy(false);
     }
   };
 
-  const selectedScore = currentQuestion ? responses[currentQuestion.id] : undefined;
-  const canPrev = currentIdx > 0;
-  const isLastQuestion = currentIdx === totalQuestions - 1;
-  const currentQuestionAnswered = currentQuestion && Number.isFinite(responses[currentQuestion.id]);
-  const allAnswered =
-    totalQuestions > 0 &&
-    filteredQuestions.every((q) => Number.isFinite(responses[q.id]) && responses[q.id] >= 0 && responses[q.id] <= 5);
-  const progress = totalQuestions > 0 ? Math.round(((currentIdx + 1) / totalQuestions) * 100) : 0;
+  // Toggle logic (max two sectors). "All Sectors" resets to all.
+  const onSectorClick = (sec: string) => {
+    if (sec === "All Sectors") {
+      setSelectedSector("All Sectors");
+      setSelectedSectors([...SECTOR_ORDER]);
+      return;
+    }
+    const s = canonicalSector(sec);
+    setSelectedSectors((prev) => {
+      let next = prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s];
+      if (next.length > 2) {
+        next = next.slice(-2); // keep the most recent two
+      }
+      if (next.length === 0) {
+        setSelectedSector("All Sectors");
+        return [...SECTOR_ORDER];
+      }
+      setSelectedSector(next.length === 1 ? next[0] : "Multiple");
+      return next;
+    });
+  };
+
+  const sectorLabel =
+    selectedSector === "All Sectors"
+      ? "All Sectors"
+      : activeSectors.length > 1
+      ? `${activeSectors[0]} + ${activeSectors[1]}`
+      : activeSectors[0] || ctxSector || "General";
 
   return (
     <div className="bg-white rounded-2xl shadow-lg p-6 animate-fadeIn">
@@ -216,7 +322,7 @@ export default function FormPage() {
         <div>
           <h2 className="text-2xl font-bold text-primary">Interactive Questionnaire</h2>
           <p className="text-neutral text-sm">
-            Sector: {selectedSector || sector} | {totalQuestions} Questions
+            Sector: {sectorLabel} | {filtered.length} Questions
           </p>
         </div>
         <div className="relative w-64">
@@ -230,112 +336,93 @@ export default function FormPage() {
         </div>
       </div>
 
+      {/* Sector filter */}
       <div className="bg-gray-50 rounded-lg p-4 mb-6">
-        <h3 className="text-lg font-semibold text-primary mb-2">Select Sector</h3>
+        <h3 className="text-lg font-semibold text-primary mb-2">Select Sector (max 2)</h3>
         <div className="flex flex-wrap gap-2">
-          {uniqueSectors.map(sector => (
-            <button
-              key={sector}
-              onClick={() => setSelectedSector(sector)}
-              className={`px-4 py-2 rounded-lg transition-all duration-200 ${
-                selectedSector === sector
-                  ? "bg-primary text-white"
-                  : "bg-gray-200 text-gray-600 hover:bg-gray-300"
-              }`}
-            >
-              {sector}
-            </button>
-          ))}
+          {sectors.map((sec) => {
+            const isAll = sec === "All Sectors";
+            const isActive = isAll
+              ? selectedSector === "All Sectors"
+              : activeSectors.includes(canonicalSector(sec)) && selectedSector !== "All Sectors";
+            return (
+              <button
+                key={sec}
+                onClick={() => onSectorClick(sec)}
+                className={`px-4 py-2 rounded-lg transition-all duration-200 ${
+                  isActive ? "bg-primary text-white" : "bg-gray-200 text-gray-600 hover:bg-gray-300"
+                }`}
+              >
+                {sec}
+              </button>
+            );
+          })}
         </div>
-        <p className="text-sm text-neutral mt-2">
-          Select a sector to view its questions or choose "All Sectors" to see questions from both Textiles and Fertilizers.
-        </p>
+        {selectedSector !== "All Sectors" && activeSectors.length > 1 && (
+          <p className="text-xs text-neutral mt-2">
+            Showing sectors in order: {SECTOR_ORDER.filter((s) => activeSectors.includes(s)).join(" → ")}
+          </p>
+        )}
       </div>
 
       {error && (
-        <div
-          className="bg-red-50 border border-red-200 text-red-700 rounded-lg p-4 mb-6 animate-shake"
-          role="alert"
-        >
+        <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg p-4 mb-6 animate-shake" role="alert">
           {error}
         </div>
       )}
 
       {isBusy ? (
         <div className="text-center text-neutral">Loading questionnaire...</div>
+      ) : pages.length === 0 ? (
+        <div className="text-center text-neutral">
+          No complete (4-dimension) cards available
+          {selectedSector && selectedSector !== "All Sectors" ? ` for selection "${sectorLabel}"` : ""}.
+        </div>
       ) : (
         <>
           <div className="text-center text-neutral text-sm mb-4">
-            {totalQuestions > 0
-              ? `Question ${currentIdx + 1} of ${totalQuestions}`
-              : `No questions available${selectedSector && selectedSector !== "All Sectors" ? ` for sector "${selectedSector}"` : ""}.`}
+            Page {pageIdx + 1} of {pages.length}
           </div>
 
-          <div className="animate-slideIn">
-            {currentQuestion ? (
-              <QuestionCard
-                question={currentQuestion}
-                selectedScore={selectedScore}
-                onScoreSelect={handleScoreSelect}
-              />
-            ) : (
-              <div className="text-center text-neutral">
-                No questions available{selectedSector && selectedSector !== "All Sectors" ? ` for sector "${selectedSector}"` : ""}. 
-                Please upload a valid Excel file with required headers or try a different sector.
-              </div>
-            )}
-          </div>
+          <QuestionCard
+            questions={currentPage}
+            selectedScores={scoresByKey}
+            onScoreSelect={handleScoreSelect}
+            scoreRubric={rubric}
+          />
 
-          <div className="flex justify-between mt-8 gap-4" style={{ minHeight: '40px' }}>
+          <div className="flex justify-between mt-8 gap-4">
             <button
               onClick={goPrev}
-              disabled={!canPrev || isBusy}
-              className={`px-4 py-2 border border-gray-300 rounded-lg text-gray-600 transition-opacity
-                ${!canPrev || isBusy ? "opacity-50 cursor-not-allowed" : "hover:bg-gray-50"}`}
+              disabled={pageIdx === 0 || isBusy}
+              className={`px-4 py-2 border border-gray-300 rounded-lg text-gray-600 transition-opacity ${
+                pageIdx === 0 || isBusy ? "opacity-50 cursor-not-allowed" : "hover:bg-gray-50"
+              }`}
             >
               Previous
             </button>
 
-            <div className="flex gap-4">
+            {pageIdx < pages.length - 1 ? (
               <button
                 onClick={goNext}
-                disabled={isLastQuestion || !currentQuestionAnswered || isBusy}
-                className={`px-4 py-2 bg-primary text-white rounded-lg transition-opacity
-                  ${isLastQuestion || !currentQuestionAnswered || isBusy 
-                    ? "opacity-50 cursor-not-allowed" 
-                    : "hover:bg-primary/90"}`}
+                disabled={!pageComplete || isBusy}
+                className={`px-4 py-2 bg-primary text-white rounded-lg transition-opacity ${
+                  !pageComplete || isBusy ? "opacity-50 cursor-not-allowed" : "hover:bg-primary/90"
+                }`}
               >
                 Next
               </button>
-              
-              {isLastQuestion && (
-                <button
-                  onClick={handleSubmitAnswers}
-                  disabled={!allAnswered || isBusy}
-                  className={`px-4 py-2 bg-primary text-white rounded-lg flex items-center gap-2 transition-opacity
-                    ${!allAnswered || isBusy 
-                      ? "opacity-50 cursor-not-allowed" 
-                      : "hover:bg-primary/90"}`}
-                >
-                  {isBusy && (
-                    <svg
-                      className="animate-spin h-5 w-5 text-white"
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                    >
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                      <path
-                        className="opacity-75"
-                        fill="currentColor"
-                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                      />
-                    </svg>
-                  )}
-                  Submit & View Results
-                </button>
-              )}
-            </div>
+            ) : (
+              <button
+                onClick={handleSubmitAnswers}
+                disabled={!allComplete || isBusy}
+                className={`px-4 py-2 bg-primary text-white rounded-lg transition-opacity ${
+                  !allComplete || isBusy ? "opacity-50 cursor-not-allowed" : "hover:bg-primary/90"
+                }`}
+              >
+                Submit & View Results
+              </button>
+            )}
           </div>
         </>
       )}

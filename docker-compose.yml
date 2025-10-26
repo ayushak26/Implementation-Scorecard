@@ -11,11 +11,9 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-    command: npm run dev
+    command: npm start
     ports: 
     - "3000:3000"
     environment:
       - NEXT_PUBLIC_FASTAPI_BASE=http://backend:8000
-      - NODE_ENV=development
-    volumes:
-      - ./frontend:/app
+      - NODE_ENV=production

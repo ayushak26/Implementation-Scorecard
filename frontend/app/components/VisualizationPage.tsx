@@ -20,59 +20,67 @@ type Question = {
 
 type SectorData = Record<string, { rows: Question[] }>;
 
+function normalizeKey(s: string | undefined | null) {
+  return (s ?? "").trim().toLowerCase();
+}
+
 export default function VisualizationPage() {
   const context = useContext(SDGContext);
   const router = useRouter();
+
+  if (!context) return null;
+  const { sector: ctxSector, selectedSector: ctxSelectedSector, reset } = context;
+
   const [isBusy, setIsBusy] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [sectorData, setSectorData] = useState<SectorData | null>(null);
-  const [selectedVizSector, setSelectedVizSector] = useState<string>("");
 
-  if (!context) return null;
-  const { sector, selectedSector } = context;
+  // We keep two pieces of selection state:
+  // - selectedVizSectorUI: what the <select> shows (original key string)
+  // - selectedVizSectorKey: the actual original key used to read rows
+  const [selectedVizSectorUI, setSelectedVizSectorUI] = useState<string>("");
 
-  // Compute available sectors for the dropdown
-  const availableSectors = useMemo(() => {
-    if (!sectorData) return [];
-    return Object.keys(sectorData).filter(s => s && s.trim());
+  /** Build a lookup from normalized key -> original sector key, plus a stable ordered list of original keys */
+  const sectorKeyLookup = useMemo(() => {
+    const map = new Map<string, string>();
+    const originals: string[] = sectorData ? Object.keys(sectorData) : [];
+    for (const k of originals) map.set(normalizeKey(k), k);
+    // Sort originals for nicer UI
+    originals.sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" }));
+    return { map, originals };
   }, [sectorData]);
 
-  // Initialize selectedVizSector with selectedSector, sector, or first available sector
-  useEffect(() => {
-    if (selectedSector && availableSectors.includes(selectedSector)) {
-      setSelectedVizSector(selectedSector);
-    } else if (sector && availableSectors.includes(sector)) {
-      setSelectedVizSector(sector);
-    } else if (availableSectors.length > 0) {
-      setSelectedVizSector(availableSectors[0]);
-    } else {
-      setSelectedVizSector("General");
-    }
-  }, [selectedSector, sector, availableSectors]);
+  /** Resolve any user/context provided sector name to the exact original key in sectorData */
+  const resolveToOriginalKey = (name: string | undefined | null): string | null => {
+    if (!name) return null;
+    const found = sectorKeyLookup.map.get(normalizeKey(name));
+    return found ?? null;
+  };
 
+  /** Initial load of visualization data (from sessionStorage or fallback API) */
   useEffect(() => {
     const loadVisualizationData = async () => {
       setIsBusy(true);
       setError(null);
       try {
-        // Primary: sessionStorage
-        const raw = typeof window !== "undefined" ? sessionStorage.getItem("scorecard") : null;
-
         let data: SectorData | null = null;
-        if (raw) {
-          try {
-            data = JSON.parse(raw) as SectorData;
-          } catch {
-            data = null;
+
+        // Primary: sessionStorage
+        if (typeof window !== "undefined") {
+          const raw = sessionStorage.getItem("scorecard");
+          if (raw) {
+            try {
+              data = JSON.parse(raw) as SectorData;
+            } catch {
+              data = null;
+            }
           }
         }
 
-        // Fallback: try temp API
+        // Fallback: temp API
         if (!data) {
           const r = await fetch("/api/result/latest", { cache: "no-store" });
-          if (r.ok) {
-            data = (await r.json()) as SectorData;
-          }
+          if (r.ok) data = (await r.json()) as SectorData;
         }
 
         if (!data || typeof data !== "object" || Object.keys(data).length === 0) {
@@ -90,38 +98,70 @@ export default function VisualizationPage() {
     loadVisualizationData();
   }, []);
 
+  /** Decide the initial selected sector once sectorData + context are available */
+  useEffect(() => {
+    if (!sectorData) return;
+
+    // Try context.selectedSector (but ignore "All Sectors")
+    let initial =
+      ctxSelectedSector && normalizeKey(ctxSelectedSector) !== "all sectors"
+        ? resolveToOriginalKey(ctxSelectedSector)
+        : null;
+
+    // Then try context.sector
+    if (!initial) {
+      initial = resolveToOriginalKey(ctxSector);
+    }
+
+    // Then first available key
+    if (!initial) {
+      initial = sectorKeyLookup.originals[0] ?? "General";
+    }
+
+    setSelectedVizSectorUI(initial);
+  }, [sectorData, ctxSelectedSector, ctxSector, sectorKeyLookup.originals]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  /** Derive rows for the currently selected UI value */
+  const rows = useMemo(() => {
+    if (!sectorData) return [];
+    const originalKey =
+      resolveToOriginalKey(selectedVizSectorUI) ??
+      (sectorKeyLookup.originals.length ? sectorKeyLookup.originals[0] : "");
+    if (!originalKey) return [];
+    return sectorData[originalKey]?.rows ?? [];
+  }, [sectorData, selectedVizSectorUI, sectorKeyLookup.originals]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  /** Available sector options for the <select> (original keys) */
+  const availableSectors = sectorKeyLookup.originals;
+
   const handleReset = () => {
     try {
-      if (typeof window !== "undefined") {
-        sessionStorage.removeItem("scorecard");
-      }
+      if (typeof window !== "undefined") sessionStorage.removeItem("scorecard");
     } catch {}
-    context.reset();
+    reset();
     router.push("/");
   };
-
-  const rows = sectorData && selectedVizSector in sectorData ? sectorData[selectedVizSector].rows : [];
 
   return (
     <div className="bg-white rounded-2xl shadow-lg p-6 animate-fadeIn">
       <div className="text-center mb-6">
         <h2 className="text-2xl font-bold text-primary">SDG Performance Visualization</h2>
         <p className="text-neutral mt-2">
-          Explore your sector&apos;s ({selectedVizSector}) SDG performance metrics and analytics.
+          Explore your sector&apos;s ({selectedVizSectorUI || "—"}) SDG performance metrics and analytics.
         </p>
       </div>
 
       <div className="bg-gray-50 rounded-lg p-4 mb-6">
         <h3 className="text-lg font-semibold text-primary mb-2">Select Sector</h3>
         <select
-          value={selectedVizSector}
-          onChange={(e) => setSelectedVizSector(e.target.value)}
+          value={selectedVizSectorUI}
+          onChange={(e) => setSelectedVizSectorUI(e.target.value)}
           className="border border-gray-300 rounded-lg p-2 w-full max-w-xs"
         >
           {availableSectors.length > 0 ? (
-            availableSectors.map(sector => (
-              <option key={sector} value={sector}>
-                {sector}
+            availableSectors.map((opt) => (
+              <option key={opt} value={opt}>
+                {opt}
               </option>
             ))
           ) : (
@@ -131,10 +171,7 @@ export default function VisualizationPage() {
       </div>
 
       {error && (
-        <div
-          className="bg-red-50 border border-red-200 text-red-700 rounded-lg p-4 mb-6 animate-shake"
-          role="alert"
-        >
+        <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg p-4 mb-6 animate-shake" role="alert">
           {error}
         </div>
       )}
@@ -145,7 +182,7 @@ export default function VisualizationPage() {
         <>
           <div className="mb-6">
             {rows.length > 0 ? (
-              <SdgGridRouletteVisualization rows={rows} sector={selectedVizSector} />
+              <SdgGridRouletteVisualization rows={rows} sector={selectedVizSectorUI} />
             ) : (
               <div className="text-center text-neutral">
                 No data available for the selected sector. Please submit the questionnaire again.
@@ -154,11 +191,9 @@ export default function VisualizationPage() {
           </div>
         </>
       )}
+
       <div className="flex justify-end mt-6">
-        <button
-          onClick={handleReset}
-          className="px-4 py-2 bg-primary text-white rounded-lg opacity-100"
-        >
+        <button onClick={handleReset} className="px-4 py-2 bg-primary text-white rounded-lg opacity-100">
           Reset & Start Over
         </button>
       </div>

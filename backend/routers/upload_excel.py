@@ -52,7 +52,7 @@ async def upload_excel(file: UploadFile = File(...)):
         return {
             "success": True,
             "questions": all_questions,
-            "sector": final_sector or "General",
+            "sector": final_sector,
             "total_questions": len(all_questions)
         }
     except openpyxl.utils.exceptions.InvalidFileException:
