@@ -1,5 +1,7 @@
 {
   "/page": "app/page.js",
   "/form/page": "app/form/page.js",
-  "/visualization/page": "app/visualization/page.js"
+  "/visualization/page": "app/visualization/page.js",
+  "/api/upload-excel/route": "app/api/upload-excel/route.js",
+  "/api/questionnaire/template/route": "app/api/questionnaire/template/route.js"
 }

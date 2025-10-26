@@ -1,9 +1,10 @@
 // frontend/components/FormPage.tsx
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo, useContext,useRef} from "react";
 import { useRouter } from "next/navigation";
 import QuestionCard from "./QuestionCard";
+import { SDGContext } from "./SDGContext";
 
 type Question = {
   id: string;
@@ -71,16 +72,47 @@ function normalizeToQuestions(payload: any): { questions: Question[]; sector: st
 }
 
 export default function FormPage() {
+  const context = useContext(SDGContext);
   const router = useRouter();
   const [isBusy, setIsBusy] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentIdx, setCurrentIdx] = useState(0);
-  const [questions, setQuestions] = useState<Question[]>([]);
-  const [sector, setSector] = useState<string>("General");
   const [responses, setResponses] = useState<Record<string, number>>({});
+  const hasFetched = useRef(false); // Add this
+
+  if (!context) return null;
+
+  const { questions, sector, selectedSector, setSelectedSector } = context;
+
+  // Compute unique sectors and filtered questions
+  const uniqueSectors = useMemo(() => {
+    const sectors = Array.from(new Set(questions.map(q => q.sector))).filter(s => s && s.trim());
+    return ["All Sectors", ...sectors];
+  }, [questions]);
+
+  const filteredQuestions = useMemo(() => {
+    if (!selectedSector || selectedSector === "All Sectors") return questions;
+    return questions.filter(q => q.sector.toLowerCase() === selectedSector.toLowerCase());
+  }, [questions, selectedSector]);
+
+  // Reset currentIdx and responses when filtered questions change
+  useEffect(() => {
+    setCurrentIdx(0);
+    setResponses(prev => {
+      const validIds = new Set(filteredQuestions.map(q => q.id));
+      const newResponses: Record<string, number> = {};
+      for (const [id, score] of Object.entries(prev)) {
+        if (validIds.has(id)) {
+          newResponses[id] = score;
+        }
+      }
+      return newResponses;
+    });
+  }, [filteredQuestions]);
 
   useEffect(() => {
     async function fetchQuestionnaire() {
+      hasFetched.current = true;
       setIsBusy(true);
       setError(null);
       try {
@@ -94,12 +126,14 @@ export default function FormPage() {
           throw new Error(data?.error || "Failed to fetch questionnaire template");
         }
         const { questions: fetchedQuestions, sector: fetchedSector } = normalizeToQuestions(data);
-        setQuestions(fetchedQuestions);
-        setSector(fetchedSector);
+        context.setQuestions(fetchedQuestions);
+        context.setSector(fetchedSector);
+        context.setSelectedSector("All Sectors"); // Default to All Sectors
       } catch (e) {
-        setError((e as Error).message || "Failed to load questionnaire template");
-        setQuestions(buildTemplateQuestions());
-        setSector("General");
+        setError((e as Error).message || "Failed to load questionnaire template. Please ensure the Excel file contains valid sheets with required headers.");
+        context.setQuestions(buildTemplateQuestions());
+        context.setSector("General");
+        context.setSelectedSector("All Sectors");
       } finally {
         setIsBusy(false);
       }
@@ -107,8 +141,8 @@ export default function FormPage() {
     fetchQuestionnaire();
   }, []);
 
-  const totalQuestions = questions.length;
-  const currentQuestion = totalQuestions > 0 ? questions[currentIdx] : null;
+  const totalQuestions = filteredQuestions.length;
+  const currentQuestion = totalQuestions > 0 ? filteredQuestions[currentIdx] : null;
 
   const handleScoreSelect = (score: number) => {
     if (!currentQuestion) return;
@@ -117,9 +151,8 @@ export default function FormPage() {
   };
 
   const goPrev = () => setCurrentIdx((prev) => Math.max(0, prev - 1));
-  
+
   const goNext = () => {
-    // Prevent navigation if on last question or if current question isn't answered
     if (currentIdx === totalQuestions - 1) return;
     if (!currentQuestion || isBusy || !Number.isFinite(responses[currentQuestion.id])) return;
     setCurrentIdx((prev) => Math.min(totalQuestions - 1, prev + 1));
@@ -130,7 +163,7 @@ export default function FormPage() {
     setIsBusy(true);
     setError(null);
     try {
-      const responsesArray = questions.map((q) => ({
+      const responsesArray = filteredQuestions.map((q) => ({
         question_id: q.id,
         score: Number.isFinite(responses[q.id]) ? responses[q.id] : 0,
       }));
@@ -138,7 +171,7 @@ export default function FormPage() {
       const response = await fetch("/api/questionnaire/calculate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ responses: responsesArray, questions, sector }),
+        body: JSON.stringify({ responses: responsesArray, questions: filteredQuestions, sector: selectedSector || sector }),
       });
 
       const data = await response.json();
@@ -174,7 +207,7 @@ export default function FormPage() {
   const currentQuestionAnswered = currentQuestion && Number.isFinite(responses[currentQuestion.id]);
   const allAnswered =
     totalQuestions > 0 &&
-    questions.every((q) => Number.isFinite(responses[q.id]) && responses[q.id] >= 0 && responses[q.id] <= 5);
+    filteredQuestions.every((q) => Number.isFinite(responses[q.id]) && responses[q.id] >= 0 && responses[q.id] <= 5);
   const progress = totalQuestions > 0 ? Math.round(((currentIdx + 1) / totalQuestions) * 100) : 0;
 
   return (
@@ -183,7 +216,7 @@ export default function FormPage() {
         <div>
           <h2 className="text-2xl font-bold text-primary">Interactive Questionnaire</h2>
           <p className="text-neutral text-sm">
-            Sector: {sector} | {totalQuestions} Questions
+            Sector: {selectedSector || sector} | {totalQuestions} Questions
           </p>
         </div>
         <div className="relative w-64">
@@ -195,6 +228,28 @@ export default function FormPage() {
           </div>
           <span className="absolute -top-6 right-0 text-xs text-neutral">{progress}% Complete</span>
         </div>
+      </div>
+
+      <div className="bg-gray-50 rounded-lg p-4 mb-6">
+        <h3 className="text-lg font-semibold text-primary mb-2">Select Sector</h3>
+        <div className="flex flex-wrap gap-2">
+          {uniqueSectors.map(sector => (
+            <button
+              key={sector}
+              onClick={() => setSelectedSector(sector)}
+              className={`px-4 py-2 rounded-lg transition-all duration-200 ${
+                selectedSector === sector
+                  ? "bg-primary text-white"
+                  : "bg-gray-200 text-gray-600 hover:bg-gray-300"
+              }`}
+            >
+              {sector}
+            </button>
+          ))}
+        </div>
+        <p className="text-sm text-neutral mt-2">
+          Select a sector to view its questions or choose "All Sectors" to see questions from both Textiles and Fertilizers.
+        </p>
       </div>
 
       {error && (
@@ -211,7 +266,9 @@ export default function FormPage() {
       ) : (
         <>
           <div className="text-center text-neutral text-sm mb-4">
-            {totalQuestions > 0 ? `Question ${currentIdx + 1} of ${totalQuestions}` : "No questions available"}
+            {totalQuestions > 0
+              ? `Question ${currentIdx + 1} of ${totalQuestions}`
+              : `No questions available${selectedSector && selectedSector !== "All Sectors" ? ` for sector "${selectedSector}"` : ""}.`}
           </div>
 
           <div className="animate-slideIn">
@@ -223,7 +280,8 @@ export default function FormPage() {
               />
             ) : (
               <div className="text-center text-neutral">
-                No questions available. Please upload a valid Excel file or try again.
+                No questions available{selectedSector && selectedSector !== "All Sectors" ? ` for sector "${selectedSector}"` : ""}. 
+                Please upload a valid Excel file with required headers or try a different sector.
               </div>
             )}
           </div>
@@ -239,7 +297,6 @@ export default function FormPage() {
             </button>
 
             <div className="flex gap-4">
-              {/* Next button - always visible, disabled on last question or when current question not answered */}
               <button
                 onClick={goNext}
                 disabled={isLastQuestion || !currentQuestionAnswered || isBusy}
@@ -251,7 +308,6 @@ export default function FormPage() {
                 Next
               </button>
               
-              {/* Submit button - only visible on last question */}
               {isLastQuestion && (
                 <button
                   onClick={handleSubmitAnswers}

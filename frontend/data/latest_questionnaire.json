@@ -679,7 +679,687 @@
       "kpi": "Partnerships supporting sustainable textile technology exchange",
       "question": "Has the company actively participated in partnerships or networks (regional, international, or sectoral) to share best practices, foster innovation, and build collective capacity for sustainable textile production?",
       "sector": "Textiles"
+    },
+    {
+      "id": "q_1",
+      "sdg_number": 1,
+      "sdg_description": "No Poverty",
+      "sdg_target": "1.5 Strengthen the resilience of vulnerable groups and reduce their exposure to climate-related events and other economic, social, and environmental shocks",
+      "sustainability_dimension": "Circular",
+      "kpi": "% of bio-based fertilizers made from locally available organic waste",
+      "question": "To what extennt company's bio-based fertilizers are produced using organic waste sourced from local agricultural or food industries to support local economies?",
+      "sector": "Fertilizers"
+    },
+    {
+      "id": "q_2",
+      "sdg_number": 1,
+      "sdg_description": "No Poverty",
+      "sdg_target": "1.5 Strengthen the resilience of vulnerable groups and reduce their exposure to climate-related events and other economic, social, and environmental shocks",
+      "sustainability_dimension": "Environmental",
+      "kpi": "Climate resilience measures in factories",
+      "question": "To what extent has the company implemented climate resilience measures specifically aimed at protecting vulnerable workers (e.g., temporary workers, farm labourers, or those exposed to extreme weather)?",
+      "sector": "Fertilizers"
+    },
+    {
+      "id": "q_3",
+      "sdg_number": 1,
+      "sdg_description": "No Poverty",
+      "sdg_target": "1.2 Reduce by at least half the share of people of all ages living in poverty in all its forms",
+      "sustainability_dimension": "Economic",
+      "kpi": "Percentage workers earning a living wage",
+      "question": "To what extent does the company ensure that all workers receive fair and decent wages in line with living wage standards?",
+      "sector": "Fertilizers"
+    },
+    {
+      "id": "q_4",
+      "sdg_number": 1,
+      "sdg_description": "No Poverty",
+      "sdg_target": "1.4 Ensure equal rights to economic resources and access to services, property, natural resources, technology, and finance for all, especially the poor and vulnerable",
+      "sustainability_dimension": "Social",
+      "kpi": "Access to microfinance or financial literacy programs",
+      "question": "To what extent does the company provide or facilitate access to financial literacy training or microfinance opportunities for its workers?",
+      "sector": "Fertilizers"
+    },
+    {
+      "id": "q_5",
+      "sdg_number": 2,
+      "sdg_description": "Zero Hunger",
+      "sdg_target": "2.4 Ensure sustainable food production systems and implement resilient agricultural practices",
+      "sustainability_dimension": "Circular",
+      "kpi": "fertilizer production from recycled into agricultural use",
+      "question": "To what extent are the company’s fertiliser products produced using recovered nutrients or organic waste as primary inputs?",
+      "sector": "Fertilizers"
+    },
+    {
+      "id": "q_6",
+      "sdg_number": 2,
+      "sdg_description": "Zero Hunger",
+      "sdg_target": "2.5 Maintain genetic diversity of seeds, cultivated plants and animals",
+      "sustainability_dimension": "Environmental",
+      "kpi": "% of raw materials sourced from practices promoting agrobiodiversity",
+      "question": "To what extent does the company source organic waste or raw inputs from farms that actively promote crop diversity and conserve genetic resources?",
+      "sector": "Fertilizers"
+    },
+    {
+      "id": "q_7",
+      "sdg_number": 2,
+      "sdg_description": "Zero Hunger",
+      "sdg_target": "2.3 Double the productivity and incomes of small-scale food producers",
+      "sustainability_dimension": "Economic",
+      "kpi": "% of smallholder farmers benefiting from the company's fertilizer products (via direct sales or programs)",
+      "question": "To what extent has the company expanded its programs, distribution, or sales channels to increase market access for smallholder farmers to bio-based fertiliser products?",
+      "sector": "Fertilizers"
+    },
+    {
+      "id": "q_8",
+      "sdg_number": 2,
+      "sdg_description": "Zero Hunger",
+      "sdg_target": "2.1 End hunger and ensure access by all people to safe, nutritiuous and sufficient food",
+      "sustainability_dimension": "Social",
+      "kpi": "% of employees provided access to affordable and nutritious meals at the workplace",
+      "question": "To what extent does the company provide affordable and nutritious food options for employees (e.g., canteen meals, subsidised food programs) at the workplace?",
+      "sector": "Fertilizers"
+    },
+    {
+      "id": "q_9",
+      "sdg_number": 3,
+      "sdg_description": "Good Health & Well-being",
+      "sdg_target": "3.9 Promote safe reuse of nutrients",
+      "sustainability_dimension": "Circular",
+      "kpi": "% of reused materials proven to be non-toxic for soil and crops",
+      "question": "To what extent does the company test and validate secondary or recovered bio-materials to ensure their safe reuse in production without risks to human health or the environment?",
+      "sector": "Fertilizers"
+    },
+    {
+      "id": "q_10",
+      "sdg_number": 3,
+      "sdg_description": "Good Health & Well-being",
+      "sdg_target": "3.9 Prevent exposure to harmful substances",
+      "sustainability_dimension": "Environmental",
+      "kpi": "% reduction in toxic emissions from fertilizer production",
+      "question": "To what extent has the company implemented cleaner production technologies to minimise toxic emissions and hazardous by-products in fertiliser manufacturing?",
+      "sector": "Fertilizers"
+    },
+    {
+      "id": "q_11",
+      "sdg_number": 3,
+      "sdg_description": "Good Health & Well-being",
+      "sdg_target": "3.C Support employee health capacity",
+      "sustainability_dimension": "Economic",
+      "kpi": "% annual budget allocated to employees receiving annual health check-ups",
+      "question": "To what extent does the company allocate resources to provide regular health check-ups and occupational health services for employees as part of its long-term productivity strategy?",
+      "sector": "Fertilizers"
+    },
+    {
+      "id": "q_12",
+      "sdg_number": 3,
+      "sdg_description": "Good Health & Well-being",
+      "sdg_target": "3.4 Promote employee well-being",
+      "sustainability_dimension": "Social",
+      "kpi": "Access to mental health resources and flexible hours",
+      "question": "To what extent does the company provide employees with access to mental health support services and flexible working arrangements?",
+      "sector": "Fertilizers"
+    },
+    {
+      "id": "q_13",
+      "sdg_number": 4,
+      "sdg_description": "Ensure inclusive and equitable quality education and promote lifelong learning opportunities for all",
+      "sdg_target": "4.6 Ensure that all youth and a substantial proportion of adults, both men and women, achieve literacy and numeracy",
+      "sustainability_dimension": "Circular",
+      "kpi": "% of employees trained in fertilizer recycling or nutrient recovery",
+      "question": "Does the company provide employees with training on nutrient recovery practices and the safe use of recycled fertilisers?",
+      "sector": "Fertilizers"
+    },
+    {
+      "id": "q_14",
+      "sdg_number": 4,
+      "sdg_description": "Ensure inclusive and equitable quality education and promote lifelong learning opportunities for all",
+      "sdg_target": "4.7 Ensure that all learners acquire the knowledge and skills needed to promote sustainable development",
+      "sustainability_dimension": "Environmental",
+      "kpi": "Inclusion of sustainability in worker orientation programs",
+      "question": "To what extent has the company integrated environmental sustainability education into employee onboarding and regular training programmes?",
+      "sector": "Fertilizers"
+    },
+    {
+      "id": "q_15",
+      "sdg_number": 4,
+      "sdg_description": "Ensure inclusive and equitable quality education and promote lifelong learning opportunities for all",
+      "sdg_target": "4.4 Promote skills for work",
+      "sustainability_dimension": "Economic",
+      "kpi": "% of annual budget for employees to enrolled in job-relevant upskilling or certification",
+      "question": "Has the company invested in supporting employees to upskill or obtain relevant professional certifications?",
+      "sector": "Fertilizers"
+    },
+    {
+      "id": "q_16",
+      "sdg_number": 4,
+      "sdg_description": "Ensure inclusive and equitable quality education and promote lifelong learning opportunities for all",
+      "sdg_target": "4.5 Eliminate gender disparities in education and ensure equal access to all levels of education",
+      "sustainability_dimension": "Social",
+      "kpi": "Number of marginalized or underrepresented employees receiving training",
+      "question": "To what extent does the company ensure equal access to skill development and training opportunities for marginalised or underrepresented employees?",
+      "sector": "Fertilizers"
+    },
+    {
+      "id": "q_17",
+      "sdg_number": 5,
+      "sdg_description": "Gender Equality",
+      "sdg_target": "5.5 Ensure women’s full and effective participation and equal opportunities",
+      "sustainability_dimension": "Circular",
+      "kpi": "Inclusion of women in research and innovation",
+      "question": "To what extent are women actively involved in research, innovation, or product development aimed at improving circularity (e.g., bio-based materials, resource-efficient processes)?",
+      "sector": "Fertilizers"
+    },
+    {
+      "id": "q_18",
+      "sdg_number": 5,
+      "sdg_description": "Gender Equality",
+      "sdg_target": "5.5 Ensure equal workplace safety",
+      "sustainability_dimension": "Environmental",
+      "kpi": "Implementation of gender-inclusive measures in environmental practices",
+      "question": "Has the company integrated gender considerations into its environmental management practices (e.g., ensuring women’s participation in environmental monitoring, training, or risk assessments)?",
+      "sector": "Fertilizers"
+    },
+    {
+      "id": "q_19",
+      "sdg_number": 5,
+      "sdg_description": "Gender Equality",
+      "sdg_target": "5.4 Recognize and value unpaid care and domestic work",
+      "sustainability_dimension": "Economic",
+      "kpi": "% of workers benefiting from paid family leave and childcare support",
+      "question": "To what extent does the company ensure access to paid family leave, childcare facilities, or flexible work arrangements for women employees?",
+      "sector": "Fertilizers"
+    },
+    {
+      "id": "q_20",
+      "sdg_number": 5,
+      "sdg_description": "Gender Equality",
+      "sdg_target": "5.2 Eliminate violence and harassment against women",
+      "sustainability_dimension": "Social",
+      "kpi": "Policies and mechanisms to prevent workplace harassment",
+      "question": "To what extent has the company implemented anti-harassment and discrimination policies supported by confidential reporting mechanisms?",
+      "sector": "Fertilizers"
+    },
+    {
+      "id": "q_21",
+      "sdg_number": 6,
+      "sdg_description": "Clean Water & Sanitation",
+      "sdg_target": "6.3 Improve water quality by reducing pollution",
+      "sustainability_dimension": "Circular",
+      "kpi": "% of wastewater reused in production or other industrial applications",
+      "question": "What proportion of treated wastewater is reused within the company’s operations (e.g., fertilizer production, process water, or supplied for external industrial reuse)?",
+      "sector": "Fertilizers"
+    },
+    {
+      "id": "q_22",
+      "sdg_number": 6,
+      "sdg_description": "Clean Water & Sanitation",
+      "sdg_target": "6.4 Increase water-use efficiency",
+      "sustainability_dimension": "Environmental",
+      "kpi": "% reduction in freshwater consumption per ton of bio-fertilizer produced",
+      "question": "To what extent has the company adopted water-efficient technologies or practices to reduce freshwater consumption?",
+      "sector": "Fertilizers"
+    },
+    {
+      "id": "q_23",
+      "sdg_number": 6,
+      "sdg_description": "Clean Water & Sanitation",
+      "sdg_target": "6.3 Improve water quality by reducing pollution",
+      "sustainability_dimension": "Economic",
+      "kpi": "Reducing operational costs through water efficiency",
+      "question": "To what extent has the company reduced operational costs through water efficiency, reuse, or wastewater recovery practices?",
+      "sector": "Fertilizers"
+    },
+    {
+      "id": "q_24",
+      "sdg_number": 6,
+      "sdg_description": "Clean Water & Sanitation",
+      "sdg_target": "6.2 Ensure access to adequate sanitation & hygiene for all",
+      "sustainability_dimension": "Social",
+      "kpi": "% investment in local clean water and sanitation initiatives",
+      "question": "To what extent has the company ensured adequate sanitation and hygiene conditions for its own workers, and contributed to improving such access for nearby communities?",
+      "sector": "Fertilizers"
+    },
+    {
+      "id": "q_25",
+      "sdg_number": 7,
+      "sdg_description": "Affordable and Clean Energy",
+      "sdg_target": "7.2 Increase the share of renewable energy",
+      "sustainability_dimension": "Circular",
+      "kpi": "Amount of renewable energy recovered and used for energy in fertilizer production",
+      "question": "To what extent does the company recover and reuse energy e.g., from biogas, waste heat. etc.) within its fertilizer production cycle to close resource loops?",
+      "sector": "Fertilizers"
+    },
+    {
+      "id": "q_26",
+      "sdg_number": 7,
+      "sdg_description": "Affordable and Clean Energy",
+      "sdg_target": "7.2 Increase the share of renewable energy",
+      "sustainability_dimension": "Environmental",
+      "kpi": "Bioenergy use in fertilizer production",
+      "question": "To what extent has the company replaced fossil-based energy with renewable sources in its operations?",
+      "sector": "Fertilizers"
+    },
+    {
+      "id": "q_27",
+      "sdg_number": 7,
+      "sdg_description": "Affordable and Clean Energy",
+      "sdg_target": "7.3 Improve energy efficiency",
+      "sustainability_dimension": "Economic",
+      "kpi": "Investment in energy-efficient fertilizers",
+      "question": "Has the company adopted energy-efficient technologies or processes that measurably reduce energy consumption and production costs per ton of fertilizer?",
+      "sector": "Fertilizers"
+    },
+    {
+      "id": "q_28",
+      "sdg_number": 7,
+      "sdg_description": "Affordable and Clean Energy",
+      "sdg_target": "7.B Expand energy services for all",
+      "sustainability_dimension": "Social",
+      "kpi": "Number of employees trained in clean energy technologies for bio-based fertilizer production",
+      "question": "To what extent are employees trained and engaged in the adoption, operation, and maintenance of clean energy solutions integrated into production?",
+      "sector": "Fertilizers"
+    },
+    {
+      "id": "q_29",
+      "sdg_number": 8,
+      "sdg_description": "Decent Work & Economic Growth",
+      "sdg_target": "8.3 Promote policies that support decent jobs, entrepreneurship, innovation, and the growth and formalization of MSMEs, including access to financial services.",
+      "sustainability_dimension": "Circular",
+      "kpi": "Circular strategies for fertilizers made from recovered or recycled nutrients",
+      "question": "To what extent has the company implemented circular strategies or innovations that increase the use of recovered nutrients in fertilizer production?",
+      "sector": "Fertilizers"
+    },
+    {
+      "id": "q_30",
+      "sdg_number": 8,
+      "sdg_description": "Decent Work & Economic Growth",
+      "sdg_target": "8.4 Improve environmental impact of fertilizer production",
+      "sustainability_dimension": "Environmental",
+      "kpi": "Reduction of GHG emissions from fertilizer production",
+      "question": "To what extent has the company adopted green technologies (e.g., controlled-release fertilizers, nitrogen-efficient processes, or alternative feedstocks) to reduce environmental impacts of production?",
+      "sector": "Fertilizers"
+    },
+    {
+      "id": "q_31",
+      "sdg_number": 8,
+      "sdg_description": "Decent Work & Economic Growth",
+      "sdg_target": "8.5 Green Job Creation",
+      "sustainability_dimension": "Economic",
+      "kpi": "% of jobs created through expansion or sustainable practices",
+      "question": "To what extent has the company created new jobs through business expansion or the adoption of sustainable manufacturing practices?",
+      "sector": "Fertilizers"
+    },
+    {
+      "id": "q_32",
+      "sdg_number": 8,
+      "sdg_description": "Decent Work & Economic Growth",
+      "sdg_target": "8.5 Promote equal pay & gender equality in workforce",
+      "sustainability_dimension": "Social",
+      "kpi": "Gender pay gap reduction & women in leadership",
+      "question": "To what extent has the company assessed and addressed gender pay disparities and ensured equal opportunities for leadership roles regardless of gender?",
+      "sector": "Fertilizers"
+    },
+    {
+      "id": "q_33",
+      "sdg_number": 9,
+      "sdg_description": "Build resilient infrastructure, promote inclusive and sustainable industrialization and foster innovation",
+      "sdg_target": "9.2 Sustainable Industrialization",
+      "sustainability_dimension": "Circular",
+      "kpi": "Use of industrial symbiosis for resource sharing",
+      "question": "To what extent does the company participate in industrial symbiosis or resource-sharing initiatives to strengthen circular value chains?",
+      "sector": "Fertilizers"
+    },
+    {
+      "id": "q_34",
+      "sdg_number": 9,
+      "sdg_description": "Build resilient infrastructure, promote inclusive and sustainable industrialization and foster innovation",
+      "sdg_target": "9.4 Upgrade infrastructure for sustainability",
+      "sustainability_dimension": "Environmental",
+      "kpi": "% of machinery upgraded to low-impact alternatives",
+      "question": "To what extent has the company upgraded production infrastructure or adopted cleaner technologies to enhance its environmental performance?",
+      "sector": "Fertilizers"
+    },
+    {
+      "id": "q_35",
+      "sdg_number": 9,
+      "sdg_description": "Build resilient infrastructure, promote inclusive and sustainable industrialization and foster innovation",
+      "sdg_target": "9.5 R&D Investment & Innovation",
+      "sustainability_dimension": "Economic",
+      "kpi": "% of budget allocated to research on bio-based fertilizer formulations",
+      "question": "Has the company allocated resources to pilot projects or innovation partnerships that improve the competitiveness of sustainable fertilizer technologies?",
+      "sector": "Fertilizers"
+    },
+    {
+      "id": "q_36",
+      "sdg_number": 9,
+      "sdg_description": "Build resilient infrastructure, promote inclusive and sustainable industrialization and foster innovation",
+      "sdg_target": "9.4 Upgrade infrastructure for skills",
+      "sustainability_dimension": "Social",
+      "kpi": "% of staff involved in technical upskilling or equipment handling",
+      "question": "To what extent are employees actively involved in the transition to modernized, sustainable production practices through structured training programs?",
+      "sector": "Fertilizers"
+    },
+    {
+      "id": "q_37",
+      "sdg_number": 10,
+      "sdg_description": "Reduce inequality within and among countries",
+      "sdg_target": "10.2 Promote inclusion",
+      "sustainability_dimension": "Circular",
+      "kpi": "% of recycled fertilizers provided to underserved or smallholder farmers",
+      "question": "To what extent has the company expanded access to recycled or bio-based fertilizers for smallholder or marginalized farmers, supporting more inclusive circular value chains?",
+      "sector": "Fertilizers"
+    },
+    {
+      "id": "q_38",
+      "sdg_number": 10,
+      "sdg_description": "Reduce inequality within and among countries",
+      "sdg_target": "10.2 Promote the social, economic, and environmental inclusion of all",
+      "sustainability_dimension": "Environmental",
+      "kpi": "Inclusion of workers in environmental initiatives",
+      "question": "To what extent are employees from diverse backgrounds engaged in environmental improvement initiatives?",
+      "sector": "Fertilizers"
+    },
+    {
+      "id": "q_39",
+      "sdg_number": 10,
+      "sdg_description": "Reduce inequality within and among countries",
+      "sdg_target": "10.2 Promote inclusion of all",
+      "sustainability_dimension": "Economic",
+      "kpi": "% of underrepresented employees receiving bonuses or performance-linked incentives",
+      "question": "To what extent are wages, benefits, and performance incentives distributed equitably across employees, including those from underrepresented or marginalized groups?",
+      "sector": "Fertilizers"
+    },
+    {
+      "id": "q_40",
+      "sdg_number": 10,
+      "sdg_description": "Reduce inequality within and among countries",
+      "sdg_target": "10.2 Promote inclusion",
+      "sustainability_dimension": "Social",
+      "kpi": "No. of company activities/events promoting cultural understanding",
+      "question": "Has the company implemented initiatives (e.g., training, events, mentorship) to foster inclusion, cultural diversity, and equal participation in the workplace?",
+      "sector": "Fertilizers"
+    },
+    {
+      "id": "q_41",
+      "sdg_number": 11,
+      "sdg_description": "Make cities and human settlements inclusive, safe, resilient and sustainable",
+      "sdg_target": "11.6 – Reduce waste generation through better production and consumption practices.",
+      "sustainability_dimension": "Circular",
+      "kpi": "% of packaging materials used in product distribution that are recyclable or biodegradable",
+      "question": "Has the company integrated recyclable, biodegradable, or reusable packaging materials into its fertilizer distribution system as part of circular economy practices?",
+      "sector": "Fertilizers"
+    },
+    {
+      "id": "q_42",
+      "sdg_number": 11,
+      "sdg_description": "Make cities and human settlements inclusive, safe, resilient and sustainable",
+      "sdg_target": "11.6 – Reduce waste generation and environmental impact through closed-loop systems.",
+      "sustainability_dimension": "Environmental",
+      "kpi": "Percentage of Fertilizer Production Process Using Closed-Loop Systems",
+      "question": "To what extent has the company implemented closed-loop systems (e.g., nutrient recovery, water reuse, or by-product valorization) in its production process to reduce waste and environmental impacts?",
+      "sector": "Fertilizers"
+    },
+    {
+      "id": "q_43",
+      "sdg_number": 11,
+      "sdg_description": "Make cities and human settlements inclusive, safe, resilient and sustainable",
+      "sdg_target": "11.6 Cleaner production processes",
+      "sustainability_dimension": "Economic",
+      "kpi": "% increase in production efficiency per unit of input material (e.g., water, energy, raw materials)",
+      "question": "To what extent has the company optimized resource use (water, energy, raw materials) to reduce operational costs and improve long-term economic sustainability?",
+      "sector": "Fertilizers"
+    },
+    {
+      "id": "q_44",
+      "sdg_number": 11,
+      "sdg_description": "Make cities and human settlements inclusive, safe, resilient and sustainable",
+      "sdg_target": "11.1 Employee Housing and Commute Support",
+      "sustainability_dimension": "Social",
+      "kpi": "% of urban employees provided with benefits or subsidized commuting options",
+      "question": "To what extent does the company provide workplace facilities or benefits that improve employees’ quality of life in urban settings (e.g., affordable meals, flexible hours, safe transport)?",
+      "sector": "Fertilizers"
+    },
+    {
+      "id": "q_45",
+      "sdg_number": 12,
+      "sdg_description": "Ensure sustainable consumption and production patterns",
+      "sdg_target": "12.5 Substantially reduce waste generation through prevention, reduction, recycling and reuse",
+      "sustainability_dimension": "Circular",
+      "kpi": "Nutrients from recovered or waste-based sources in production",
+      "question": "Has the company established monitoring systems to track waste reduction and nutrient recovery performance across its production processes?",
+      "sector": "Fertilizers"
+    },
+    {
+      "id": "q_46",
+      "sdg_number": 12,
+      "sdg_description": "Ensure sustainable consumption and production patterns",
+      "sdg_target": "12.4 Ensure environmentally sound management of chemicals and waste across their lifecycle",
+      "sustainability_dimension": "Environmental",
+      "kpi": "Freshwater/Seawater eutrophication impact",
+      "question": "To what extent has the company assessed the eutrophication potential of its products (freshwater/marine) and implemented measures to reduce or mitigate these impacts?",
+      "sector": "Fertilizers"
+    },
+    {
+      "id": "q_47",
+      "sdg_number": 12,
+      "sdg_description": "Ensure sustainable consumption and production patterns",
+      "sdg_target": "12.4 Ensure environmentally sound management of chemicals and waste across their lifecycle",
+      "sustainability_dimension": "Economic",
+      "kpi": "Percentage of product that is slow-releasing fertilizer",
+      "question": "To what extent has the company expanded its portfolio of bio-based slow-release fertilizers and developed a strategy to increase their market share?",
+      "sector": "Fertilizers"
+    },
+    {
+      "id": "q_48",
+      "sdg_number": 12,
+      "sdg_description": "Ensure sustainable consumption and production patterns",
+      "sdg_target": "12.4 Ensure environmentally sound management of chemicals and waste across their lifecycle",
+      "sustainability_dimension": "Social",
+      "kpi": "Implementation status of chemical management procedures to protect employees",
+      "question": "Has the company provided employees with regular training on safe handling, storage, and application of fertilizers and chemicals to ensure responsible production practices?",
+      "sector": "Fertilizers"
+    },
+    {
+      "id": "q_49",
+      "sdg_number": 13,
+      "sdg_description": "Climate Action",
+      "sdg_target": "13.2 Integrate climate change measures into national policies, strategies and planning",
+      "sustainability_dimension": "Circular",
+      "kpi": "Circular design to reduce lifecycle GHG emissions",
+      "question": "Has the company implemented circular practices (nutrient recovery, organic waste valorisation, etc.) that contribute to reducing lifecycle GHG emissions of its products?",
+      "sector": "Fertilizers"
+    },
+    {
+      "id": "q_50",
+      "sdg_number": 13,
+      "sdg_description": "Climate Action",
+      "sdg_target": "13.1 Strengthen resilience and adaptive capacity to climate-related hazards and natural disasters",
+      "sustainability_dimension": "Environmental",
+      "kpi": "Progress in reducing operational GHG emissions",
+      "question": "Has the company adopted concrete measures (e.g., energy efficiency upgrades, low-carbon transport, renewable energy use) to reduce direct and indirect GHG emissions in fertilizer production and distribution?",
+      "sector": "Fertilizers"
+    },
+    {
+      "id": "q_51",
+      "sdg_number": 13,
+      "sdg_description": "Climate Action",
+      "sdg_target": "13.2 Integrate climate change measures into national policies, strategies and planning",
+      "sustainability_dimension": "Economic",
+      "kpi": "Integration of Climate-Related Risks and Opportunities into Financial Strategy",
+      "question": "To what extent has your organisation integrated climate-related risks or opportunities into its financial planning, investment strategies or product development?",
+      "sector": "Fertilizers"
+    },
+    {
+      "id": "q_52",
+      "sdg_number": 13,
+      "sdg_description": "Climate Action",
+      "sdg_target": "13.3 Improve education, awareness-raising and human and institutional capacity on climate change mitigation, adaptation, impact reduction and early warning",
+      "sustainability_dimension": "Social",
+      "kpi": "% of employees and stakeholders trained on climate action",
+      "question": "Does the company provide training and awareness programs on climate change adaptation and mitigation for employees?",
+      "sector": "Fertilizers"
+    },
+    {
+      "id": "q_53",
+      "sdg_number": 14,
+      "sdg_description": "Life Below Water",
+      "sdg_target": "14.C Enhance the conservation and sustainable use of oceans and their resources by implementing international law",
+      "sustainability_dimension": "Circular",
+      "kpi": "Circular strategies focusing on reduced marine impacts",
+      "question": "To what extent are circular resource practices (reuse, recycling, nutrient recovery) aligned with strategies to reduce impacts on marine ecosystems?",
+      "sector": "Fertilizers"
+    },
+    {
+      "id": "q_54",
+      "sdg_number": 14,
+      "sdg_description": "Life Below Water",
+      "sdg_target": "14.1. By 2025, prevent and significantly reduce marine pollution of all kinds, in particular fromland-based activities, including marine debris and nutrient pollution",
+      "sustainability_dimension": "Environmental",
+      "kpi": "% reduction of pollutants before discharge",
+      "question": "Has the company adopted wastewater treatment or pollution control measures specifically designed to minimize nutrient leaching and hazardous discharges that could harm marine environments?",
+      "sector": "Fertilizers"
+    },
+    {
+      "id": "q_55",
+      "sdg_number": 14,
+      "sdg_description": "Life Below Water",
+      "sdg_target": "14.1. By 2025, prevent and significantly reduce marine pollution of all kinds, in particular fromland-based activities, including marine debris and nutrient pollution",
+      "sustainability_dimension": "Economic",
+      "kpi": "Share (%) of investment in organic biofertilizers that reduce marine hazards.",
+      "question": "To what extent has the company invested in eco-innovations (e.g., low-leaching fertilizers, improved nutrient formulations) that lower the risk of marine eutrophication while maintaining market competitiveness?",
+      "sector": "Fertilizers"
+    },
+    {
+      "id": "q_56",
+      "sdg_number": 14,
+      "sdg_description": "Life Below Water",
+      "sdg_target": "14.3. Minimize and address the impacts of ocean acidification, including throughenhanced scientific cooperation at all levels",
+      "sustainability_dimension": "Social",
+      "kpi": "Engagement with scientific projects or partnerships to reduce ocean acidification from fertilizer use.",
+      "question": "Has the company participated in scientific cooperation or community initiatives to raise awareness and build knowledge on the impacts of fertilizer production and use on ocean health?",
+      "sector": "Fertilizers"
+    },
+    {
+      "id": "q_57",
+      "sdg_number": 15,
+      "sdg_description": "Life on Land",
+      "sdg_target": "15.3 Combat desertification, restore degraded land and soil, including land affected by desertification, drought and floods, and strive to achieve a land degradation-neutral world",
+      "sustainability_dimension": "Circular",
+      "kpi": "Percentage of total fertiliser product volume composed of recycled or organic-based nutrients",
+      "question": "To what extent does the company participate in nutrient-loop systems by sourcing organic waste, manure, or digestate to replace virgin raw materials and reduce pressure on land ecosystems?",
+      "sector": "Fertilizers"
+    },
+    {
+      "id": "q_58",
+      "sdg_number": 15,
+      "sdg_description": "Life on Land",
+      "sdg_target": "15.3 Combat desertification, restore degraded land and soil, including land affected by desertification, drought and floods, and strive to achieve a land degradation-neutral world",
+      "sustainability_dimension": "Environmental",
+      "kpi": "Fertiliser impact on biodiversity, soil health, and land restoration",
+      "question": "Has the company implemented measures to restore or rehabilitate soils and ecosystems affected by mining activities linked to fertilizer raw material extraction?",
+      "sector": "Fertilizers"
+    },
+    {
+      "id": "q_59",
+      "sdg_number": 15,
+      "sdg_description": "Life on Land",
+      "sdg_target": "15A. Mobilize and significantly increase financial resources from all sources to conserve and sustainably use biodiversity and ecosystems.",
+      "sustainability_dimension": "Economic",
+      "kpi": "% of annual budget or investment allocated to biodiversity or sustainable land use initiatives",
+      "question": "To what extent has the company invested financial resources into biodiversity conservation, soil restoration, or sustainable land-use practices along its value chain?",
+      "sector": "Fertilizers"
+    },
+    {
+      "id": "q_60",
+      "sdg_number": 15,
+      "sdg_description": "Life on Land",
+      "sdg_target": "15.1 Ensure the conservation, restoration and sustainable use of terrestrial and inland freshwater ecosystems and their services, in particular forests, wetlands, mountains and drylands",
+      "sustainability_dimension": "Social",
+      "kpi": "Training in ecosystem protection",
+      "question": "To what extent has the company trained its staff and integrated soil/ecosystem protection principles into fertilizer design, production, and application guidelines?",
+      "sector": "Fertilizers"
+    },
+    {
+      "id": "q_61",
+      "sdg_number": 16,
+      "sdg_description": "Peace, Justice and Strong Institutions",
+      "sdg_target": "16.6 Develop effective, accountable and transparent institutions at all levels",
+      "sustainability_dimension": "Circular",
+      "kpi": "Transparency in fertiliser component materials",
+      "question": "To what extent does the company ensure transparency in its use of secondary or recycled materials, e.g., by providing clear product labeling, safety datasheets, or disclosure of recovery methods?",
+      "sector": "Fertilizers"
+    },
+    {
+      "id": "q_62",
+      "sdg_number": 16,
+      "sdg_description": "Peace, Justice and Strong Institutions",
+      "sdg_target": "16.6 Develop effective, accountable and transparent institutions at all levels",
+      "sustainability_dimension": "Environmental",
+      "kpi": "Environmental risk reports made public",
+      "question": "Has the company conducted and shared sustainability or risk assessments of its fertilizer production with relevant stakeholders?",
+      "sector": "Fertilizers"
+    },
+    {
+      "id": "q_63",
+      "sdg_number": 16,
+      "sdg_description": "Peace, Justice and Strong Institutions",
+      "sdg_target": "16.5 Substantially reduce corruption and bribery in all their forms",
+      "sustainability_dimension": "Economic",
+      "kpi": "Integrity checks in land and subsidy processes",
+      "question": "Has the company implemented policies and procedures to ensure fair, transparent, and corruption-free practices in sourcing, procurement, and use of subsidies?",
+      "sector": "Fertilizers"
+    },
+    {
+      "id": "q_64",
+      "sdg_number": 16,
+      "sdg_description": "Peace, Justice and Strong Institutions",
+      "sdg_target": "16.7 Ensure responsive, inclusive, participatory and representative decisionmaking at all levels",
+      "sustainability_dimension": "Social",
+      "kpi": "Farmer/stakeholder consultation systems",
+      "question": "Has the company established mechanisms that allow employees, suppliers, or smallholder partners to participate in sustainability-related decisions?",
+      "sector": "Fertilizers"
+    },
+    {
+      "id": "q_65",
+      "sdg_number": 17,
+      "sdg_description": "Partnerships for the Goals",
+      "sdg_target": "Target 17.3. Mobilize additional financial resources for developing countries from multiple sources",
+      "sustainability_dimension": "Circular",
+      "kpi": "Financial resources mobilized for circular fertilizer initiatives in developing countries",
+      "question": "To what extent does the company participate in or benefit from financial support schemes (e.g., EU programs, national subsidies, or partnerships) that enable circular fertilizer innovation or international collaboration?",
+      "sector": "Fertilizers"
+    },
+    {
+      "id": "q_66",
+      "sdg_number": 17,
+      "sdg_description": "Partnerships for the Goals",
+      "sdg_target": "Target 17.7. Promote the development, transfer, dissemination and diffusion of environmentally sound technologies to developing countries on favourable terms, including on concessional andpreferential terms, as mutually agreed",
+      "sustainability_dimension": "Environmental",
+      "kpi": "Biofertilizer initiatives in developing countries",
+      "question": "Has the company shared or exchanged knowledge, technologies, or practices with partners abroad (e.g., through EU projects, international collaborations, or supplier/customer networks) to promote environmentally sound fertilizer production?",
+      "sector": "Fertilizers"
+    },
+    {
+      "id": "q_67",
+      "sdg_number": 17,
+      "sdg_description": "Partnerships for the Goals",
+      "sdg_target": "Target 17.1. Strengthen domestic resource mobilization, including through international support to developing countries, to improve domestic capacity for tax and other revenue collection",
+      "sustainability_dimension": "Economic",
+      "kpi": "Growth in tax payments linked to sustainable biofertilizer production",
+      "question": "Has the adoption of sustainable practices improved the company’s financial stability (e.g., revenue growth, cost savings, eligibility for funding), strengthening its contribution to the domestic economy (e.g., taxes, reinvestment)?",
+      "sector": "Fertilizers"
+    },
+    {
+      "id": "q_68",
+      "sdg_number": 17,
+      "sdg_description": "Partnerships for the Goals",
+      "sdg_target": "Target 17.17 Encourage and promote effective public, public-private and civil society partnerships, building on the experience and resourcing strategies of partnerships",
+      "sustainability_dimension": "Social",
+      "kpi": "Number of active partnerships",
+      "question": "To what extent does the company engage in partnerships that support sustainable innovation, knowledge-sharing, or capacity building in the fertilizer sector?",
+      "sector": "Fertilizers"
     }
   ],
-  "sector": "Textiles"
+  "sector": "Fertilizers"
 }

@@ -44,7 +44,7 @@ export default function UploadExcelPage() {
 
   if (!context) return null;
 
-  const { file, setFile, setQuestions, setSector, reset } = context;
+  const { file, setFile, setQuestions, setSector, setSelectedSector, reset } = context;
 
   const handleFileChange = (f: File | null) => {
     setError(null);
@@ -94,31 +94,34 @@ export default function UploadExcelPage() {
       const fixed = ensureExcelMime(file);
       const form = new FormData();
       form.append("file", fixed, fixed.name);
-      form.append("excel_file", fixed, fixed.name);
 
-      const resp = await fetch("/api/upload-excel", { method: "POST", body: form });
+      const resp = await fetch("/api/upload-excel", {
+        method: "POST",
+        body: form,
+      });
       let payload: any = {};
       try {
         payload = await resp.json();
       } catch {
-        // Fallback to generic error if JSON parsing fails
+        throw new Error("Failed to parse server response.");
       }
 
       if (!resp.ok || payload?.success === false) {
         throw new Error(payload?.detail || payload?.error || `Upload failed (${resp.status})`);
       }
 
-      const qs: Question[] = Array.isArray(payload?.questions) ? payload.questions : [];
+      let qs: Question[] = Array.isArray(payload?.questions) ? payload.questions : [];
       if (qs.length === 0) {
-        throw new Error("No questions found in the uploaded Excel sheet.");
+        throw new Error(payload?.detail || "No questions found in the uploaded Excel file. Ensure the file contains sheets with valid headers: sdg_target, sustainability_dimension, kpi, question, scoring, source, notes, status, comment.");
       }
 
       setQuestions(qs);
       setSector(String(payload?.sector || "General"));
+      setSelectedSector(""); // Reset sector filter for FormPage
 
       setTimeout(() => router.push("/form"), 100);
     } catch (e) {
-      setError((e as Error).message || "Failed to upload Excel.");
+      setError((e as Error).message || "Failed to upload Excel. Please ensure the file is correctly formatted.");
     } finally {
       setIsBusy(false);
     }
@@ -200,7 +203,10 @@ export default function UploadExcelPage() {
         </button>
         <button
           onClick={handleExcelUpload}
-          className="px-4 py-2 bg-black text-white rounded-lg flex items-center gap-2 opacity-100"
+          disabled={isBusy}
+          className={`px-4 py-2 bg-black text-white rounded-lg flex items-center gap-2 ${
+            isBusy ? "opacity-50 cursor-not-allowed" : "opacity-100"
+          }`}
         >
           {isBusy && (
             <svg
