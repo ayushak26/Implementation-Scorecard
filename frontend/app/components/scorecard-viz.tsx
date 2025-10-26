@@ -450,31 +450,6 @@ export default function SdgGridRouletteVisualization({ rows, sector }: Props) {
           {/* Roulette Visualization */}
           <div className="xl:col-span-3 bg-white rounded-xl shadow-md p-6">
             <svg ref={ref} width="100%" height="700" />
-
-            {/* Visual Guide */}
-            <div className="mt-6 border-t pt-4">
-              <h3 className="font-semibold mb-3">Reading the Grid</h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                <div className="p-3 bg-gray-50 rounded-lg">
-                  <p className="font-medium text-gray-700 mb-1">🎯 Radial Segments</p>
-                  <p className="text-gray-600 text-xs">17 SDGs separated by bold black lines</p>
-                </div>
-                <div className="p-3 bg-gray-50 rounded-lg">
-                  <p className="font-medium text-gray-700 mb-1">📊 Vertical Divisions</p>
-                  <p className="text-gray-600 text-xs">4 dimensions per SDG (see center legend)</p>
-                </div>
-                <div className="p-3 bg-gray-50 rounded-lg">
-                  <p className="font-medium text-gray-700 mb-1">📈 Horizontal Rings</p>
-                  <p className="text-gray-600 text-xs">Score levels 0-5 from center outward</p>
-                </div>
-              </div>
-              <div className="mt-3 p-3 bg-blue-50 rounded-lg">
-                <p className="text-xs text-blue-800">
-                  <strong>Color Coding:</strong> Filled cells use the dimension color (not SDG color).
-                  Higher scores have darker shades. Empty cells are light gray.
-                </p>
-              </div>
-            </div>
           </div>
 
           {/* Info Panel */}
@@ -562,34 +537,6 @@ export default function SdgGridRouletteVisualization({ rows, sector }: Props) {
                     </div>
                   );
                 })}
-              </div>
-            </div>
-
-            {/* Grid Structure Info */}
-            <div className="bg-amber-50 rounded-xl p-5">
-              <h3 className="font-semibold mb-3 text-gray-800">Grid Structure</h3>
-              <div className="space-y-2 text-xs">
-                <div className="flex items-start gap-2">
-                  <span className="font-bold text-amber-700">Bold lines:</span>
-                  <span className="text-gray-700">Separate 17 SDGs</span>
-                </div>
-                <div className="flex items-start gap-2">
-                  <span className="font-bold text-amber-700">Thin lines:</span>
-                  <span className="text-gray-700">Separate 4 dimensions</span>
-                </div>
-                <div className="flex items-start gap-2">
-                  <span className="font-bold text-amber-700">Circles:</span>
-                  <span className="text-gray-700">Score levels (0-5)</span>
-                </div>
-                <div className="flex items-start gap-2">
-                  <span className="font-bold text-amber-700">Colors:</span>
-                  <span className="text-gray-700">Match dimension, not SDG</span>
-                </div>
-              </div>
-              <div className="mt-3 pt-3 border-t border-amber-200">
-                <p className="text-xs text-amber-800">
-                  <strong>Total Grid:</strong> 17 SDGs × 4 Dimensions × 6 Levels = 408 cells
-                </p>
               </div>
             </div>
           </div>
