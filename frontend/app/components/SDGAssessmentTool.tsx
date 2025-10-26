@@ -12,7 +12,7 @@ const Stepper = () => {
   const steps = [
     { key: "upload", label: "Upload", path: "/" },
     { key: "questionnaire", label: "Answer", path: "/form" },
-    { key: "results", label: "Results", path: "/results" },
+    { key: "results", label: "Results", path: "/visualization" },
   ];
   const idx = steps.findIndex((s) => s.path === pathname);
 
@@ -22,7 +22,7 @@ const Stepper = () => {
         const done = i < idx;
         const active = i === idx;
         return (
-          <div key={s.key} className="flex items-center relative">
+          <div key={s.key} className="flex items-center">
             <div
               className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold transition-all duration-300 ${
                 done
@@ -41,13 +41,6 @@ const Stepper = () => {
             >
               {s.label}
             </div>
-            {i < steps.length - 1 && (
-              <div
-                className={`absolute h-1 top-4 left-11 right-[-2.25rem] rounded-full ${
-                  i < idx ? "bg-secondary" : "bg-gray-200"
-                }`}
-              />
-            )}
           </div>
         );
       })}

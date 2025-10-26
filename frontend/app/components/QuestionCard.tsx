@@ -17,6 +17,8 @@ type Props = {
 };
 
 export default function QuestionCard({ question, selectedScore, onScoreSelect }: Props) {
+  const scores = [0, 1, 2, 3, 4, 5]; // Score range based on FormPage logic
+
   const handleScoreChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const score = Number(e.target.value); // Explicit type casting
     onScoreSelect(score);
@@ -27,31 +29,33 @@ export default function QuestionCard({ question, selectedScore, onScoreSelect }:
       <h3 className="text-lg font-semibold text-primary">
         SDG {question.sdg_number}: {question.sdg_description}
       </h3>
-      <p className="text-neutral text-sm mt-2">Target: {question.sdg_target}</p>
+      <p className="text-neutral text-sm mt-2">Target: {question.sdg_target || "N/A"}</p>
       <p className="text-neutral text-sm">Dimension: {question.sustainability_dimension}</p>
-      <p className="text-neutral text-sm">KPI: {question.kpi}</p>
+      <p className="text-neutral text-sm">KPI: {question.kpi || "N/A"}</p>
       <p className="text-gray-600 mt-4">{question.question}</p>
       <div className="mt-4">
-        <label htmlFor="score-slider" className="text-sm text-gray-600">
-          Score (0-5):
-        </label>
-        <input
-          id="score-slider"
-          type="range"
-          min="0"
-          max="5"
-          value={selectedScore ?? 0}
-          onChange={handleScoreChange}
-          className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-primary"
-          aria-label="Select a score from 0 to 5"
-          aria-valuemin={0}
-          aria-valuemax={5}
-          aria-valuenow={selectedScore ?? 0}
-        />
-        <div className="flex justify-between text-sm text-neutral mt-2">
-          <span>0</span>
-          <span>{selectedScore ?? 0}</span>
-          <span>5</span>
+        <label className="text-sm text-gray-600">Score (0-5):</label>
+        <div className="flex flex-wrap gap-3 mt-2">
+          {scores.map((score) => (
+            <label
+              key={score}
+              className={`flex items-center gap-2 px-3 py-2 border rounded-lg cursor-pointer transition-all duration-300
+                ${selectedScore === score ? "opacity-30" : "opacity-100"}
+                ${selectedScore === score ? "bg-primary/10" : "bg-white"}
+                hover:bg-gray-100`}
+            >
+              <input
+                type="radio"
+                name={`question-${question.sdg_number}-${question.sustainability_dimension}`}
+                value={score}
+                checked={selectedScore === score}
+                onChange={handleScoreChange}
+                className="h-4 w-4 text-primary focus:ring-primary"
+                aria-label={`Score ${score}`}
+              />
+              <span className="text-gray-700">{score}</span>
+            </label>
+          ))}
         </div>
       </div>
     </div>

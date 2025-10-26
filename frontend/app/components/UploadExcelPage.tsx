@@ -1,12 +1,21 @@
 // frontend/components/UploadExcelPage.tsx
-
 "use client";
 
 import React, { useContext, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { SDGContext } from "./SDGContext";
 
-/* ============================ Helpers ============================ */
+type Question = {
+  id: string;
+  sdg_number: number;
+  sdg_description: string;
+  sdg_target: string;
+  sustainability_dimension: string;
+  kpi: string;
+  question: string;
+  sector: string;
+};
+
 const isExcelFilename = (name?: string) =>
   !!name && /\.xlsx?$/i.test(name.trim());
 
@@ -25,7 +34,6 @@ const ensureExcelMime = (f: File): File => {
   return new File([f], f.name, { type: mime, lastModified: f.lastModified });
 };
 
-/* ============================ Component ============================ */
 export default function UploadExcelPage() {
   const context = useContext(SDGContext);
   const router = useRouter();
@@ -38,7 +46,6 @@ export default function UploadExcelPage() {
 
   const { file, setFile, setQuestions, setSector, reset } = context;
 
-  /* -------------------- Handlers -------------------- */
   const handleFileChange = (f: File | null) => {
     setError(null);
     if (f && !isExcelFilename(f.name)) {
@@ -67,8 +74,8 @@ export default function UploadExcelPage() {
   const handleClick = () => fileInputRef.current?.click();
 
   const handleExcelUpload = async () => {
-    if (!file) {
-      setError("Please select an Excel file first.");
+    if (!file || isBusy) {
+      setError(!file ? "Please select an Excel file first." : "Please wait for the current upload to complete.");
       return;
     }
     if (file.size > 10 * 1024 * 1024) {
@@ -84,11 +91,8 @@ export default function UploadExcelPage() {
     setError(null);
 
     try {
-      // Normalize MIME for strict backends
       const fixed = ensureExcelMime(file);
-
       const form = new FormData();
-      // Send under BOTH keys to satisfy different server expectations
       form.append("file", fixed, fixed.name);
       form.append("excel_file", fixed, fixed.name);
 
@@ -97,7 +101,7 @@ export default function UploadExcelPage() {
       try {
         payload = await resp.json();
       } catch {
-        // if server didn't return JSON, fallback to generic error below
+        // Fallback to generic error if JSON parsing fails
       }
 
       if (!resp.ok || payload?.success === false) {
@@ -112,16 +116,14 @@ export default function UploadExcelPage() {
       setQuestions(qs);
       setSector(String(payload?.sector || "General"));
 
-      // Allow state propagation before navigation
       setTimeout(() => router.push("/form"), 100);
-    } catch (e: any) {
-      setError(e?.message || "Failed to upload Excel.");
+    } catch (e) {
+      setError((e as Error).message || "Failed to upload Excel.");
     } finally {
       setIsBusy(false);
     }
   };
 
-  /* -------------------- UI -------------------- */
   return (
     <div className="bg-white rounded-2xl shadow-lg p-6 animate-fadeIn">
       <div className="text-center mb-6">
@@ -132,9 +134,9 @@ export default function UploadExcelPage() {
       </div>
 
       <div
-        className={`border-2 border-dashed rounded-xl p-8 text-center transition-all duration-300 ${
+        className={`border-2 border-dashed rounded-xl p-8 text-center ${
           dragActive ? "border-secondary bg-green-50" : file ? "border-secondary" : "border-gray-300"
-        } hover:border-primary hover:bg-gray-50 cursor-pointer`}
+        } cursor-pointer`}
         onDragEnter={handleDrag}
         onDragLeave={handleDrag}
         onDragOver={handleDrag}
@@ -152,7 +154,6 @@ export default function UploadExcelPage() {
           onChange={(e) => handleFileChange(e.target.files?.[0] ?? null)}
           className="hidden"
         />
-
         <div className="flex flex-col items-center">
           {file ? (
             <p className="text-lg font-semibold text-secondary">{file.name}</p>
@@ -192,18 +193,16 @@ export default function UploadExcelPage() {
       <div className="flex justify-end gap-4 mt-6">
         <button
           onClick={reset}
-          className="px-4 py-2 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-100 transition-all duration-300"
+          className="px-4 py-2 border border-gray-300 rounded-lg text-gray-600 opacity-100"
           type="button"
         >
           Reset
         </button>
         <button
           onClick={handleExcelUpload}
-          disabled={!file || isBusy}
-          className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-gray-800 disabled:opacity-60 transition-all duration-300 flex items-center gap-2"
-          type="button"
+          className="px-4 py-2 bg-black text-white rounded-lg flex items-center gap-2 opacity-100"
         >
-          {isBusy ? (
+          {isBusy && (
             <svg
               className="animate-spin h-5 w-5 text-white"
               xmlns="http://www.w3.org/2000/svg"
@@ -225,23 +224,10 @@ export default function UploadExcelPage() {
                 d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
               />
             </svg>
-          ) : (
-            "Upload & Proceed"
           )}
+          Upload & Proceed
         </button>
       </div>
     </div>
   );
 }
-
-/* ============================ Types ============================ */
-type Question = {
-  id: string;
-  sdg_number: number;
-  sdg_description: string;
-  sdg_target: string;
-  sustainability_dimension: string;
-  kpi: string;
-  question: string;
-  sector: string;
-};
