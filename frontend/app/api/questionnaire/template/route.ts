@@ -74,7 +74,16 @@ export async function GET(_req: NextRequest) {
     }
 
     // 2) Fetch meta from FastAPI and synthesize questions
-    const upstream = await fetch(`${FASTAPI_BASE}/api/questionnaire/template`, {
+    const { searchParams } = new URL(_req.url);
+    const sheetName = searchParams.get('sheet_name');
+    if (!sheetName) {
+      return NextResponse.json(
+        { success: false, error: "Sheet name is required" },
+        { status: 400 }
+      );
+    }
+
+    const upstream = await fetch(`${FASTAPI_BASE}/api/questionnaire/template?sheet_name=${encodeURIComponent(sheetName)}`, {
       method: "GET",
       headers: { "Cache-Control": "no-store" },
       // @ts-ignore
@@ -82,30 +91,17 @@ export async function GET(_req: NextRequest) {
       next: { revalidate: 0 },
     });
 
-    const text = await upstream.text();
-    let raw: any = {};
-    try { raw = text ? JSON.parse(text) : {}; } catch { raw = {}; }
+    const data = await upstream.json();
 
-    if (!upstream.ok && (raw?.error || raw?.detail)) {
+    if (!upstream.ok || data?.success === false) {
       return NextResponse.json(
-        { success: false, error: raw.error || raw.detail },
-        { status: upstream.status }
+        { success: false, error: data?.error || data?.detail || "Failed to fetch questions" },
+        { status: upstream.status || 500 }
       );
     }
 
-    const sdgs = Array.isArray(raw?.sdgs) ? raw.sdgs : DEFAULT_SDGS;
-    const dims = Array.isArray(raw?.dimensions) ? raw.dimensions : DEFAULT_DIMENSIONS;
-    const sector = typeof raw?.sector === "string" && raw.sector.trim() ? raw.sector : "General";
-
-    return NextResponse.json(
-      {
-        success: true,
-        questions: buildTemplateQuestions(sdgs, dims, sector),
-        sector,
-        meta: { sdgs, dimensions: dims, score_rubric: raw?.score_rubric || {} },
-      },
-      { status: 200 }
-    );
+    // Return the questions directly from the backend
+    return NextResponse.json(data, { status: 200 });
   } catch (e: any) {
     // 3) Hard fallback (never break UI)
     return NextResponse.json(

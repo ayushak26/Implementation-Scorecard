@@ -1,8 +1,10 @@
 # backend/routers/questionnaire.py
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Query
 from typing import List, Dict
 from pydantic import BaseModel
+from parsers.excel_parser import extract_questions_for_interactive
+import os
 
 router = APIRouter(prefix="/api", tags=["questionnaire"])
 
@@ -74,22 +76,18 @@ def get_score_description(score: int) -> str:
     return descriptions.get(score, "Unknown")
 
 @router.get("/questionnaire/template")
-async def get_template():
-    """Return a template structure for the questionnaire"""
-    return {
-        "sdgs": list(range(1, 18)),
-        "dimensions": [
-            "Economic Performance",
-            "Circular Performance",
-            "Environmental Performance",
-            "Social Performance"
-        ],
-        "score_rubric": {
-            0: "N/A",
-            1: "Issue identified, but no plans for further actions",
-            2: "Issue identified, starts planning further actions",
-            3: "Action plan with clear targets and deadlines in place",
-            4: "Action plan operational - some progress in established targets",
-            5: "Action plan operational - achieving the target set"
+async def get_template(sheet_name: str = Query(...)):
+    """Return a template structure for the questionnaire for the specified sheet"""
+    try:
+        # Use the same path as the upload endpoint
+        excel_file_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data", "last_uploaded_file.xlsx")
+        if not os.path.exists(excel_file_path):
+            raise HTTPException(404, "No Excel file has been uploaded yet")
+            
+        data = extract_questions_for_interactive(excel_file_path, sheet_name)
+        return {
+            "success": True,
+            **data  # This will include both questions and sector
         }
-    }
+    except Exception as e:
+        raise HTTPException(500, f"Failed to fetch questions for sheet '{sheet_name}': {str(e)}")

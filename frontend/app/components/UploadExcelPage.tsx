@@ -4,6 +4,7 @@
 import React, { useContext, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { SDGContext } from "./SDGContext";
+import { SheetContext } from "./SheetContext";
 
 type Question = {
   id: string;
@@ -36,6 +37,7 @@ const ensureExcelMime = (f: File): File => {
 
 export default function UploadExcelPage() {
   const context = useContext(SDGContext);
+  const { setSheetNames } = useContext(SheetContext);
   const router = useRouter();
   const [isBusy, setIsBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -108,15 +110,13 @@ export default function UploadExcelPage() {
         throw new Error(payload?.detail || payload?.error || `Upload failed (${resp.status})`);
       }
 
-      const qs: Question[] = Array.isArray(payload?.questions) ? payload.questions : [];
-      if (qs.length === 0) {
-        throw new Error("No questions found in the uploaded Excel sheet.");
+      const sheets: string[] = Array.isArray(payload?.sheets) ? payload.sheets : [];
+      if (sheets.length === 0) {
+        throw new Error("No sheets found in the uploaded Excel file.");
       }
 
-      setQuestions(qs);
-      setSector(String(payload?.sector || "General"));
-
-      setTimeout(() => router.push("/form"), 100);
+      setSheetNames(sheets); // Pass sheet names to SheetContext
+      router.push("/sheet-selection"); // Navigate to SheetSelectionPage
     } catch (e) {
       setError((e as Error).message || "Failed to upload Excel.");
     } finally {

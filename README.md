@@ -14,6 +14,7 @@ uvicorn app:app --reload
 ```bash
 cd frontend
 npm install
+npm install @tailwindcss/postcss
 npm run dev
 ```
 

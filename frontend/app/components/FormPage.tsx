@@ -1,9 +1,10 @@
 // frontend/components/FormPage.tsx
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import React, { useState, useEffect, useContext } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import QuestionCard from "./QuestionCard";
+import { SheetContext } from "./SheetContext";
 
 type Question = {
   id: string;
@@ -70,8 +71,11 @@ function normalizeToQuestions(payload: any): { questions: Question[]; sector: st
   return { questions: buildTemplateQuestions(), sector: "General" };
 }
 
-export default function FormPage() {
+
+function FormPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const { selectedSheet, setSelectedSheet } = useContext(SheetContext);
   const [isBusy, setIsBusy] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentIdx, setCurrentIdx] = useState(0);
@@ -79,12 +83,20 @@ export default function FormPage() {
   const [sector, setSector] = useState<string>("General");
   const [responses, setResponses] = useState<Record<string, number>>({});
 
+  // Determine the sheet name: from context, or from URL if not set
+  const sheetFromUrl = searchParams.get("sheet") || searchParams.get("sheet_name");
   useEffect(() => {
+    let sheet = selectedSheet;
+    if (!sheet && sheetFromUrl) {
+      sheet = sheetFromUrl;
+      setSelectedSheet(sheetFromUrl);
+    }
+    if (!sheet) return;
     async function fetchQuestionnaire() {
       setIsBusy(true);
       setError(null);
       try {
-        const response = await fetch("/api/questionnaire/template", {
+        const response = await fetch(`/api/questionnaire/template?sheet_name=${encodeURIComponent(sheet)}`, {
           method: "GET",
           headers: { "Cache-Control": "no-store" },
           cache: "no-store",
@@ -105,7 +117,8 @@ export default function FormPage() {
       }
     }
     fetchQuestionnaire();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedSheet, sheetFromUrl]);
 
   const totalQuestions = questions.length;
   const currentQuestion = totalQuestions > 0 ? questions[currentIdx] : null;
@@ -177,6 +190,11 @@ export default function FormPage() {
     questions.every((q) => Number.isFinite(responses[q.id]) && responses[q.id] >= 0 && responses[q.id] <= 5);
   const progress = totalQuestions > 0 ? Math.round(((currentIdx + 1) / totalQuestions) * 100) : 0;
 
+  const goBackToSheetSelection = () => {
+    router.push("/sheet-selection");
+  };
+
+
   return (
     <div className="bg-white rounded-2xl shadow-lg p-6 animate-fadeIn">
       <div className="flex justify-between items-center mb-6">
@@ -216,11 +234,13 @@ export default function FormPage() {
 
           <div className="animate-slideIn">
             {currentQuestion ? (
-              <QuestionCard
-                question={currentQuestion}
-                selectedScore={selectedScore}
-                onScoreSelect={handleScoreSelect}
-              />
+              <div className="space-y-4">
+                <QuestionCard
+                  question={currentQuestion}
+                  selectedScore={selectedScore}
+                  onScoreSelect={handleScoreSelect}
+                />
+              </div>
             ) : (
               <div className="text-center text-neutral">
                 No questions available. Please upload a valid Excel file or try again.
@@ -243,10 +263,9 @@ export default function FormPage() {
               <button
                 onClick={goNext}
                 disabled={isLastQuestion || !currentQuestionAnswered || isBusy}
-                className={`px-4 py-2 bg-primary text-white rounded-lg transition-opacity
+                className={`px-4 py-2 bg-black text-white rounded-lg transition-opacity hover:bg-gray-800
                   ${isLastQuestion || !currentQuestionAnswered || isBusy 
-                    ? "opacity-50 cursor-not-allowed" 
-                    : "hover:bg-primary/90"}`}
+                    ? "opacity-50 cursor-not-allowed" : "hover:opacity-90"}`}
               >
                 Next
               </button>
@@ -256,10 +275,10 @@ export default function FormPage() {
                 <button
                   onClick={handleSubmitAnswers}
                   disabled={!allAnswered || isBusy}
-                  className={`px-4 py-2 bg-primary text-white rounded-lg flex items-center gap-2 transition-opacity
+                  className={`px-4 py-2 bg-black text-white rounded-lg flex items-center gap-2 transition-opacity
                     ${!allAnswered || isBusy 
                       ? "opacity-50 cursor-not-allowed" 
-                      : "hover:bg-primary/90"}`}
+                      : "hover:bg-gray-800"}`}
                 >
                   {isBusy && (
                     <svg
@@ -283,6 +302,17 @@ export default function FormPage() {
           </div>
         </>
       )}
+
+      <div className="mt-6">
+        <button
+          onClick={goBackToSheetSelection}
+          className="px-4 py-2 bg-gray-300 text-black rounded-lg"
+        >
+          Back to Sheet Selection
+        </button>
+      </div>
     </div>
   );
 }
+
+export default FormPage;

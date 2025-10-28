@@ -4,6 +4,8 @@
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import SdgGridRouletteVisualization from "./scorecard-viz";
+import { useContext } from "react";
+import { SheetContext } from "./SheetContext";
 
 type Question = {
   id: string;
@@ -25,49 +27,85 @@ export default function VisualizationPage() {
   const [error, setError] = useState<string | null>(null);
   const [sector, setSector] = useState<string>("General");
   const [rows, setRows] = useState<Question[]>([]);
+  const { sheetNames, selectedSheet: contextSelectedSheet } = useContext(SheetContext);
+  const [activeSheet, setActiveSheet] = useState(contextSelectedSheet || sheetNames[0] || "");
+
+  const normalizeScorecard = (payload: unknown): { sector: string; rows: Question[] } => {
+    if (!payload || typeof payload !== "object") {
+      return { sector: "General", rows: [] };
+    }
+
+    const root =
+      "data" in (payload as any) && typeof (payload as any).data === "object"
+        ? (payload as any).data
+        : (payload as any);
+
+    const entries = Object.entries(root as Record<string, any>);
+    if (!entries.length) {
+      return { sector: "General", rows: [] };
+    }
+
+    const [sectorName, sectorData] = entries[0];
+    const sectorRows = Array.isArray(sectorData?.rows) ? sectorData.rows : [];
+    return { sector: sectorName, rows: sectorRows };
+  };
 
   useEffect(() => {
+    if (!activeSheet && sheetNames.length) {
+      setActiveSheet(sheetNames[0]);
+      return;
+    }
+    if (contextSelectedSheet && contextSelectedSheet !== activeSheet) {
+      setActiveSheet(contextSelectedSheet);
+    }
+  }, [sheetNames, activeSheet, contextSelectedSheet]);
+
+  useEffect(() => {
+    let isMounted = true;
+
     const loadVisualizationData = async () => {
       setIsBusy(true);
       setError(null);
       try {
-        // Primary: sessionStorage
-        const raw = typeof window !== "undefined" ? sessionStorage.getItem("scorecard") : null;
-
-        let data: SectorData | null = null;
-        if (raw) {
-          try {
-            data = JSON.parse(raw) as SectorData;
-          } catch {
-            data = null;
+        // Prefer freshly generated data that may be in sessionStorage.
+        if (typeof window !== "undefined") {
+          const storedData = window.sessionStorage.getItem("scorecard");
+          if (storedData) {
+            const normalized = normalizeScorecard(JSON.parse(storedData));
+            if (!isMounted) return;
+            setSector(normalized.sector);
+            setRows(normalized.rows);
+            return;
           }
         }
 
-        // Fallback: try temp API (optional)
-        if (!data) {
-          const r = await fetch("/api/result/latest", { cache: "no-store" });
-          if (r.ok) {
-            data = (await r.json()) as SectorData;
-          }
+  const query = activeSheet ? `?sheet=${encodeURIComponent(activeSheet)}` : "";
+        const response = await fetch(`/api/result/latest${query}`, { cache: "no-store" });
+        if (!response.ok) {
+          throw new Error("Failed to load visualization data.");
         }
-
-        if (!data || typeof data !== "object") {
-          throw new Error("No visualization data available. Please submit the questionnaire again.");
-        }
-
-        const firstSector = Object.keys(data)[0] || "General";
-        setSector(firstSector);
-        setRows(data[firstSector]?.rows || []);
-      } catch (e: any) {
-        setError(e?.message || "Failed to load visualization data.");
+        const data = await response.json();
+        const normalized = normalizeScorecard(data);
+        if (!isMounted) return;
+        setSector(normalized.sector);
+        setRows(normalized.rows);
+      } catch (e) {
+        if (!isMounted) return;
+        setError((e as Error).message || "Failed to load visualization data.");
         setRows([]);
-        setSector("General");
       } finally {
-        setIsBusy(false);
+        if (isMounted) {
+          setIsBusy(false);
+        }
       }
     };
+
     loadVisualizationData();
-  }, []);
+
+    return () => {
+      isMounted = false;
+    };
+  }, [activeSheet, sheetNames]);
 
   const handleReset = () => {
     try {

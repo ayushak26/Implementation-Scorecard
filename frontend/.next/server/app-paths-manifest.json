@@ -1,5 +1,6 @@
 {
   "/page": "app/page.js",
-  "/form/page": "app/form/page.js",
+  "/questionnaire/page": "app/questionnaire/page.js",
+  "/api/questionnaire/calculate/route": "app/api/questionnaire/calculate/route.js",
   "/visualization/page": "app/visualization/page.js"
 }

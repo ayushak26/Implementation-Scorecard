@@ -424,6 +424,17 @@ def parse_excel_questionnaire(file_path: str, sheet_names: Optional[List[str]] =
     return parser.parse_all_data()
 
 
+def extract_sheet_names(file_path: str) -> List[str]:
+    """
+    Extracts and returns the names of all sheets in the given Excel file.
+    """
+    try:
+        workbook = openpyxl.load_workbook(file_path, data_only=True)
+        return workbook.sheetnames
+    except Exception as e:
+        logger.exception(f"Failed to extract sheet names: {e}")
+        raise ValueError("Unable to extract sheet names from the Excel file.")
+
 # Add this NEW function at the end of backend/parsers/excel_parser.py
 
 def extract_questions_for_interactive(file_path: str, sheet_name: str = "Textile_revised") -> Dict[str, Any]:

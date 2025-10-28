@@ -51,3 +51,18 @@ export const api = axios.create({
 //         return Promise.reject(error);
 //     }
 // );
+
+export const fetchSheetNames = async (file: File): Promise<string[]> => {
+  const form = new FormData();
+  form.append("file", file);
+
+  const response = await api.post("/upload-excel", form, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+
+  if (response.status !== 200 || !response.data?.sheets) {
+    throw new Error("Failed to fetch sheet names.");
+  }
+
+  return response.data.sheets;
+};

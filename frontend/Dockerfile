@@ -12,6 +12,7 @@ ENV PATH=/app/node_modules/.bin:$PATH
 # Copy application code
 COPY . .
 
+
 # Expose port
 EXPOSE 3000
 

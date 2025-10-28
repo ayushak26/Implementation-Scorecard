@@ -11,10 +11,15 @@
       "static/css/app/layout.css",
       "static/chunks/app/layout.js"
     ],
-    "/form/page": [
+    "/sheet-selection/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/form/page.js"
+      "static/chunks/app/sheet-selection/page.js"
+    ],
+    "/questionnaire/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/questionnaire/page.js"
     ],
     "/visualization/page": [
       "static/chunks/webpack.js",

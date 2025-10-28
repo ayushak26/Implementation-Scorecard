@@ -23,3 +23,13 @@ class SectorRows(BaseModel):
 class UploadExcelResponse(BaseModel):
     success: bool = True
     data: Dict[str, SectorRows]
+
+class MultiSheetScorecard(BaseModel):
+    sheets: Dict[str, SectorRows]  # Each sheet name maps to its respective rows
+
+    def add_sheet(self, sheet_name: str, rows: List[QuestionnaireRow]):
+        if sheet_name not in self.sheets:
+            self.sheets[sheet_name] = SectorRows(rows=rows)
+
+    def get_sheet(self, sheet_name: str) -> Optional[SectorRows]:
+        return self.sheets.get(sheet_name)
