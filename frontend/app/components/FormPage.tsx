@@ -336,7 +336,7 @@ export default function FormPage() {
                 onClick={handleSubmit}
                 disabled={!allComplete || isBusy}
                 className={`
-                  px-4 py-2 bg-primary text-white rounded-lg font-medium
+                  px-4 py-2 bg-black text-white rounded-lg font-medium
                   transition-all duration-200 flex items-center gap-2
                   ${
                     !allComplete || isBusy
