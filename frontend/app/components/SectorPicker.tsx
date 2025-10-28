@@ -1,77 +1,69 @@
+// app/components/SectorPicker.tsx
 "use client";
 
 import React, { useMemo, useState, useContext } from "react";
+import { useRouter } from "next/navigation"; // Import router
 import { SDGContext } from "./SDGContext";
 
 const SECTOR_ORDER = ["Textiles", "Fertilizers", "Packaging"] as const;
 const norm = (s: string) => (s || "").trim().toLowerCase();
 
-function canonicalSector(s?: string): string {
+const canonicalSector = (s?: string): string => {
   const m: Record<string, string> = {
-    "textile": "Textiles",
-    "textiles": "Textiles",
-    "fertilizer": "Fertilizers",
-    "fertilizers": "Fertilizers",
-    "packaging": "Packaging",
+    textile: "Textiles",
+    textiles: "Textiles",
+    fertilizer: "Fertilizers",
+    fertilizers: "Fertilizers",
+    packaging: "Packaging",
   };
   const k = norm(s || "");
   return m[k] || (s?.trim() || "General");
-}
+};
 
 export default function SectorPicker() {
+  const router = useRouter(); // Initialize router
   const ctx = useContext(SDGContext);
   if (!ctx) return null;
 
-  const { questions, setSelectedSector } = ctx;
+  const { setSelectedSector } = ctx;
 
-  // Build chips: All Sectors + discovered + enforce canonical order up front
-  const sectors = useMemo(() => {
-    const discovered = new Set<string>();
-    questions.forEach((q) => q.sector && discovered.add(canonicalSector(q.sector)));
-    const ordered = Array.from(new Set<string>([...SECTOR_ORDER, ...Array.from(discovered)]));
-    return ordered;
-  }, [questions]);
+  // Only show the three canonical sectors
+  const sectors = SECTOR_ORDER;
 
-  // Local selection (max 2)
-  const [picked, setPicked] = useState<string[]>([]);
+  // Single selected sector
+  const [picked, setPicked] = useState<string>("");
 
   const toggle = (sec: string) => {
     const s = canonicalSector(sec);
-    setPicked((prev) => {
-      let next = prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s];
-      if (next.length > 2) next = next.slice(-2); // keep most recent two
-      return next;
-    });
+    setPicked((prev) => (prev === s ? "" : s));
   };
 
   const start = () => {
-    // Store selection into context.selectedSector for compatibility with FormPage:
-    // - If none picked => "All Sectors" (your FormPage already handles it)
-    // - If one picked  => that sector
-    // - If two picked  => "Multiple" (FormPage uses internal array state if you extended it)
-    if (picked.length === 0) setSelectedSector("All Sectors");
-    else if (picked.length === 1) setSelectedSector(picked[0]);
-    else setSelectedSector("Multiple");
+    if (!picked) return;
+    setSelectedSector(picked);
+    router.push("/form"); // Navigate to the form page
   };
 
-  const canStart = picked.length === 0 || picked.length === 1 || picked.length === 2;
+  const canStart = !!picked;
 
   return (
-    <div className="bg-white rounded-2xl shadow-lg p-6 animate-fadeIn">
-      <h2 className="text-2xl font-bold text-primary mb-2">Choose Sector(s)</h2>
-      <p className="text-neutral text-sm mb-4">
-        Pick up to two sectors. Leave empty to cover all sectors.
+    <div className="bg-white rounded-2xl shadow-lg p-6 animate-fadeIn max-w-md mx-auto">
+      <h2 className="text-2xl font-bold text-primary mb-2">Choose Sector</h2>
+      <p className="text-neutral text-sm mb-6">
+        Select <strong>one</strong> sector to begin the questionnaire.
       </p>
 
-      <div className="flex flex-wrap gap-2 mb-6">
+      <div className="flex flex-wrap gap-3 mb-8 justify-center">
         {sectors.map((sec) => {
-          const isActive = picked.includes(sec);
+          const isActive = picked === sec;
           return (
             <button
               key={sec}
               onClick={() => toggle(sec)}
-              className={`px-4 py-2 rounded-lg transition-all duration-200 ${
-                isActive ? "bg-primary text-white" : "bg-gray-200 text-gray-600 hover:bg-gray-300"
+              className={`px-5 py-3 rounded-xl font-medium text-sm transition-all duration-200 shadow-sm ${
+                isActive
+                  ? "bg-primary text-white ring-2 ring-primary ring-offset-2"
+                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
               }`}
             >
               {sec}
@@ -80,33 +72,25 @@ export default function SectorPicker() {
         })}
       </div>
 
-      <div className="flex items-center gap-3">
+      <div className="flex flex-col items-center gap-4">
         <button
           onClick={start}
           disabled={!canStart}
-          className={`px-5 py-2 rounded-lg text-white transition-opacity ${
-            canStart ? "bg-primary hover:bg-primary/90" : "bg-gray-400 cursor-not-allowed"
+          className={`w-full max-w-xs px-6 py-3 rounded-xl text-white font-semibold transition-all ${
+            canStart
+              ? "bg-primary hover:bg-primary/90 shadow-lg"
+              : "bg-gray-400 cursor-not-allowed"
           }`}
         >
           Start Questionnaire
         </button>
 
-        <button
-          onClick={() => {
-            setPicked([]);
-            setSelectedSector("All Sectors");
-          }}
-          className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50"
-        >
-          Use All Sectors
-        </button>
+        {picked && (
+          <p className="text-sm text-neutral">
+            Selected: <strong className="text-primary">{picked}</strong>
+          </p>
+        )}
       </div>
-
-      {picked.length > 0 && (
-        <p className="text-xs text-neutral mt-3">
-          Selected: {picked.join(" + ")}
-        </p>
-      )}
     </div>
   );
 }

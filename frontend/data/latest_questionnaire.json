@@ -1359,7 +1359,687 @@
       "kpi": "Number of active partnerships",
       "question": "To what extent does the company engage in partnerships that support sustainable innovation, knowledge-sharing, or capacity building in the fertilizer sector?",
       "sector": "Fertilizers"
+    },
+    {
+      "id": "q_1",
+      "sdg_number": 1,
+      "sdg_description": "No Poverty",
+      "sdg_target": "1.5 – Strengthen resilience of vulnerable groups",
+      "sustainability_dimension": "Circular",
+      "kpi": "Integration of reusable/recyclable packaging solutions that generate local employment",
+      "question": "To what extent has the company integrated reusable or recyclable packaging models that also create employment or income opportunities in local communities (e.g., collection, sorting, remanufacturing)?",
+      "sector": "Packaging"
+    },
+    {
+      "id": "q_2",
+      "sdg_number": 1,
+      "sdg_description": "No Poverty",
+      "sdg_target": "1.5 – Strengthen resilience for vulnerable workers",
+      "sustainability_dimension": "Environmental",
+      "kpi": "Climate resilience and occupational safety in facilities",
+      "question": "To what extent has the company implemented climate-resilience measures (e.g., ventilation, cooling, flood protection) and integrated them into its occupational health and safety procedures?",
+      "sector": "Packaging"
+    },
+    {
+      "id": "q_3",
+      "sdg_number": 1,
+      "sdg_description": "No Poverty",
+      "sdg_target": "1.2 – Reduce poverty through fair wages and inclusive employment",
+      "sustainability_dimension": "Economic",
+      "kpi": "Fair wages and inclusive hiring practices",
+      "question": "To what extent has the company ensured that employees receive fair and decent wages and implemented inclusive recruitment practices for individuals from economically disadvantaged backgrounds?",
+      "sector": "Packaging"
+    },
+    {
+      "id": "q_4",
+      "sdg_number": 1,
+      "sdg_description": "No Poverty",
+      "sdg_target": "1.4 – Ensure access to financial services and social benefits",
+      "sustainability_dimension": "Social",
+      "kpi": "Employee access to financial literacy or savings programs",
+      "question": "Does the company provide or facilitate access to financial literacy training, savings schemes, or similar programs that strengthen workers’ financial security?",
+      "sector": "Packaging"
+    },
+    {
+      "id": "q_5",
+      "sdg_number": 2,
+      "sdg_description": "Zero Hunger",
+      "sdg_target": "2.4 – Ensure sustainable food production systems and implement resilient agricultural practices",
+      "sustainability_dimension": "Circular",
+      "kpi": "Share of bio-based packaging produced from agricultural or food-processing by-products",
+      "question": "To what extent does the company use renewable and secondary bio-based raw materials, such as agricultural residues, forestry by-products, algae, or other non-food biomass, in its packaging products to reduce competition with food resources and support sustainable material cycles?",
+      "sector": "Packaging"
+    },
+    {
+      "id": "q_6",
+      "sdg_number": 2,
+      "sdg_description": "Zero Hunger",
+      "sdg_target": "2.5 – Maintain genetic diversity of cultivated plants and farm systems",
+      "sustainability_dimension": "Environmental",
+      "kpi": "Biodiversity-friendly sourcing of bio-based feedstocks",
+      "question": "To what extent does the company ensure that its bio-based materials originate from supply chains verified for biodiversity protection and sustainable land-use practices (e.g., certified regenerative, organic, or biodiversity-friendly sources)?",
+      "sector": "Packaging"
+    },
+    {
+      "id": "q_7",
+      "sdg_number": 2,
+      "sdg_description": "Zero Hunger",
+      "sdg_target": "2.3 – Double the productivity and incomes of small-scale food producers",
+      "sustainability_dimension": "Economic",
+      "kpi": "Procurement share from small-scale bio-feedstock producers",
+      "question": "To what extent has the company increased procurement from small-scale or cooperative producers of bio-feedstock materials for its packaging, thereby enhancing their income and market access?",
+      "sector": "Packaging"
+    },
+    {
+      "id": "q_8",
+      "sdg_number": 2,
+      "sdg_description": "Zero Hunger",
+      "sdg_target": "2.1 – End hunger and ensure access to safe, nutritious food for all",
+      "sustainability_dimension": "Social",
+      "kpi": "Employee access to affordable and nutritious meals",
+      "question": "To what extent does the company promote employee health and food security through initiatives such as providing nutritious meals, food vouchers, or awareness programs on sustainable nutrition?",
+      "sector": "Packaging"
+    },
+    {
+      "id": "q_9",
+      "sdg_number": 3,
+      "sdg_description": "Good Health & Well-being",
+      "sdg_target": "3.9 – Reduce exposure to hazardous materials and ensure safe reuse",
+      "sustainability_dimension": "Circular",
+      "kpi": "Health and safety assurance for reused or recycled packaging materials",
+      "question": "To what extent does the company ensure that reused or recycled materials incorporated in packaging are tested or certified as safe for human health and environmental use (e.g., food contact, absence of hazardous residues)?",
+      "sector": "Packaging"
+    },
+    {
+      "id": "q_10",
+      "sdg_number": 3,
+      "sdg_description": "Good Health & Well-being",
+      "sdg_target": "3.9 – Reduce exposure to harmful substances",
+      "sustainability_dimension": "Environmental",
+      "kpi": "Phase-out of hazardous substances in production",
+      "question": "To what extent has the company identified and replaced potentially hazardous substances (e.g., chemical additives, inks, PFAS, etc.) with safer alternatives?",
+      "sector": "Packaging"
+    },
+    {
+      "id": "q_11",
+      "sdg_number": 3,
+      "sdg_description": "Good Health & Well-being",
+      "sdg_target": "3.C – Strengthen health workforce capacity",
+      "sustainability_dimension": "Economic",
+      "kpi": "Investment in employee health and safety programs",
+      "question": "To what extent does the company allocate resources for regular occupational health check-ups and workplace safety programs aimed at reducing absenteeism and improving productivity?",
+      "sector": "Packaging"
+    },
+    {
+      "id": "q_12",
+      "sdg_number": 3,
+      "sdg_description": "Good Health & Well-being",
+      "sdg_target": "3.4 – Promote mental health and well-being",
+      "sustainability_dimension": "Social",
+      "kpi": "Access to mental health support and flexible work arrangements",
+      "question": "To what extent does the company provide employees with access to mental health support services and implement flexible working arrangements to promote well-being and work-life balance?",
+      "sector": "Packaging"
+    },
+    {
+      "id": "q_13",
+      "sdg_number": 4,
+      "sdg_description": "Ensure inclusive and equitable quality education and promote lifelong learning opportunities for all",
+      "sdg_target": "4.6 – Literacy and skills (incl. adult learning)",
+      "sustainability_dimension": "Circular",
+      "kpi": "Share of employees trained on circular packaging practices (design for recyclability/reuse, safe use of recycled content, take-back operations)",
+      "question": "To what extent does the company provide structured training for employees on circular packaging practices (e.g., design for reuse/recyclability, operating reuse/return systems, etc.)?",
+      "sector": "Packaging"
+    },
+    {
+      "id": "q_14",
+      "sdg_number": 4,
+      "sdg_description": "Ensure inclusive and equitable quality education and promote lifelong learning opportunities for all",
+      "sdg_target": "4.7 – Education for sustainable development",
+      "sustainability_dimension": "Environmental",
+      "kpi": "Integration of sustainability content in onboarding and periodic training (resources, emissions, chemicals, waste)",
+      "question": "Has the company integrated environmental and sustainability education into employee onboarding and regular training (e.g., resource efficiency, safe chemicals, waste minimization)?",
+      "sector": "Packaging"
+    },
+    {
+      "id": "q_15",
+      "sdg_number": 4,
+      "sdg_description": "Ensure inclusive and equitable quality education and promote lifelong learning opportunities for all",
+      "sdg_target": "4.4 – Skills for decent work",
+      "sustainability_dimension": "Economic",
+      "kpi": "Investment and participation in job-relevant upskilling/certification (QA, food-contact compliance, eco-design, LCA, digital skills)",
+      "question": "To what extent does the company invest in employee upskilling that enhance operational performance and competitiveness (e.g. eco-design, LCA, digital/automation skills)?",
+      "sector": "Packaging"
+    },
+    {
+      "id": "q_16",
+      "sdg_number": 4,
+      "sdg_description": "Ensure inclusive and equitable quality education and promote lifelong learning opportunities for all",
+      "sdg_target": "4.5 – Equal access to education and training",
+      "sustainability_dimension": "Social",
+      "kpi": "Equitable access to training for underrepresented groups; targeted programs to close gaps",
+      "question": "Does the company ensure equitable access to training and career development for underrepresented or marginalized employees (with targeted programs to address participation gaps)?",
+      "sector": "Packaging"
+    },
+    {
+      "id": "q_17",
+      "sdg_number": 5,
+      "sdg_description": "Gender Equality",
+      "sdg_target": "5.5 – Ensure women’s full and effective participation and equal opportunities",
+      "sustainability_dimension": "Circular",
+      "kpi": "Representation of women in circular design and innovation initiatives (e.g., eco-design, recyclability, material substitution)",
+      "question": "To what extent are women actively involved in the company’s circular packaging activities, such as eco-design, recyclability improvement, material recovery, or sustainability innovation projects?",
+      "sector": "Packaging"
+    },
+    {
+      "id": "q_18",
+      "sdg_number": 5,
+      "sdg_description": "Gender Equality",
+      "sdg_target": "5.5 – Ensure equal workplace safety",
+      "sustainability_dimension": "Environmental",
+      "kpi": "Gender-inclusive health and safety practices in production and chemical handling",
+      "question": "To what extent does the company integrate gender perspectives into its environmental management practices (involving women in environmental monitoring, resource efficiency initiatives, or sustainability committees)?",
+      "sector": "Packaging"
+    },
+    {
+      "id": "q_19",
+      "sdg_number": 5,
+      "sdg_description": "Gender Equality",
+      "sdg_target": "5.4 – Recognize and value unpaid care and domestic work",
+      "sustainability_dimension": "Economic",
+      "kpi": "Work-life balance and family support measures (paid leave, childcare, flexibility)",
+      "question": "To what extent does the company provide and monitor access to paid family leave, childcare support, and flexible work arrangements for employees with care responsibilities?",
+      "sector": "Packaging"
+    },
+    {
+      "id": "q_20",
+      "sdg_number": 5,
+      "sdg_description": "Gender Equality",
+      "sdg_target": "5.2 – Eliminate violence and harassment in the workplace",
+      "sustainability_dimension": "Social",
+      "kpi": "Anti-harassment and non-discrimination policies with reporting mechanisms",
+      "question": "To what extent has the company implemented and communicated anti-harassment and non-discrimination policies supported by confidential reporting and follow-up mechanisms?",
+      "sector": "Packaging"
+    },
+    {
+      "id": "q_21",
+      "sdg_number": 6,
+      "sdg_description": "Clean Water & Sanitation",
+      "sdg_target": "6.4 – Substantially increase water-use efficiency across all sectors",
+      "sustainability_dimension": "Circular",
+      "kpi": "Water reuse and recycling within operations",
+      "question": "To what extent has the company implemented closed-loop or water-recycling systems that allow treated process water to be reused in bio-based packaging production or other industrial operations?",
+      "sector": "Packaging"
+    },
+    {
+      "id": "q_22",
+      "sdg_number": 6,
+      "sdg_description": "Clean Water & Sanitation",
+      "sdg_target": "6.3 – Improve water quality by reducing pollution",
+      "sustainability_dimension": "Environmental",
+      "kpi": "Reduction of wastewater contamination from production",
+      "question": "Has the company adopted cleaner production and wastewater treatment processes to minimize the release of chemicals, inks, or coatings into water bodies and ensure compliance with discharge standards?",
+      "sector": "Packaging"
+    },
+    {
+      "id": "q_23",
+      "sdg_number": 6,
+      "sdg_description": "Clean Water & Sanitation",
+      "sdg_target": "6.4 – Increase water-use efficiency",
+      "sustainability_dimension": "Economic",
+      "kpi": "Cost savings through water-efficiency optimization",
+      "question": "To what extent has the company integrated water-efficiency or reuse measures as part of its cost-optimization and resource management strategy?",
+      "sector": "Packaging"
+    },
+    {
+      "id": "q_24",
+      "sdg_number": 6,
+      "sdg_description": "Clean Water & Sanitation",
+      "sdg_target": "6.2 – Ensure access to safe drinking water and sanitation for all",
+      "sustainability_dimension": "Social",
+      "kpi": "Workers’ access to safe water, sanitation, and hygiene (WASH)",
+      "question": "Has the company ensured that all employees have access to safe drinking water, sanitation, and hygiene facilities (including gender-appropriate and menstrual hygiene provisions)?",
+      "sector": "Packaging"
+    },
+    {
+      "id": "q_25",
+      "sdg_number": 7,
+      "sdg_description": "Affordable and Clean Energy",
+      "sdg_target": "7.3 – Improve energy efficiency",
+      "sustainability_dimension": "Circular",
+      "kpi": "Energy recovery and reuse within operations",
+      "question": "To what extent has the company implemented systems to recover and reuse waste heat or other forms of process energy within packaging production, thereby reducing overall energy demand?",
+      "sector": "Packaging"
+    },
+    {
+      "id": "q_26",
+      "sdg_number": 7,
+      "sdg_description": "Affordable and Clean Energy",
+      "sdg_target": "7.2 – Increase the share of renewable energy",
+      "sustainability_dimension": "Environmental",
+      "kpi": "Renewable energy sourcing and strategy",
+      "question": "Has the company developed and implemented a strategy to replace fossil-based energy with renewable sources (e.g., solar, wind, biomass, or certified green electricity) in its operations?",
+      "sector": "Packaging"
+    },
+    {
+      "id": "q_27",
+      "sdg_number": 7,
+      "sdg_description": "Affordable and Clean Energy",
+      "sdg_target": "7.3 – Improve energy efficiency",
+      "sustainability_dimension": "Economic",
+      "kpi": "Integration of energy efficiency into cost and resource management strategy",
+      "question": "To what extent has the company integrated energy-efficiency measures (e.g., equipment upgrades, process optimization) into its overall business strategy to enhance competitiveness and reduce operational costs?",
+      "sector": "Packaging"
+    },
+    {
+      "id": "q_28",
+      "sdg_number": 7,
+      "sdg_description": "Affordable and Clean Energy",
+      "sdg_target": "7.A – Enhance access to clean energy knowledge",
+      "sustainability_dimension": "Social",
+      "kpi": "Employee training and awareness on energy efficiency",
+      "question": "Does the company provide regular employee training or awareness programs on energy-saving practices and the efficient use of clean or renewable energy technologies?",
+      "sector": "Packaging"
+    },
+    {
+      "id": "q_29",
+      "sdg_number": 8,
+      "sdg_description": "Decent Work & Economic Growth",
+      "sdg_target": "8.3 – Promote circular and inclusive economic models",
+      "sustainability_dimension": "Circular",
+      "kpi": "Integration of reusable, refillable, or take-back systems",
+      "question": "To what extent has the company developed or implemented circular business models such as reusable, refillable, or take-bac systems to reduce waste and generate new value streams?",
+      "sector": "Packaging"
+    },
+    {
+      "id": "q_30",
+      "sdg_number": 8,
+      "sdg_description": "Decent Work & Economic Growth",
+      "sdg_target": "8.4 – Improve resource efficiency and decouple growth from environmental degradation",
+      "sustainability_dimension": "Environmental",
+      "kpi": "Cleaner and more efficient production technologies",
+      "question": "To what extent has the company implemented cleaner or resource-efficient technologies (e.g., low-carbon materials, energy-efficient production lines) to reduce environmental impacts while sustaining growth?",
+      "sector": "Packaging"
+    },
+    {
+      "id": "q_31",
+      "sdg_number": 8,
+      "sdg_description": "Decent Work & Economic Growth",
+      "sdg_target": "8.2 – Achieve higher productivity through sustainable innovation",
+      "sustainability_dimension": "Economic",
+      "kpi": "Integration of sustainability-driven innovation into business strategy",
+      "question": "To what extent has the company integrated sustainability-driven innovation (e.g., new bio-based materials, recyclable design, digital process optimization) into its business strategy to enhance competitiveness and market growth?",
+      "sector": "Packaging"
+    },
+    {
+      "id": "q_32",
+      "sdg_number": 8,
+      "sdg_description": "Decent Work & Economic Growth",
+      "sdg_target": "8.5 – Achieve full and productive employment and equal pay for all",
+      "sustainability_dimension": "Social",
+      "kpi": "Decent work and inclusion programs",
+      "question": "To what extent has the company implemented measures to ensure safe, fair, and stable employment conditions for all workers, including fair pay, working hours, and equal opportunity?",
+      "sector": "Packaging"
+    },
+    {
+      "id": "q_33",
+      "sdg_number": 9,
+      "sdg_description": "Build resilient infrastructure, promote inclusive and sustainable industrialization and foster innovation",
+      "sdg_target": "9.1 – Develop quality, reliable, sustainable, and resilient infrastructure",
+      "sustainability_dimension": "Circular",
+      "kpi": "Infrastructure enabling closed-loop packaging systems",
+      "question": "To what extent has the company invested in or collaborated on shared infrastructure (e.g., collection, sorting, or refill systems) that enables circular packaging loops?",
+      "sector": "Packaging"
+    },
+    {
+      "id": "q_34",
+      "sdg_number": 9,
+      "sdg_description": "Build resilient infrastructure, promote inclusive and sustainable industrialization and foster innovation",
+      "sdg_target": "9.4 – Upgrade all industries and infrastructures for sustainability",
+      "sustainability_dimension": "Environmental",
+      "kpi": "Integration of digital and low-impact production systems",
+      "question": "To what extent has the company digitalised or modernised its production infrastructure (e.g., automation, digital monitoring, predictive maintenance) to improve environmental performance and resilience?",
+      "sector": "Packaging"
+    },
+    {
+      "id": "q_35",
+      "sdg_number": 9,
+      "sdg_description": "Build resilient infrastructure, promote inclusive and sustainable industrialization and foster innovation",
+      "sdg_target": "9.5 – Enhance scientific research and upgrade the technological capabilities of industrial sectors",
+      "sustainability_dimension": "Economic",
+      "kpi": "Collaboration and innovation capacity",
+      "question": "To what extent does the company participate in collaborative innovation projects (e.g., R&D pilots, public–private partnerships, or innovation clusters) focused on advancing bio-based and circular packaging technologies?",
+      "sector": "Packaging"
+    },
+    {
+      "id": "q_36",
+      "sdg_number": 9,
+      "sdg_description": "Build resilient infrastructure, promote inclusive and sustainable industrialization and foster innovation",
+      "sdg_target": "9.a – Facilitate sustainable and inclusive industrialisation",
+      "sustainability_dimension": "Social",
+      "kpi": "Inclusion and accessibility in industrial transformation",
+      "question": "To what extent does the company promote inclusive participation (e.g., SMEs, women, local suppliers) in its innovation or production ecosystem for sustainable packaging?",
+      "sector": "Packaging"
+    },
+    {
+      "id": "q_37",
+      "sdg_number": 10,
+      "sdg_description": "Reduce inequality within and among countries",
+      "sdg_target": "10.2 – Empower and promote the social, economic, and political inclusion of all",
+      "sustainability_dimension": "Circular",
+      "kpi": "Inclusion of marginalized actors in circular value chains",
+      "question": "To what extent does the company include or collaborate with small or underrepresented suppliers, recyclers, etc. within its circular packaging systems?",
+      "sector": "Packaging"
+    },
+    {
+      "id": "q_38",
+      "sdg_number": 10,
+      "sdg_description": "Reduce inequality within and among countries",
+      "sdg_target": "10.3 – Ensure equal opportunity and reduce inequalities of outcome",
+      "sustainability_dimension": "Environmental",
+      "kpi": "Equal participation in environmental programs",
+      "question": "Does the company have formal mechanisms ensuring employees from all roles and backgrounds can propose or review environmental improvements?",
+      "sector": "Packaging"
+    },
+    {
+      "id": "q_39",
+      "sdg_number": 10,
+      "sdg_description": "Reduce inequality within and among countries",
+      "sdg_target": "10.4 – Adopt policies to promote greater equality",
+      "sustainability_dimension": "Economic",
+      "kpi": "Fair distribution of financial rewards and advancement opportunities",
+      "question": "Has the company established documented and regularly reviewed procedures for transparent salary bands, promotion criteria, and performance-based incentives accessible to all employees?",
+      "sector": "Packaging"
+    },
+    {
+      "id": "q_40",
+      "sdg_number": 10,
+      "sdg_description": "Reduce inequality within and among countries",
+      "sdg_target": "10.2 – Promote inclusion through cultural awareness and belonging",
+      "sustainability_dimension": "Social",
+      "kpi": "Inclusion and sense of belonging within workforce",
+      "question": "To what extent does the company foster inclusion and belonging among employees through structured diversity programs, cultural awareness training, or inclusive workplace policies?",
+      "sector": "Packaging"
+    },
+    {
+      "id": "q_41",
+      "sdg_number": 11,
+      "sdg_description": "Make cities and human settlements inclusive, safe, resilient and sustainable",
+      "sdg_target": "11.6 – Reduce urban waste generation and environmental impact",
+      "sustainability_dimension": "Circular",
+      "kpi": "Participation in local circular packaging systems",
+      "question": "Does the company collaborate with external stakeholders to establish or support urban packaging take-back, refill, or reuse systems?",
+      "sector": "Packaging"
+    },
+    {
+      "id": "q_42",
+      "sdg_number": 11,
+      "sdg_description": "Make cities and human settlements inclusive, safe, resilient and sustainable",
+      "sdg_target": "11.6 – Reduce the adverse environmental impact of cities",
+      "sustainability_dimension": "Environmental",
+      "kpi": "Urban pollution prevention",
+      "question": "Has the company assessed and implemented measures to minimise air, noise, or waste emissions from its urban production or logistics sites (e.g., low-emission transport, dust or odour control)?",
+      "sector": "Packaging"
+    },
+    {
+      "id": "q_43",
+      "sdg_number": 11,
+      "sdg_description": "Make cities and human settlements inclusive, safe, resilient and sustainable",
+      "sdg_target": "11.A – Support positive economic, social and environmental links between urban and rural areas",
+      "sustainability_dimension": "Economic",
+      "kpi": "Local partnerships supporting circular economy",
+      "question": "To what extent does the company establish economic partnerships with urban micro-enterprises or social cooperatives that strengthen local circular value chains?",
+      "sector": "Packaging"
+    },
+    {
+      "id": "q_44",
+      "sdg_number": 11,
+      "sdg_description": "Make cities and human settlements inclusive, safe, resilient and sustainable",
+      "sdg_target": "11.1 – Ensure access to safe and affordable housing and transport",
+      "sustainability_dimension": "Social",
+      "kpi": "Worker mobility and wellbeing",
+      "question": "Has the company adopted workplace measures that improve employees’ urban well-being, such as flexible schedules, safe facilities, or support for commuting and family needs?",
+      "sector": "Packaging"
+    },
+    {
+      "id": "q_45",
+      "sdg_number": 12,
+      "sdg_description": "Ensure sustainable consumption and production patterns",
+      "sdg_target": "12.5 – Substantially reduce waste generation through prevention, reduction, recycling and reuse",
+      "sustainability_dimension": "Circular",
+      "kpi": "% of total packaging materials designed or recovered for reuse, recycling, or composting",
+      "question": "To what extent has the company established clear targets and mechanisms to ensure its packaging materials are reused, recycled, or composted within a circular system?",
+      "sector": "Packaging"
+    },
+    {
+      "id": "q_46",
+      "sdg_number": 12,
+      "sdg_description": "Ensure sustainable consumption and production patterns",
+      "sdg_target": "12.4 – Ensure environmentally sound management of chemicals and waste throughout their lifecycle",
+      "sustainability_dimension": "Environmental",
+      "kpi": "Presence of a chemical and waste management procedure aligned with ISO or GRI frameworks",
+      "question": "Has the company implemented and regularly updated procedures to manage chemical inputs (e.g., inks, coatings, adhesives) and prevent their release into the environment during and after production?",
+      "sector": "Packaging"
+    },
+    {
+      "id": "q_47",
+      "sdg_number": 12,
+      "sdg_description": "Ensure sustainable consumption and production patterns",
+      "sdg_target": "12.6 – Encourage companies to adopt sustainable practices and integrate sustainability information into reporting",
+      "sustainability_dimension": "Economic",
+      "kpi": "Existence and integration of sustainability performance indicators in financial or management reporting",
+      "question": "To what extent has the company integrated sustainability performance indicators (e.g., resource efficiency, waste savings, emission reductions) into its financial planning and decision-making processes?",
+      "sector": "Packaging"
+    },
+    {
+      "id": "q_48",
+      "sdg_number": 12,
+      "sdg_description": "Ensure sustainable consumption and production patterns",
+      "sdg_target": "12.8 – Ensure that people everywhere have relevant information and awareness for sustainable development",
+      "sustainability_dimension": "Social",
+      "kpi": "Existence of communication or awareness initiatives on sustainable packaging",
+      "question": "Does the company actively educate employees, clients, or consumers on responsible packaging use, recycling, or disposal through awareness campaigns or product information?",
+      "sector": "Packaging"
+    },
+    {
+      "id": "q_49",
+      "sdg_number": 13,
+      "sdg_description": "Climate Action",
+      "sdg_target": "13.1 – Strengthen resilience and adaptive capacity to climate-related hazards",
+      "sustainability_dimension": "Circular",
+      "kpi": "Existence of climate-resilient circular operations (e.g., sourcing, logistics, materials)",
+      "question": "To what extent has the company adapted its circular value chain to withstand climate-related disruptions such as extreme weather or raw-material shortages?",
+      "sector": "Packaging"
+    },
+    {
+      "id": "q_50",
+      "sdg_number": 13,
+      "sdg_description": "Climate Action",
+      "sdg_target": "13.2 – Integrate climate measures into strategies and planning",
+      "sustainability_dimension": "Environmental",
+      "kpi": "Existence of a GHG inventory and verified mitigation targets",
+      "question": "Has the company quantified its greenhouse-gas emissions and set verifiable emission-reduction or neutrality targets?",
+      "sector": "Packaging"
+    },
+    {
+      "id": "q_51",
+      "sdg_number": 13,
+      "sdg_description": "Climate Action",
+      "sdg_target": "13.2 – Integrate climate-related risks and opportunities into financial planning",
+      "sustainability_dimension": "Economic",
+      "kpi": "Integration of climate-risk scenarios into strategic and financial planning",
+      "question": "To what extent has the company assessed and integrated climate-related risks (e.g., energy prices, supply chain disruptions, regulation) and opportunities (e.g., green-market access) into its financial or strategic planning?",
+      "sector": "Packaging"
+    },
+    {
+      "id": "q_52",
+      "sdg_number": 13,
+      "sdg_description": "Climate Action",
+      "sdg_target": "13.3 – Improve education, awareness, and capacity on climate mitigation and adaptation",
+      "sustainability_dimension": "Social",
+      "kpi": "% of employees trained or engaged in climate initiatives",
+      "question": "Does the company provide training or engagement opportunities for employees and partners to understand climate risks and contribute to mitigation or adaptation actions within their roles?",
+      "sector": "Packaging"
+    },
+    {
+      "id": "q_53",
+      "sdg_number": 14,
+      "sdg_description": "Life Below Water",
+      "sdg_target": "14.1 – Reduce marine pollution from land-based activities",
+      "sustainability_dimension": "Circular",
+      "kpi": "Presence and maturity of granulate/powder/pellet loss-prevention and stormwater controls",
+      "question": "To what extent has the company implemented controls to prevent material loss (e.g., pellets, flakes, powders, fines) to drains and stormwater?",
+      "sector": "Packaging"
+    },
+    {
+      "id": "q_54",
+      "sdg_number": 14,
+      "sdg_description": "Life Below Water",
+      "sdg_target": "14.3 – Minimize and address impacts of ocean acidification",
+      "sustainability_dimension": "Environmental",
+      "kpi": "Implementation of acidifying emissions/effluent monitoring and neutralization",
+      "question": "To what extent has the company monitored and reduced acidifying emissions or effluents that can alter downstream water pH?",
+      "sector": "Packaging"
+    },
+    {
+      "id": "q_55",
+      "sdg_number": 14,
+      "sdg_description": "Life Below Water",
+      "sdg_target": "14.a – Increase scientific knowledge, research capacity for ocean health",
+      "sustainability_dimension": "Economic",
+      "kpi": "Budget and collaborations for aquatic-safety R&D (eco-toxicity, fragmentation, microfiber/microplastic risk, water-degradation testing)",
+      "question": "To what extent has the company invested in R&D or partnerships to assess and reduce aquatic impacts of its materials/processes?",
+      "sector": "Packaging"
+    },
+    {
+      "id": "q_56",
+      "sdg_number": 14,
+      "sdg_description": "Life Below Water",
+      "sdg_target": "14.1 / 14.a – Reduce pollution via awareness & cooperation",
+      "sustainability_dimension": "Social",
+      "kpi": "Share of workforce/partners covered by spill response & water-protection training and incident reporting",
+      "question": "Has the company implemented training and reporting mechanisms for employees and contractors on spill prevention, stormwater protection, and incident response related to potential water contamination?",
+      "sector": "Packaging"
+    },
+    {
+      "id": "q_57",
+      "sdg_number": 15,
+      "sdg_description": "Life on Land",
+      "sdg_target": "15.2 – Sustainably manage forests; halt deforestation / 15.5 – Reduce habitat loss",
+      "sustainability_dimension": "Circular",
+      "kpi": "Share and maturity of actions that lower reliance on virgin land-sourced biomass (e.g., recycled fibre content, agri-by-products, design that reduces material intensity)",
+      "question": "To what extent has the company reduced dependence on virgin land-sourced biomass by increasing recycled/secondary bio-based inputs?",
+      "sector": "Packaging"
+    },
+    {
+      "id": "q_58",
+      "sdg_number": 15,
+      "sdg_description": "Life on Land",
+      "sdg_target": "15.2 – Sustainably manage forests; halt deforestation / 15.1 – Conserve terrestrial ecosystems",
+      "sustainability_dimension": "Environmental",
+      "kpi": "Existence and coverage of a deforestation- and conversion-free (DCF) sourcing policy with traceability/certification for plant-based inputs (pulp, starch, etc.)",
+      "question": "To what extent has the company ensured that the sourcing of all bio-based feedstocks (e.g., wood, crops, or biowaste) avoids deforestation, habitat conversion, or soil degradation?",
+      "sector": "Packaging"
+    },
+    {
+      "id": "q_59",
+      "sdg_number": 15,
+      "sdg_description": "Life on Land",
+      "sdg_target": "15.3 – Combat land degradation and ensure sustainable use of soils",
+      "sustainability_dimension": "Economic",
+      "kpi": "Existence of internal procedures integrating land-use and biodiversity risks into sourcing and procurement decisions",
+      "question": "To what extent does the company assess and manage financial or operational risks linked to land degradation and biodiversity loss in its supply chain?",
+      "sector": "Packaging"
+    },
+    {
+      "id": "q_60",
+      "sdg_number": 15,
+      "sdg_description": "Life on Land",
+      "sdg_target": "15.1 – Conserve terrestrial ecosystems / 15.3 – Combat land degradation",
+      "sustainability_dimension": "Social",
+      "kpi": "Supplier & staff capacity-building on land stewardship (training coverage; grievance/reporting mechanisms for no-conversion; corrective-action follow-up)",
+      "question": "Has the company provided awareness or training for employees on biodiversity protection, land use impacts, and sustainable materials handling?",
+      "sector": "Packaging"
+    },
+    {
+      "id": "q_61",
+      "sdg_number": 16,
+      "sdg_description": "Peace, Justice and Strong Institutions",
+      "sdg_target": "16.6 – Develop effective, accountable, and transparent institutions at all levels",
+      "sustainability_dimension": "Circular",
+      "kpi": "Availability of transparent traceability and product information system",
+      "question": "To what extent has the company established systems to ensure transparent traceability of materials and disclosure of circular design or recyclability information to clients, partners, or regulators?",
+      "sector": "Packaging"
+    },
+    {
+      "id": "q_62",
+      "sdg_number": 16,
+      "sdg_description": "Peace, Justice and Strong Institutions",
+      "sdg_target": "16.6 – Promote environmental accountability and transparency",
+      "sustainability_dimension": "Environmental",
+      "kpi": "Monitoring and disclosure of environmental performance data",
+      "question": "To what extent does the company monitor and transparently report its environmental performance internally or publicly?",
+      "sector": "Packaging"
+    },
+    {
+      "id": "q_63",
+      "sdg_number": 16,
+      "sdg_description": "Peace, Justice and Strong Institutions",
+      "sdg_target": "16.5 – Substantially reduce corruption and bribery in all their forms",
+      "sustainability_dimension": "Economic",
+      "kpi": "Existence and enforcement of anti-corruption and fair-procurement procedures",
+      "question": "To what extent has the company implemented anti-corruption, conflict-of-interest, and fair-procurement measures to ensure integrity and transparency in financial and sourcing decisions?",
+      "sector": "Packaging"
+    },
+    {
+      "id": "q_64",
+      "sdg_number": 16,
+      "sdg_description": "Peace, Justice and Strong Institutions",
+      "sdg_target": "16.7 – Ensure inclusive, participatory, and representative decision-making",
+      "sustainability_dimension": "Social",
+      "kpi": "Employee and stakeholder participation in sustainability decisions",
+      "question": "To what extent does the company involve employees in identifying, discussing, or improving sustainability and ethical practices (e.g., through feedback sessions, small working groups, or joint improvement initiatives)?",
+      "sector": "Packaging"
+    },
+    {
+      "id": "q_65",
+      "sdg_number": 17,
+      "sdg_description": "Partnerships for the Goals",
+      "sdg_target": "17.1 – Strengthen domestic resource mobilization",
+      "sustainability_dimension": "Circular",
+      "kpi": "Collaboration on circular design and sourcing initiatives",
+      "question": "To what extent does the company cooperate with local/regional suppliers or business associations to improve material circularity?",
+      "sector": "Packaging"
+    },
+    {
+      "id": "q_66",
+      "sdg_number": 17,
+      "sdg_description": "Partnerships for the Goals",
+      "sdg_target": "17.7 – Promote environmentally sound technology transfer",
+      "sustainability_dimension": "Environmental",
+      "kpi": "Participation in knowledge-exchange or pilot initiatives for clean technologies",
+      "question": "To what extent has the company shared, received, or co-developed environmentally sound packaging technologies or practices with other organizations or regions?",
+      "sector": "Packaging"
+    },
+    {
+      "id": "q_67",
+      "sdg_number": 17,
+      "sdg_description": "Partnerships for the Goals",
+      "sdg_target": "17.3 – Mobilize additional financial and partnership resources",
+      "sustainability_dimension": "Economic",
+      "kpi": "Engagement in funding or co-financing mechanisms for sustainable innovation",
+      "question": "To what extent has the company accessed or participated in collaborative funding opportunities, joint investments, or cost-sharing initiatives that support sustainable packaging innovation or upgrades?",
+      "sector": "Packaging"
+    },
+    {
+      "id": "q_68",
+      "sdg_number": 17,
+      "sdg_description": "Partnerships for the Goals",
+      "sdg_target": "17.6 – Enhance international and regional cooperation",
+      "sustainability_dimension": "Social",
+      "kpi": "Participation in collaborative networks and joint learning platforms",
+      "question": "To what extent does the company engage in peer-learning networks, trade associations, or community groups to exchange experiences and promote sustainable packaging practices?",
+      "sector": "Packaging"
     }
   ],
-  "sector": "Fertilizers"
+  "sector": "Packaging"
 }

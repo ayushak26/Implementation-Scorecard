@@ -1,3 +1,4 @@
+"use client";
 import FormPage from "../components/FormPage";
 import SectorPicker from "../components/SectorPicker";
 import { SDGContext } from "../components/SDGContext";

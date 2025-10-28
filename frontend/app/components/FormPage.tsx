@@ -21,8 +21,6 @@ type SectorData = Record<string, { rows: Question[] }>;
 
 const DIM_ORDER = ["Circular", "Environmental", "Economic", "Social"] as const;
 const DIM_SET = new Set(DIM_ORDER);
-
-// Canonical sector order
 const SECTOR_ORDER = ["Textiles", "Fertilizers", "Packaging"] as const;
 
 const DEFAULT_RUBRIC: Record<number, string> = {
@@ -35,83 +33,81 @@ const DEFAULT_RUBRIC: Record<number, string> = {
 };
 
 const norm = (s: string) => (s || "").trim().toLowerCase();
-const makeKey = (q: Question) => `${norm(q.sector)}|${q.sdg_number}|${norm(q.sustainability_dimension)}`;
+const makeKey = (q: Question) =>
+  `${norm(q.sector)}|${q.sdg_number}|${norm(q.sustainability_dimension)}`;
 
-const sectorAliases: Record<string, string> = {
-  "textile": "Textiles",
-  "textiles": "Textiles",
-  "fertilizer": "Fertilizers",
-  "fertilizers": "Fertilizers",
-  "packaging": "Packaging",
+const canonicalSector = (s?: string): string => {
+  const aliases: Record<string, string> = {
+    textile: "Textiles",
+    textiles: "Textiles",
+    fertilizer: "Fertilizers",
+    fertilizers: "Fertilizers",
+    packaging: "Packaging",
+  };
+  const k = norm(s || "");
+  return aliases[k] || SECTOR_ORDER[0];
 };
 
-function canonicalSector(s?: string): string {
-  const k = norm(s || "");
-  return sectorAliases[k] || (s?.trim() || "General");
-}
-
-function canonicalDim(d?: string): string {
+const canonicalDim = (d?: string): string => {
   const t = (d || "").trim();
-  return (DIM_SET.has(t as any) ? t : d || "").trim();
-}
+  return DIM_SET.has(t as any) ? t : "";
+};
 
-/** Normalize & dedupe */
-function sanitizeQuestions(qs: Question[]): Question[] {
+const sanitizeQuestions = (qs: Question[]): Question[] => {
   const seen = new Set<string>();
-  const out: Question[] = [];
+  const result: Question[] = [];
+
   for (const q of qs) {
     const sector = canonicalSector(q.sector);
     const dim = canonicalDim(q.sustainability_dimension);
-    if (!DIM_SET.has(dim as any)) continue;
+    if (!dim) continue;
 
-    const normQ: Question = { ...q, sector, sustainability_dimension: dim };
-    const key = makeKey(normQ);
+    const key = makeKey({ ...q, sector, sustainability_dimension: dim });
     if (seen.has(key)) continue;
-    seen.add(key);
-    out.push(normQ);
-  }
-  return out;
-}
 
-function sortByDim(a: Question, b: Question) {
+    seen.add(key);
+    result.push({ ...q, sector, sustainability_dimension: dim });
+  }
+  return result;
+};
+
+const sortByDim = (a: Question, b: Question) => {
   const ia = DIM_ORDER.indexOf(a.sustainability_dimension as any);
   const ib = DIM_ORDER.indexOf(b.sustainability_dimension as any);
   return (ia === -1 ? 99 : ia) - (ib === -1 ? 99 : ib);
-}
+};
 
-function pickFourDimsFor(arr: Question[]): Question[] | null {
-  if (!arr?.length) return null;
+const pickFourDimsFor = (arr: Question[]): Question[] | null => {
+  if (!arr.length) return null;
   const byDim = new Map<string, Question>();
+
   for (const q of arr) {
-    if (DIM_SET.has(q.sustainability_dimension as any) && !byDim.has(q.sustainability_dimension)) {
-      byDim.set(q.sustainability_dimension, q);
-    }
+    const dim = q.sustainability_dimension;
+    if (DIM_SET.has(dim as any) && !byDim.has(dim)) byDim.set(dim, q);
   }
+
   const four: Question[] = [];
   for (const d of DIM_ORDER) {
     const q = byDim.get(d);
-    if (!q) return null; // all four required
+    if (!q) return null;
     four.push(q);
   }
   return four.sort(sortByDim);
-}
+};
 
-// Build pages for a provided list of sectors (length 1, 2, or 3)
-function buildPages(questions: Question[], activeSectors: string[]) {
+const buildPages = (questions: Question[], activeSector: string): Question[][] => {
   const pages: Question[][] = [];
-  const orderedSectors = SECTOR_ORDER.filter((s) => activeSectors.includes(s));
+  if (!activeSector) return pages;
 
-  for (const sector of orderedSectors) {
-    for (let sdg = 1; sdg <= 17; sdg++) {
-      const pool = questions.filter(
-        (q) => canonicalSector(q.sector) === sector && q.sdg_number === sdg
-      );
-      const four = pickFourDimsFor(pool);
-      if (four) pages.push(four);
-    }
+  for (let sdg = 1; sdg <= 17; sdg++) {
+    const pool = questions.filter(
+      (q) => canonicalSector(q.sector) === activeSector && q.sdg_number === sdg
+    );
+    const four = pickFourDimsFor(pool);
+    if (four) pages.push(four);
   }
   return pages;
-}
+};
 
 export default function FormPage() {
   const router = useRouter();
@@ -121,8 +117,6 @@ export default function FormPage() {
   const {
     questions: ctxQuestions,
     setQuestions: setCtxQuestions,
-    sector: ctxSector,
-    setSector: setCtxSector,
     selectedSector,
     setSelectedSector,
   } = context;
@@ -133,91 +127,74 @@ export default function FormPage() {
   const [rubric, setRubric] = useState<Record<number, string>>(DEFAULT_RUBRIC);
   const [pageIdx, setPageIdx] = useState(0);
 
-  // NEW: local multi-select state (up to two sectors)
-  const [selectedSectors, setSelectedSectors] = useState<string[]>([...SECTOR_ORDER]);
+  // Use selectedSector from context (set by SectorPicker)
+  const activeSector = selectedSector && SECTOR_ORDER.includes(selectedSector as any)
+    ? selectedSector
+    : SECTOR_ORDER[0];
 
+  // Load questions on mount
   useEffect(() => {
-    const fetchQ = async () => {
+    const fetchQuestions = async () => {
       setIsBusy(true);
       setError(null);
       try {
-        const r = await fetch("/api/questionnaire/template", {
+        const res = await fetch("/api/questionnaire/template", {
           method: "GET",
           cache: "no-store",
-          headers: { "Cache-Control": "no-store" },
         });
-        const data = await r.json();
-        if (!r.ok) throw new Error(data?.error || "Failed to fetch questions");
 
-        const raw: Question[] = Array.isArray(data?.questions) ? data.questions : [];
-        if (raw.length === 0) throw new Error("No questions returned from API");
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({}));
+          throw new Error(data?.error || "Failed to load questions");
+        }
 
-        const qs = sanitizeQuestions(raw);
+        const data = await res.json();
+        const raw: Question[] = Array.isArray(data.questions) ? data.questions : [];
 
-        setCtxQuestions(qs);
-        setCtxSector(typeof data?.sector === "string" ? canonicalSector(data.sector) : "General");
+        if (raw.length === 0) throw new Error("No questions available");
 
-        // default to All Sectors
-        setSelectedSector("All Sectors");
-        setSelectedSectors([...SECTOR_ORDER]);
+        const sanitized = sanitizeQuestions(raw);
+        setCtxQuestions(sanitized);
 
+        // Initialize scores
         const init: Record<string, number> = {};
-        qs.forEach((q) => (init[makeKey(q)] = 3));
+        sanitized.forEach((q) => {
+          init[makeKey(q)] = 3;
+        });
         setScoresByKey(init);
 
-        if (data?.score_rubric && typeof data.score_rubric === "object") {
-          setRubric(data.score_rubric as Record<number, string>);
-        } else {
-          setRubric(DEFAULT_RUBRIC);
+        // Load rubric
+        if (data.score_rubric && typeof data.score_rubric === "object") {
+          setRubric(data.score_rubric);
         }
-      } catch (e: any) {
-        setError(e?.message || "Failed to load questionnaire");
+      } catch (err: any) {
+        setError(err.message || "Failed to load questionnaire");
         setCtxQuestions([]);
-        setCtxSector("General");
-        setSelectedSector("All Sectors");
-        setSelectedSectors([...SECTOR_ORDER]);
       } finally {
         setIsBusy(false);
       }
     };
-    fetchQ();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
-  // Build sector pills list
-  const sectors = useMemo(() => {
-    const discovered = new Set<string>();
-    ctxQuestions.forEach((q) => q.sector && discovered.add(canonicalSector(q.sector)));
-    const ordered = Array.from(new Set<string>([...SECTOR_ORDER, ...Array.from(discovered)]));
-    return ["All Sectors", ...ordered];
-  }, [ctxQuestions]);
+    fetchQuestions();
+  }, [setCtxQuestions]);
 
-  // Compute active sectors (1, 2, or 3)
-  const activeSectors = useMemo<string[]>(() => {
-    if (selectedSector === "All Sectors") return [...SECTOR_ORDER];
-    if (selectedSectors.length > 0) return selectedSectors.map(canonicalSector);
-    if (selectedSector) return [canonicalSector(selectedSector)];
-    return [...SECTOR_ORDER];
-  }, [selectedSector, selectedSectors]);
+  // Filter & build pages based on selected sector
+  const filteredQuestions = useMemo(() => {
+    return ctxQuestions.filter((q) => canonicalSector(q.sector) === activeSector);
+  }, [ctxQuestions, activeSector]);
 
-  // Filter to active sectors
-  const filtered = useMemo(() => {
-    const set = new Set(activeSectors);
-    return ctxQuestions.filter((q) => set.has(canonicalSector(q.sector)));
-  }, [ctxQuestions, activeSectors]);
-
-  // Build pages for current selection
-  const pages = useMemo(() => buildPages(filtered, activeSectors), [filtered, activeSectors]);
+  const pages = useMemo(() => buildPages(filteredQuestions, activeSector), [filteredQuestions, activeSector]);
   const totalPages = pages.length;
   const currentPage = totalPages > 0 ? pages[pageIdx] : [];
 
+  // Reset page on sector change
   useEffect(() => {
     setPageIdx(0);
-  }, [activeSectors.length, totalPages]);
+  }, [activeSector]);
 
-  const handleScoreSelect = (compositeKey: string, score: number) => {
-    const bounded = Math.max(0, Math.min(5, Number(score)));
-    setScoresByKey((prev) => ({ ...prev, [compositeKey]: bounded }));
+  const handleScoreSelect = (key: string, score: number) => {
+    const bounded = Math.max(0, Math.min(5, score));
+    setScoresByKey((prev) => ({ ...prev, [key]: bounded }));
   };
 
   const pageComplete =
@@ -226,103 +203,70 @@ export default function FormPage() {
 
   const allComplete =
     pages.length > 0 &&
-    pages.every((grp) => grp.every((q) => Number.isFinite(scoresByKey[makeKey(q)])));
+    pages.every((page) => page.every((q) => Number.isFinite(scoresByKey[makeKey(q)])));
 
   const progress = totalPages > 0 ? Math.round(((pageIdx + 1) / totalPages) * 100) : 0;
 
   const goPrev = () => setPageIdx((i) => Math.max(0, i - 1));
   const goNext = () => {
-    if (pageIdx < totalPages - 1 && pageComplete) setPageIdx((i) => i + 1);
+    if (pageIdx < totalPages - 1 && pageComplete) {
+      setPageIdx((i) => i + 1);
+    }
   };
 
-  const handleSubmitAnswers = async () => {
+  const handleSubmit = async () => {
     if (!allComplete) return;
     setIsBusy(true);
     setError(null);
-    try {
-      const activeQuestions = pages.flat();
 
-      const questionsWithCompositeId = activeQuestions.map((q) => ({
+    try {
+      const questionsWithId = pages.flat().map((q) => ({
         ...q,
         id: makeKey(q),
       }));
 
-      const responsesArray = activeQuestions.map((q) => ({
+      const responses = pages.flat().map((q) => ({
         question_id: makeKey(q),
-        score: Number.isFinite(scoresByKey[makeKey(q)]) ? scoresByKey[makeKey(q)] : 3,
+        score: scoresByKey[makeKey(q)] ?? 3,
       }));
 
-      const resp = await fetch("/api/questionnaire/calculate", {
+      const res = await fetch("/api/questionnaire/calculate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          responses: responsesArray,
-          questions: questionsWithCompositeId,
-          sector:
-            selectedSector === "All Sectors"
-              ? "All Sectors"
-              : activeSectors.length > 1
-              ? activeSectors.join(" + ")
-              : activeSectors[0] || ctxSector || "General",
+          responses,
+          questions: questionsWithId,
+          sector: activeSector,
         }),
       });
 
-      const payload = await resp.json().catch(() => ({}));
-      if (!resp.ok || payload?.success === false) {
-        throw new Error(payload?.error || "Failed to calculate scorecard");
+      const payload = await res.json().catch(() => ({}));
+      if (!res.ok || payload.success === false) {
+        throw new Error(payload.error || "Failed to calculate results");
       }
 
-      const result: SectorData | null =
-        payload?.data && typeof payload.data === "object" ? payload.data : null;
-      if (!result || !Object.keys(result).length) {
-        throw new Error("No scorecard data returned");
+      const result = payload.data;
+      if (!result || typeof result !== "object" || !Object.keys(result).length) {
+        throw new Error("Invalid scorecard data");
       }
 
       sessionStorage.setItem("scorecard", JSON.stringify(result));
       router.push("/visualization");
-    } catch (e: any) {
-      setError(e?.message || "Failed to submit answers");
+    } catch (err: any) {
+      setError(err.message || "Submission failed");
     } finally {
       setIsBusy(false);
     }
   };
 
-  // Toggle logic (max two sectors). "All Sectors" resets to all.
-  const onSectorClick = (sec: string) => {
-    if (sec === "All Sectors") {
-      setSelectedSector("All Sectors");
-      setSelectedSectors([...SECTOR_ORDER]);
-      return;
-    }
-    const s = canonicalSector(sec);
-    setSelectedSectors((prev) => {
-      let next = prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s];
-      if (next.length > 2) {
-        next = next.slice(-2); // keep the most recent two
-      }
-      if (next.length === 0) {
-        setSelectedSector("All Sectors");
-        return [...SECTOR_ORDER];
-      }
-      setSelectedSector(next.length === 1 ? next[0] : "Multiple");
-      return next;
-    });
-  };
-
-  const sectorLabel =
-    selectedSector === "All Sectors"
-      ? "All Sectors"
-      : activeSectors.length > 1
-      ? `${activeSectors[0]} + ${activeSectors[1]}`
-      : activeSectors[0] || ctxSector || "General";
-
   return (
-    <div className="bg-white rounded-2xl shadow-lg p-6 animate-fadeIn">
+    <div className="bg-white rounded-2xl shadow-lg p-6 animate-fadeIn max-w-4xl mx-auto">
+      {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <div>
           <h2 className="text-2xl font-bold text-primary">Interactive Questionnaire</h2>
           <p className="text-neutral text-sm">
-            Sector: {sectorLabel} | {filtered.length} Questions
+            Sector: <span className="font-medium">{activeSector}</span> | {filteredQuestions.length} Questions
           </p>
         </div>
         <div className="relative w-64">
@@ -336,52 +280,24 @@ export default function FormPage() {
         </div>
       </div>
 
-      {/* Sector filter */}
-      <div className="bg-gray-50 rounded-lg p-4 mb-6">
-        <h3 className="text-lg font-semibold text-primary mb-2">Select Sector (max 2)</h3>
-        <div className="flex flex-wrap gap-2">
-          {sectors.map((sec) => {
-            const isAll = sec === "All Sectors";
-            const isActive = isAll
-              ? selectedSector === "All Sectors"
-              : activeSectors.includes(canonicalSector(sec)) && selectedSector !== "All Sectors";
-            return (
-              <button
-                key={sec}
-                onClick={() => onSectorClick(sec)}
-                className={`px-4 py-2 rounded-lg transition-all duration-200 ${
-                  isActive ? "bg-primary text-white" : "bg-gray-200 text-gray-600 hover:bg-gray-300"
-                }`}
-              >
-                {sec}
-              </button>
-            );
-          })}
-        </div>
-        {selectedSector !== "All Sectors" && activeSectors.length > 1 && (
-          <p className="text-xs text-neutral mt-2">
-            Showing sectors in order: {SECTOR_ORDER.filter((s) => activeSectors.includes(s)).join(" → ")}
-          </p>
-        )}
-      </div>
-
+      {/* Error */}
       {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg p-4 mb-6 animate-shake" role="alert">
+        <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg p-4 mb-6 animate-shake">
           {error}
         </div>
       )}
 
+      {/* Loading / Empty / Content */}
       {isBusy ? (
-        <div className="text-center text-neutral">Loading questionnaire...</div>
+        <div className="text-center text-neutral py-12">Loading questions for <strong>{activeSector}</strong>...</div>
       ) : pages.length === 0 ? (
-        <div className="text-center text-neutral">
-          No complete (4-dimension) cards available
-          {selectedSector && selectedSector !== "All Sectors" ? ` for selection "${sectorLabel}"` : ""}.
+        <div className="text-center text-neutral py-12">
+          No complete 4-dimension cards available for <strong>{activeSector}</strong>.
         </div>
       ) : (
         <>
-          <div className="text-center text-neutral text-sm mb-4">
-            Page {pageIdx + 1} of {pages.length}
+          <div className="text-center text-sm text-neutral mb-4">
+            Page {pageIdx + 1} of {totalPages}
           </div>
 
           <QuestionCard
@@ -402,22 +318,26 @@ export default function FormPage() {
               Previous
             </button>
 
-            {pageIdx < pages.length - 1 ? (
+            {pageIdx < totalPages - 1 ? (
               <button
                 onClick={goNext}
                 disabled={!pageComplete || isBusy}
-                className={`px-4 py-2 bg-primary text-white rounded-lg transition-opacity ${
-                  !pageComplete || isBusy ? "opacity-50 cursor-not-allowed" : "hover:bg-primary/90"
+                className={`px-4 py-2 bg-primary text-white rounded-lg font-medium transition-opacity ${
+                  !pageComplete || isBusy
+                    ? "opacity-50 cursor-not-allowed"
+                    : "hover:bg-primary/90"
                 }`}
               >
                 Next
               </button>
             ) : (
               <button
-                onClick={handleSubmitAnswers}
+                onClick={handleSubmit}
                 disabled={!allComplete || isBusy}
-                className={`px-4 py-2 bg-primary text-white rounded-lg transition-opacity ${
-                  !allComplete || isBusy ? "opacity-50 cursor-not-allowed" : "hover:bg-primary/90"
+                className={`px-4 py-2 bg-primary text-white rounded-lg font-medium transition-opacity ${
+                  !allComplete || isBusy
+                    ? "opacity-50 cursor-not-allowed"
+                    : "hover:bg-primary/90"
                 }`}
               >
                 Submit & View Results

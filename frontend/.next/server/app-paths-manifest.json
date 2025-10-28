@@ -1,9 +1,7 @@
 {
   "/_not-found/page": "app/_not-found/page.js",
-  "/api/upload-excel/route": "app/api/upload-excel/route.js",
-  "/form/page": "app/form/page.js",
   "/page": "app/page.js",
   "/api/questionnaire/template/route": "app/api/questionnaire/template/route.js",
-  "/api/questionnaire/calculate/route": "app/api/questionnaire/calculate/route.js",
-  "/visualization/page": "app/visualization/page.js"
+  "/form/page": "app/form/page.js",
+  "/api/upload-excel/route": "app/api/upload-excel/route.js"
 }
