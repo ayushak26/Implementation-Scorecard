@@ -60,11 +60,11 @@ export default function SectorPicker() {
             <button
               key={sec}
               onClick={() => toggle(sec)}
-              className={`px-5 py-3 rounded-xl font-medium text-sm transition-all duration-200 shadow-sm ${
-                isActive
-                  ? "bg-primary text-white ring-2 ring-primary ring-offset-2"
-                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-              }`}
+              className={`px-5 py-3 rounded-xl font-medium text-sm transition-all duration-200
+          ${isActive
+                  ? "bg-gray-800 text-white ring-2 ring-gray-800 ring-offset-2 shadow-md"
+                  : "bg-gray-100 text-gray-700 hover:bg-gray-200 cursor-pointer"
+                }`}
             >
               {sec}
             </button>
@@ -76,11 +76,10 @@ export default function SectorPicker() {
         <button
           onClick={start}
           disabled={!canStart}
-          className={`w-full max-w-xs px-6 py-3 rounded-xl text-white font-semibold transition-all ${
-            canStart
-              ? "bg-primary hover:bg-primary/90 shadow-lg"
-              : "bg-gray-400 cursor-not-allowed"
-          }`}
+          className={`w-full max-w-xs px-6 py-3 rounded-xl text-white font-semibold ${canStart
+              ? "bg-gray-900"
+              : "bg-gray-900 text-gray-700 cursor-not-allowed"
+            }`}
         >
           Start Questionnaire
         </button>

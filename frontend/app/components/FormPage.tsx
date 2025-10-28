@@ -296,9 +296,6 @@ export default function FormPage() {
         </div>
       ) : (
         <>
-          <div className="text-center text-sm text-neutral mb-4">
-            Page {pageIdx + 1} of {totalPages}
-          </div>
 
           <QuestionCard
             questions={currentPage}
@@ -308,25 +305,28 @@ export default function FormPage() {
           />
 
           <div className="flex justify-between mt-8 gap-4">
+            {/* Previous button – unchanged */}
             <button
               onClick={goPrev}
               disabled={pageIdx === 0 || isBusy}
-              className={`px-4 py-2 border border-gray-300 rounded-lg text-gray-600 transition-opacity ${
-                pageIdx === 0 || isBusy ? "opacity-50 cursor-not-allowed" : "hover:bg-gray-50"
-              }`}
+              className={`px-4 py-2 border border-gray-300 rounded-lg text-gray-600 transition-opacity ${pageIdx === 0 || isBusy ? "opacity-50 cursor-not-allowed" : "hover:bg-gray-50"
+                }`}
             >
               Previous
             </button>
 
+            {/* ---------- FIXED NEXT / SUBMIT BUTTONS ---------- */}
             {pageIdx < totalPages - 1 ? (
               <button
                 onClick={goNext}
                 disabled={!pageComplete || isBusy}
-                className={`px-4 py-2 bg-primary text-white rounded-lg font-medium transition-opacity ${
-                  !pageComplete || isBusy
+                className={`
+        px-4 py-2 bg-black text-white rounded-lg font-medium
+        transition-all duration-200
+        ${!pageComplete || isBusy
                     ? "opacity-50 cursor-not-allowed"
-                    : "hover:bg-primary/90"
-                }`}
+                    : "hover:opacity-90 hover:shadow-md"
+                  }`}
               >
                 Next
               </button>
@@ -334,12 +334,17 @@ export default function FormPage() {
               <button
                 onClick={handleSubmit}
                 disabled={!allComplete || isBusy}
-                className={`px-4 py-2 bg-primary text-white rounded-lg font-medium transition-opacity ${
-                  !allComplete || isBusy
+                className={`
+      px-4 py-2 bg-primary text-white rounded-lg font-medium
+      transition-all duration-200 flex items-center gap-2
+      ${!allComplete || isBusy
                     ? "opacity-50 cursor-not-allowed"
-                    : "hover:bg-primary/90"
-                }`}
+                    : "hover:opacity-90 hover:shadow-md"
+                  }`}
               >
+                {isBusy && (
+                  <svg className="animate-spin h-5 w-5 text-white"/>
+                )}
                 Submit & View Results
               </button>
             )}
