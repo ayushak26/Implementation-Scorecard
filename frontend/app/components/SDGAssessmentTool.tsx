@@ -65,11 +65,10 @@ export default function SDGAssessmentTool() {
           <div className="flex items-center justify-center gap-4">
           </div>
           <h1 className="text-3xl font-extrabold text-center text-primary mt-2">
-            Sustainable Development Goals Assessment
+              BIORADAR - Implementation Scorecard
           </h1>
           <p className="text-center text-neutral mt-2 max-w-2xl mx-auto">
-            Seamlessly upload your Excel workbook, answer interactive questions,
-            and explore dynamic SDG performance visualizations.
+              Assess your company's sustainability performance and SDG contributions across Environmental, Economic, Social, and Circular dimensions. Gain insights, identify gaps, and take action to enhance sustainability. Welcome!
           </p>
           <Stepper />
         </header>

@@ -262,7 +262,7 @@ export default function FormPage() {
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h2 className="text-2xl font-bold text-primary">Interactive Questionnaire</h2>
+          <h2 className="text-2xl font-bold text-primary">BIORADAR - Implementation Scorecard</h2>
           <p className="text-neutral text-sm">
             Sector: <span className="font-medium">{activeSector}</span> | {filteredQuestions.length} Questions
           </p>

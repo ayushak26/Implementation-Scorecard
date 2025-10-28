@@ -45,6 +45,27 @@ const SDG_SHORT: Record<number, string> = {
   17: "Partnerships for the Goals",
 };
 
+// SDG Image Map (official SDG icons)
+const SDG_IMAGE_MAP: Record<number, string> = {
+  1: "https://hive.forms.usercontent.microsoft/images/54d63e24-ac6d-4c5e-a8d6-ba978a0b286e/5d9fc63b-a62d-4897-99d0-d701dd178325/T6N2DXTAH45TTE4AOX8BRXCFKI/132ea41f-4040-48ef-81e6-a942e78402b9",
+  2: "https://hive.forms.usercontent.microsoft/images/54d63e24-ac6d-4c5e-a8d6-ba978a0b286e/5d9fc63b-a62d-4897-99d0-d701dd178325/T6N2DXTAH45TTE4AOX8BRXCFKI/398dbeec-5c22-462d-bc89-0710a65a8ad9",
+  3: "https://hive.forms.usercontent.microsoft/images/54d63e24-ac6d-4c5e-a8d6-ba978a0b286e/5d9fc63b-a62d-4897-99d0-d701dd178325/T6N2DXTAH45TTE4AOX8BRXCFKI/4f9b5639-b680-4b4e-8ed5-bafb75be6cea",
+  4: "https://hive.forms.usercontent.microsoft/images/54d63e24-ac6d-4c5e-a8d6-ba978a0b286e/5d9fc63b-a62d-4897-99d0-d701dd178325/T6N2DXTAH45TTE4AOX8BRXCFKI/fa2fea1f-23e0-4c18-961f-8c492a48e170",
+  5: "https://hive.forms.usercontent.microsoft/images/54d63e24-ac6d-4c5e-a8d6-ba978a0b286e/5d9fc63b-a62d-4897-99d0-d701dd178325/T6N2DXTAH45TTE4AOX8BRXCFKI/ab98444d-a129-4bd0-8427-b0d2d69abe2a",
+  6: "https://hive.forms.usercontent.microsoft/images/54d63e24-ac6d-4c5e-a8d6-ba978a0b286e/5d9fc63b-a62d-4897-99d0-d701dd178325/T6N2DXTAH45TTE4AOX8BRXCFKI/35ea17dc-31ff-47d7-b22a-6445d22fc1f6",
+  7: "https://hive.forms.usercontent.microsoft/images/54d63e24-ac6d-4c5e-a8d6-ba978a0b286e/5d9fc63b-a62d-4897-99d0-d701dd178325/T6N2DXTAH45TTE4AOX8BRXCFKI/4095422d-f496-44dc-b7bc-1ca065dfd56f",
+  8: "https://hive.forms.usercontent.microsoft/images/54d63e24-ac6d-4c5e-a8d6-ba978a0b286e/5d9fc63b-a62d-4897-99d0-d701dd178325/T6N2DXTAH45TTE4AOX8BRXCFKI/7b8ad482-c6fb-464a-a713-f524add285bb",
+  9: "https://hive.forms.usercontent.microsoft/images/54d63e24-ac6d-4c5e-a8d6-ba978a0b286e/5d9fc63b-a62d-4897-99d0-d701dd178325/T6N2DXTAH45TTE4AOX8BRXCFKI/92270d6f-ede2-455a-8b15-fe4168f447a9",
+  10: "https://hive.forms.usercontent.microsoft/images/54d63e24-ac6d-4c5e-a8d6-ba978a0b286e/5d9fc63b-a62d-4897-99d0-d701dd178325/T6N2DXTAH45TTE4AOX8BRXCFKI/9e3239b3-c3c9-47b1-bab4-d248ff15e2e7",
+  11: "https://hive.forms.usercontent.microsoft/images/54d63e24-ac6d-4c5e-a8d6-ba978a0b286e/5d9fc63b-a62d-4897-99d0-d701dd178325/T6N2DXTAH45TTE4AOX8BRXCFKI/65636295-3a0d-485c-9243-068c7a549ccd",
+  12: "https://hive.forms.usercontent.microsoft/images/54d63e24-ac6d-4c5e-a8d6-ba978a0b286e/5d9fc63b-a62d-4897-99d0-d701dd178325/T6N2DXTAH45TTE4AOX8BRXCFKI/be850d28-c1f1-4268-b74c-ca34c3391ef8",
+  13: "https://hive.forms.usercontent.microsoft/images/54d63e24-ac6d-4c5e-a8d6-ba978a0b286e/5d9fc63b-a62d-4897-99d0-d701dd178325/T6N2DXTAH45TTE4AOX8BRXCFKI/46c7a45d-9ae6-4e3f-8b1d-6ca3d3be9cd9",
+  14: "https://hive.forms.usercontent.microsoft/images/54d63e24-ac6d-4c5e-a8d6-ba978a0b286e/5d9fc63b-a62d-4897-99d0-d701dd178325/T6N2DXTAH45TTE4AOX8BRXCFKI/87a18e9f-442f-46d8-b449-794aaffed336",
+  15: "https://hive.forms.usercontent.microsoft/images/54d63e24-ac6d-4c5e-a8d6-ba978a0b286e/5d9fc63b-a62d-4897-99d0-d701dd178325/T6N2DXTAH45TTE4AOX8BRXCFKI/a7650bea-4b2d-47e7-8660-fabad45badf0",
+  16: "https://hive.forms.usercontent.microsoft/images/54d63e24-ac6d-4c5e-a8d6-ba978a0b286e/5d9fc63b-a62d-4897-99d0-d701dd178325/T6N2DXTAH45TTE4AOX8BRXCFKI/cf11c3a3-bd84-4558-9f4c-d20ea3e8856c",
+  17: "https://hive.forms.usercontent.microsoft/images/54d63e24-ac6d-4c5e-a8d6-ba978a0b286e/5d9fc63b-a62d-4897-99d0-d701dd178325/T6N2DXTAH45TTE4AOX8BRXCFKI/e00ca088-236c-46ea-85db-c120c35ee7a4",
+};
+
 // Distinct colors for each SDG
 const SDG_COLORS: Record<number, string> = {
   1: "#E5243B",
@@ -175,7 +196,7 @@ function useGridRoulette({
     svg.selectAll("*").remove();
 
     const W = width, H = height;
-    const outerRadius = Math.min(W, H) / 2 - 50;
+    const outerRadius = Math.min(W, H) / 2 - 70;
     const innerRadius = 120; // Increased for center legend
 
     svg.attr("viewBox", `0 0 ${W} ${H}`);
@@ -294,28 +315,21 @@ function useGridRoulette({
         .attr("stroke-width", 2)
         .attr("opacity", 0.8);
 
-      // SDG labels outside with background
+      // SDG image labels outside (replaces number)
       const midAngle = (startAngle + endAngle) / 2;
-      const labelRadius = outerRadius + 25;
+      const labelRadius = outerRadius + 40; // Increased slightly for image space
+      const cx = Math.cos(midAngle - Math.PI / 2) * labelRadius;
+      const cy = Math.sin(midAngle - Math.PI / 2) * labelRadius;
 
-      // Background circle for SDG number
-      g.append("circle")
-        .attr("cx", Math.cos(midAngle - Math.PI / 2) * labelRadius)
-        .attr("cy", Math.sin(midAngle - Math.PI / 2) * labelRadius)
-        .attr("r", 12)
-        .attr("fill", SDG_COLORS[sdg])
-        .attr("opacity", 0.9);
 
-      // SDG number
-      g.append("text")
-        .attr("x", Math.cos(midAngle - Math.PI / 2) * labelRadius)
-        .attr("y", Math.sin(midAngle - Math.PI / 2) * labelRadius)
-        .attr("text-anchor", "middle")
-        .attr("dominant-baseline", "middle")
-        .attr("fill", "#fff")
-        .attr("font-size", "11px")
-        .attr("font-weight", "bold")
-        .text(sdg);
+      // SDG image (centered, scaled to fit ~24x24 for visibility)
+      g.append("image")
+        .attr("href", SDG_IMAGE_MAP[sdg])
+        .attr("x", cx - 12)
+        .attr("y", cy - 12)
+        .attr("width", 40)
+        .attr("height", 40)
+        .attr("preserveAspectRatio", "xMidYMid meet"); // Scales to fit while preserving aspect
     }
 
     // Draw concentric circles for score levels with bolder lines
@@ -437,16 +451,13 @@ export default function SdgGridRouletteVisualization({ rows, sector }: Props) {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold text-gray-800">
-                SDG Grid Roulette
+                  BIORADAR - Implementation Scorecard
               </h1>
-              <p className="text-sm text-gray-600 mt-1">
-                Sustainability Assessment Matrix: 17 SDGs - 4 Dimensions - 6 Score Levels
-              </p>
             </div>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
           {/* Roulette Visualization */}
           <div className="xl:col-span-3 bg-white rounded-xl shadow-md p-6">
             <svg ref={ref} width="100%" height="700" />
