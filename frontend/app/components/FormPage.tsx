@@ -118,7 +118,6 @@ export default function FormPage() {
     questions: ctxQuestions,
     setQuestions: setCtxQuestions,
     selectedSector,
-    setSelectedSector,
   } = context;
 
   const [isBusy, setIsBusy] = useState(true);
@@ -127,12 +126,11 @@ export default function FormPage() {
   const [rubric, setRubric] = useState<Record<number, string>>(DEFAULT_RUBRIC);
   const [pageIdx, setPageIdx] = useState(0);
 
-  // Use selectedSector from context (set by SectorPicker)
-  const activeSector = selectedSector && SECTOR_ORDER.includes(selectedSector as any)
-    ? selectedSector
-    : SECTOR_ORDER[0];
+  const activeSector =
+    selectedSector && SECTOR_ORDER.includes(selectedSector as any)
+      ? selectedSector
+      : SECTOR_ORDER[0];
 
-  // Load questions on mount
   useEffect(() => {
     const fetchQuestions = async () => {
       setIsBusy(true);
@@ -156,14 +154,12 @@ export default function FormPage() {
         const sanitized = sanitizeQuestions(raw);
         setCtxQuestions(sanitized);
 
-        // Initialize scores
         const init: Record<string, number> = {};
         sanitized.forEach((q) => {
           init[makeKey(q)] = 3;
         });
         setScoresByKey(init);
 
-        // Load rubric
         if (data.score_rubric && typeof data.score_rubric === "object") {
           setRubric(data.score_rubric);
         }
@@ -178,16 +174,17 @@ export default function FormPage() {
     fetchQuestions();
   }, [setCtxQuestions]);
 
-  // Filter & build pages based on selected sector
   const filteredQuestions = useMemo(() => {
     return ctxQuestions.filter((q) => canonicalSector(q.sector) === activeSector);
   }, [ctxQuestions, activeSector]);
 
-  const pages = useMemo(() => buildPages(filteredQuestions, activeSector), [filteredQuestions, activeSector]);
+  const pages = useMemo(
+    () => buildPages(filteredQuestions, activeSector),
+    [filteredQuestions, activeSector]
+  );
   const totalPages = pages.length;
   const currentPage = totalPages > 0 ? pages[pageIdx] : [];
 
-  // Reset page on sector change
   useEffect(() => {
     setPageIdx(0);
   }, [activeSector]);
@@ -205,7 +202,8 @@ export default function FormPage() {
     pages.length > 0 &&
     pages.every((page) => page.every((q) => Number.isFinite(scoresByKey[makeKey(q)])));
 
-  const progress = totalPages > 0 ? Math.round(((pageIdx + 1) / totalPages) * 100) : 0;
+  const progress =
+    totalPages > 0 ? Math.round(((pageIdx + 1) / totalPages) * 100) : 0;
 
   const goPrev = () => setPageIdx((i) => Math.max(0, i - 1));
   const goNext = () => {
@@ -289,14 +287,15 @@ export default function FormPage() {
 
       {/* Loading / Empty / Content */}
       {isBusy ? (
-        <div className="text-center text-neutral py-12">Loading questions for <strong>{activeSector}</strong>...</div>
+        <div className="text-center text-neutral py-12">
+          Loading questions for <strong>{activeSector}</strong>...
+        </div>
       ) : pages.length === 0 ? (
         <div className="text-center text-neutral py-12">
           No complete 4-dimension cards available for <strong>{activeSector}</strong>.
         </div>
       ) : (
         <>
-
           <QuestionCard
             questions={currentPage}
             selectedScores={scoresByKey}
@@ -305,27 +304,29 @@ export default function FormPage() {
           />
 
           <div className="flex justify-between mt-8 gap-4">
-            {/* Previous button – unchanged */}
+            {/* Previous */}
             <button
               onClick={goPrev}
               disabled={pageIdx === 0 || isBusy}
-              className={`px-4 py-2 border border-gray-300 rounded-lg text-gray-600 transition-opacity ${pageIdx === 0 || isBusy ? "opacity-50 cursor-not-allowed" : "hover:bg-gray-50"
-                }`}
+              className={`px-4 py-2 border border-gray-300 rounded-lg text-gray-600 transition-opacity ${
+                pageIdx === 0 || isBusy ? "opacity-50 cursor-not-allowed" : "hover:bg-gray-50"
+              }`}
             >
               Previous
             </button>
 
-            {/* ---------- FIXED NEXT / SUBMIT BUTTONS ---------- */}
+            {/* Next vs Submit */}
             {pageIdx < totalPages - 1 ? (
               <button
                 onClick={goNext}
                 disabled={!pageComplete || isBusy}
                 className={`
-        px-4 py-2 bg-black text-white rounded-lg font-medium
-        transition-all duration-200
-        ${!pageComplete || isBusy
-                    ? "opacity-50 cursor-not-allowed"
-                    : "hover:opacity-90 hover:shadow-md"
+                  px-4 py-2 bg-black text-white rounded-lg font-medium
+                  transition-all duration-200
+                  ${
+                    !pageComplete || isBusy
+                      ? "opacity-50 cursor-not-allowed"
+                      : "hover:opacity-90 hover:shadow-md"
                   }`}
               >
                 Next
@@ -335,15 +336,28 @@ export default function FormPage() {
                 onClick={handleSubmit}
                 disabled={!allComplete || isBusy}
                 className={`
-      px-4 py-2 bg-primary text-white rounded-lg font-medium
-      transition-all duration-200 flex items-center gap-2
-      ${!allComplete || isBusy
-                    ? "opacity-50 cursor-not-allowed"
-                    : "hover:opacity-90 hover:shadow-md"
+                  px-4 py-2 bg-primary text-white rounded-lg font-medium
+                  transition-all duration-200 flex items-center gap-2
+                  ${
+                    !allComplete || isBusy
+                      ? "opacity-50 cursor-not-allowed"
+                      : "hover:opacity-90 hover:shadow-md"
                   }`}
               >
                 {isBusy && (
-                  <svg className="animate-spin h-5 w-5 text-white"/>
+                  <svg
+                    className="animate-spin h-5 w-5 text-white"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    />
+                  </svg>
                 )}
                 Submit & View Results
               </button>

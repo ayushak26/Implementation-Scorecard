@@ -1,5 +1,6 @@
 {
   "/page": "app/page.js",
   "/form/page": "app/form/page.js",
-  "/visualization/page": "app/visualization/page.js"
+  "/visualization/page": "app/visualization/page.js",
+  "/api/questionnaire/template/route": "app/api/questionnaire/template/route.js"
 }

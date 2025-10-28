@@ -131,9 +131,6 @@ export default function VisualizationPage() {
     return sectorData[originalKey]?.rows ?? [];
   }, [sectorData, selectedVizSectorUI, sectorKeyLookup.originals]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  /** Available sector options for the <select> (original keys) */
-  const availableSectors = sectorKeyLookup.originals;
-
   const handleReset = () => {
     try {
       if (typeof window !== "undefined") sessionStorage.removeItem("scorecard");
@@ -149,25 +146,6 @@ export default function VisualizationPage() {
         <p className="text-neutral mt-2">
           Explore your sector&apos;s ({selectedVizSectorUI || "—"}) SDG performance metrics and analytics.
         </p>
-      </div>
-
-      <div className="bg-gray-50 rounded-lg p-4 mb-6">
-        <h3 className="text-lg font-semibold text-primary mb-2">Select Sector</h3>
-        <select
-          value={selectedVizSectorUI}
-          onChange={(e) => setSelectedVizSectorUI(e.target.value)}
-          className="border border-gray-300 rounded-lg p-2 w-full max-w-xs"
-        >
-          {availableSectors.length > 0 ? (
-            availableSectors.map((opt) => (
-              <option key={opt} value={opt}>
-                {opt}
-              </option>
-            ))
-          ) : (
-            <option value="General">General</option>
-          )}
-        </select>
       </div>
 
       {error && (
