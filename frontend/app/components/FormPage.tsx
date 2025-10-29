@@ -213,9 +213,10 @@ export default function FormPage() {
   };
 
   const handleSubmit = async () => {
-    if (!allComplete) return;
-    setIsBusy(true);
-    setError(null);
+    if (!allComplete|| isBusy) return;
+
+      setIsBusy(true);
+      setError(null);
 
     try {
       const questionsWithId = pages.flat().map((q) => ({
@@ -249,10 +250,10 @@ export default function FormPage() {
       }
 
       sessionStorage.setItem("scorecard", JSON.stringify(result));
+
       router.push("/visualization");
     } catch (err: any) {
       setError(err.message || "Submission failed");
-    } finally {
       setIsBusy(false);
     }
   };
