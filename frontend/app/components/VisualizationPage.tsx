@@ -171,7 +171,7 @@ export default function VisualizationPage() {
       )}
 
       <div className="flex justify-end mt-6">
-        <button onClick={handleReset} className="px-4 py-2 bg-primary text-white rounded-lg opacity-100">
+        <button onClick={handleReset} className="px-4 py-2 bg-black text-white rounded-lg opacity-100">
           Reset & Start Over
         </button>
       </div>

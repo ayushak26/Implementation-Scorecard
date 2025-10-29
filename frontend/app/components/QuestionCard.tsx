@@ -68,23 +68,20 @@ export default function QuestionCard({
   const scores = [0, 1, 2, 3, 4, 5];
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border">
+    <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
       {/* Header */}
       <div className="px-6 py-5 border-b bg-amber-50 flex items-center gap-4">
-        <img
-          src={SDG_IMAGE_MAP[sdg.sdg_number]}
-          alt={`SDG ${sdg.sdg_number} Icon`}
-          className="w-12 h-12 object-contain"
-          loading="lazy"
-        />
         <div className="flex-1">
           <h3 className="text-base md:text-lg font-semibold text-gray-900">
             SDG {sdg.sdg_number}: {sdg.sdg_description}
           </h3>
-          {sdg.sdg_target ? (
-            <p className="text-xs text-gray-600 mt-1">Target: {sdg.sdg_target}</p>
-          ) : null}
         </div>
+        <img
+          src={SDG_IMAGE_MAP[sdg.sdg_number]}
+          alt={`SDG ${sdg.sdg_number} Icon`}
+          className="w-[308px] h-[308px] object-contain mx-auto"
+          loading="lazy"
+        />
       </div>
 
       {/* 4 questions stacked in separate cards */}
