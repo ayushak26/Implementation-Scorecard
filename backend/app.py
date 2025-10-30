@@ -23,6 +23,10 @@ app.add_middleware(
 app.include_router(upload_excel.router)
 app.include_router(questionnaire.router)
 
+@app.get("/")
+def root():
+    return {"ok": True, "msg": "Hello from FastAPI"}
+
 @app.get("/health")
 async def health_check():
     return {"status": "healthy"}
