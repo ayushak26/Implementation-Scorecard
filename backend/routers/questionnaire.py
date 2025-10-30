@@ -3,6 +3,7 @@
 from fastapi import APIRouter, HTTPException
 from typing import List, Dict
 from pydantic import BaseModel
+import os
 
 router = APIRouter(prefix="/api", tags=["questionnaire"])
 
@@ -75,21 +76,77 @@ def get_score_description(score: int) -> str:
 
 @router.get("/questionnaire/template")
 async def get_template():
-    """Return a template structure for the questionnaire"""
-    return {
-        "sdgs": list(range(1, 18)),
-        "dimensions": [
-            "Economic Performance",
-            "Circular Performance",
-            "Environmental Performance",
-            "Social Performance"
-        ],
-        "score_rubric": {
-            0: "N/A",
-            1: "Issue identified, but no plans for further actions",
-            2: "Issue identified, starts planning further actions",
-            3: "Action plan with clear targets and deadlines in place",
-            4: "Action plan operational - some progress in established targets",
-            5: "Action plan operational - achieving the target set"
+    """
+    Return questions from the last uploaded Excel file.
+    If no file has been uploaded yet, loads from default file.
+    
+    Returns:
+        {
+            "success": True,
+            "questions": [...],
+            "sector": "Textiles",
+            "total_questions": 50,
+            "source": "uploaded" or "default"
         }
-    }
+    """
+    try:
+        from utils.cache import questionnaire_cache
+        
+        # Try to get cached uploaded data first
+        cached_data = questionnaire_cache.get_data()
+        
+        if cached_data:
+            # Return uploaded data
+            return {
+                **cached_data,
+                "source": "uploaded"
+            }
+        
+        # No uploaded file yet - load from default file
+        from parsers.excel_parser import extract_questions_for_interactive
+        
+        default_file = os.path.join("backend", "data", "final.xlsx")
+        
+        if not os.path.exists(default_file):
+            default_file = os.path.join("data", "final.xlsx")
+            if not os.path.exists(default_file):
+                raise HTTPException(
+                    404,
+                    "No questionnaire available. Please upload an Excel file first."
+                )
+        
+        all_questions = []
+        last_sector = "General"
+        
+        # Load from default file
+        for sheet_name in ["Textile_revised", "Fertilizer_revised", "Packaging_revised"]:
+            try:
+                result = extract_questions_for_interactive(default_file, sheet_name)
+                if result["questions"]:
+                    all_questions.extend(result["questions"])
+                    last_sector = result.get("sector", last_sector)
+            except Exception as e:
+                print(f"Warning: Could not load sheet '{sheet_name}': {str(e)}")
+                continue
+        
+        if not all_questions:
+            raise HTTPException(
+                500,
+                "No questions available. Please upload an Excel file."
+            )
+        
+        # Cache the default data too
+        questionnaire_cache.set_data(all_questions, last_sector)
+        
+        return {
+            "success": True,
+            "questions": all_questions,
+            "sector": last_sector,
+            "total_questions": len(all_questions),
+            "source": "default"
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(500, f"Failed to load template: {str(e)}")

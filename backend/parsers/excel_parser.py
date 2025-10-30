@@ -199,38 +199,36 @@ class QuestionnaireParser:
 
     # -------------------- helpers: sheet resolution --------------------
     def _resolve_sheet_name(self, desired: str) -> Optional[str]:
-        """
-        Resolve sheet by:
-          1) exact name
-          2) 1-based index (string digits)
-          3) case-insensitive substring (e.g., 'packaging' matches 'Packaging_revised')
-          4) fuzzy best match (min ratio 0.60)
-        """
-        sheetnames = self.wb.sheetnames
 
-        # Exact
-        if desired in sheetnames:
-            return desired
-
-        # Index ("3" → 3rd sheet)
-        if isinstance(desired, str) and desired.isdigit():
-            idx = int(desired)
-            if 1 <= idx <= len(sheetnames):
-                return sheetnames[idx - 1]
-
-        # Substring (case-insensitive)
-        low = desired.strip().lower()
-        for sn in sheetnames:
-            if low in sn.lower():
-                return sn
-
-        # Fuzzy ratio
-        best, best_ratio = None, 0.0
-        for sn in sheetnames:
-            r = SequenceMatcher(None, low, sn.lower()).ratio()
-            if r > best_ratio:
-                best, best_ratio = sn, r
-        return best if best_ratio >= 0.60 else None
+        # Handle None or empty input
+        if not desired or desired is None:
+            return None
+    
+        try:
+            low = desired.strip().lower()
+        except (AttributeError, TypeError):
+            return None
+    
+        avail = self.wb.sheetnames
+    
+        # Exact match (case-insensitive)
+        for a in avail:
+            if a.lower() == low:
+                return a
+    
+        # Fuzzy match
+        best_match, best_score = None, 0.0
+        for a in avail:
+            score = SequenceMatcher(None, low, a.lower()).ratio()
+            if score > best_score:
+                best_score = score
+                best_match = a
+    
+        # Accept if score > 0.6
+        if best_score > 0.6:
+            return best_match
+    
+        return None
 
     def _normalize_sheet_list(self, sheets: List[str]) -> List[str]:
         out: List[str] = []
@@ -564,51 +562,61 @@ def parse_excel_questionnaire(file_source: Union[str, BytesIO], sheet_names: Opt
         parser.close()
 
 
-def extract_questions_for_interactive(file_source: Union[str, BytesIO], sheet_name: str) -> Dict[str, Any]:
+def extract_questions_for_interactive(file_source: Union[str, BytesIO], sheet_name: Optional[str] = None) -> Dict[str, Any]:
     """
     Extract ONLY questions (no scores) for interactive UI.
     Works with both file paths and BytesIO objects (for Vercel serverless).
 
-    'sheet_name' may be:
-      • Exact (e.g., 'Packaging_revised')
-      • Fuzzy (e.g., 'packaging')
-      • A 1-based index as string (e.g., '3' → 3rd sheet)
-    
     Args:
         file_source: Either a file path (str) or BytesIO object
-        sheet_name: Name or identifier of the sheet to extract
+        sheet_name: Name of sheet to extract, or None to extract all default sheets
     
     Returns:
         Dictionary with questions list and sector information
     """
-    parser = QuestionnaireParser(file_source, [sheet_name])
-    try:
-        data = parser.extract_questionnaire_data(sheet_name)
-
-        questions: List[Dict[str, Any]] = []
-        for idx, row in enumerate(data.get("rows", [])):
-            if row.get("question"):
-                questions.append(
-                    {
-                        "id": f"q_{idx + 1}",
+    
+    # Determine which sheets to process
+    if sheet_name is None or sheet_name == "":
+        # Process all default sector sheets
+        sheets_to_process = ["Textile_revised", "Fertilizer_revised", "Packaging_revised"]
+    else:
+        # User specified a specific sheet
+        sheets_to_process = [sheet_name]
+    
+    # Initialize parser with sheets
+    parser = QuestionnaireParser(file_source, sheets_to_process)
+    
+    # Collect all questions from all processed sheets
+    all_questions = []
+    last_sector = "General"
+    
+    for sheet in parser.sheet_names:
+        try:
+            # Use extract_questionnaire_data for each sheet
+            data = parser.extract_questionnaire_data(sheet)
+            
+            for idx, row in enumerate(data.get("rows", [])):
+                if row.get("question"):
+                    all_questions.append({
+                        "id": row.get("id") or f"q_{len(all_questions) + 1}",
                         "sdg_number": row.get("sdg_number"),
                         "sdg_description": row.get("sdg_description"),
                         "sdg_target": row.get("sdg_target"),
                         "sustainability_dimension": row.get("sustainability_dimension"),
                         "kpi": row.get("kpi"),
                         "question": row.get("question"),
-                        "sector": row.get("sector"),
-                    }
-                )
-
-        # Sector from first SDG mapping if present
-        sector = "Unknown"
-        if data.get("sector_by_sdg"):
-            sector = next(iter(data["sector_by_sdg"].values())) or "Unknown"
-
-        return {"questions": questions, "sector": sector}
-    finally:
-        parser.close()
+                        "sector": row.get("sector", "Unknown")
+                    })
+                    last_sector = row.get("sector", last_sector)
+        
+        except Exception as e:
+            logger.warning(f"Failed to extract from sheet '{sheet}': {e}")
+            continue
+    
+    return {
+        "questions": all_questions,
+        "sector": last_sector
+    }
 
 
 # ============================== CLI ==============================
