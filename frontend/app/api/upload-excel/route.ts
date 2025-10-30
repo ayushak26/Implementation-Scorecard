@@ -6,7 +6,6 @@ import path from "path";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const FASTAPI_BASE = process.env.NEXT_PUBLIC_FASTAPI_BASE || "http://backend:8000";
 const CACHE_DIR = path.join(process.cwd(), "data");
 const CACHE_FILE = path.join(CACHE_DIR, "latest_questionnaire.json");
 
@@ -29,7 +28,7 @@ export async function POST(req: NextRequest) {
     const upstreamForm = new FormData();
     upstreamForm.append("file", file, file.name);
 
-    const upstream = await fetch(`${FASTAPI_BASE}/api/upload-excel`, {
+    const upstream = await fetch(`/api/upload-excel`, {
       method: "POST",
       body: upstreamForm,
       // Let fetch set multipart boundary; don't set Content-Type manually

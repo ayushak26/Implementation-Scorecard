@@ -3,12 +3,11 @@ import { NextRequest, NextResponse } from "next/server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-const FASTAPI_BASE = process.env.NEXT_PUBLIC_FASTAPI_BASE || "http://backend:8000";
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const resp = await fetch(`${FASTAPI_BASE}/api/questionnaire/calculate`, {
+    const resp = await fetch(`/api/questionnaire/calculate`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),

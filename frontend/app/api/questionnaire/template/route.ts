@@ -6,7 +6,6 @@ import path from "path";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const FASTAPI_BASE = process.env.NEXT_PUBLIC_FASTAPI_BASE || "http://backend:8000";
 const CACHE_FILE = path.join(process.cwd(), "data", "latest_questionnaire.json");
 
 type Question = {
@@ -74,7 +73,7 @@ export async function GET(_req: NextRequest) {
     }
 
     // 2) Fetch meta from FastAPI and synthesize questions
-    const upstream = await fetch(`${FASTAPI_BASE}/api/questionnaire/template`, {
+    const upstream = await fetch(`/api/questionnaire/template`, {
       method: "GET",
       headers: { "Cache-Control": "no-store" },
       // @ts-ignore
