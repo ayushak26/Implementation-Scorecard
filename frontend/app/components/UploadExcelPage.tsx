@@ -95,10 +95,29 @@ export default function UploadExcelPage() {
       const form = new FormData();
       form.append("file", fixed, fixed.name);
 
+      // ✅ Direct call to FastAPI - no Next.js API route needed
+      // Development: next.config.js proxies to localhost:8000
+      // Production: vercel.json routes to FastAPI
       const resp = await fetch("/api/upload-excel", {
         method: "POST",
         body: form,
       });
+
+      // ✅ Better error handling
+      if (!resp.ok) {
+        const errorText = await resp.text();
+        let errorMsg = "Upload failed";
+        
+        try {
+          const errorData = JSON.parse(errorText);
+          errorMsg = errorData?.detail || errorData?.error || errorMsg;
+        } catch {
+          errorMsg = errorText || errorMsg;
+        }
+        
+        throw new Error(errorMsg);
+      }
+
       let payload: any = {};
       try {
         payload = await resp.json();
@@ -106,21 +125,30 @@ export default function UploadExcelPage() {
         throw new Error("Failed to parse server response.");
       }
 
-      if (!resp.ok || payload?.success === false) {
-        throw new Error(payload?.detail || payload?.error || `Upload failed (${resp.status})`);
+      // Check for success flag
+      if (payload?.success === false) {
+        throw new Error(payload?.error || payload?.detail || "Upload failed");
       }
 
       let qs: Question[] = Array.isArray(payload?.questions) ? payload.questions : [];
+      
       if (qs.length === 0) {
-        throw new Error(payload?.detail || "No questions found in the uploaded Excel file. Ensure the file contains sheets with valid headers: sdg_target, sustainability_dimension, kpi, question, scoring, source, notes, status, comment.");
+        throw new Error(
+          payload?.detail || 
+          "No questions found in the uploaded Excel file. Ensure the file contains sheets with valid headers: sdg_target, sustainability_dimension, kpi, question, scoring, source, notes, status, comment."
+        );
       }
+
+      console.log(`✅ Successfully uploaded ${qs.length} questions from sector: ${payload?.sector}`);
 
       setQuestions(qs);
       setSector(String(payload?.sector || "General"));
       setSelectedSector(""); // Reset sector filter for FormPage
 
+      // Navigate to form page
       setTimeout(() => router.push("/form"), 100);
     } catch (e) {
+      console.error("Upload error:", e);
       setError((e as Error).message || "Failed to upload Excel. Please ensure the file is correctly formatted.");
     } finally {
       setIsBusy(false);
@@ -137,7 +165,7 @@ export default function UploadExcelPage() {
       </div>
 
       <div
-        className={`border-2 border-dashed rounded-xl p-8 text-center ${
+        className={`border-2 border-dashed rounded-xl p-8 text-center transition-colors ${
           dragActive ? "border-secondary bg-green-50" : file ? "border-secondary" : "border-gray-300"
         } cursor-pointer`}
         onDragEnter={handleDrag}
@@ -156,10 +184,30 @@ export default function UploadExcelPage() {
           accept=".xlsx,.xls"
           onChange={(e) => handleFileChange(e.target.files?.[0] ?? null)}
           className="hidden"
+          disabled={isBusy}
         />
         <div className="flex flex-col items-center">
           {file ? (
-            <p className="text-lg font-semibold text-secondary">{file.name}</p>
+            <>
+              <svg
+                className="w-12 h-12 text-secondary mb-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                />
+              </svg>
+              <p className="text-lg font-semibold text-secondary">{file.name}</p>
+              <p className="text-sm text-gray-500 mt-1">
+                {(file.size / 1024).toFixed(2)} KB
+              </p>
+            </>
           ) : (
             <>
               <svg
@@ -189,23 +237,34 @@ export default function UploadExcelPage() {
           className="bg-red-50 border border-red-200 text-red-700 rounded-lg p-4 mt-4 animate-shake"
           role="alert"
         >
-          {error}
+          <div className="flex items-start gap-2">
+            <svg className="w-5 h-5 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+            </svg>
+            <div>
+              <p className="font-medium">Upload Error</p>
+              <p className="text-sm">{error}</p>
+            </div>
+          </div>
         </div>
       )}
 
       <div className="flex justify-end gap-4 mt-6">
         <button
           onClick={reset}
-          className="px-4 py-2 border border-gray-300 rounded-lg text-gray-600 opacity-100"
+          disabled={isBusy}
+          className={`px-4 py-2 border border-gray-300 rounded-lg text-gray-600 ${
+            isBusy ? "opacity-50 cursor-not-allowed" : "hover:bg-gray-50"
+          }`}
           type="button"
         >
           Reset
         </button>
         <button
           onClick={handleExcelUpload}
-          disabled={isBusy}
-          className={`px-4 py-2 bg-black text-white rounded-lg flex items-center gap-2 ${
-            isBusy ? "opacity-50 cursor-not-allowed" : "opacity-100"
+          disabled={isBusy || !file}
+          className={`px-4 py-2 bg-black text-white rounded-lg flex items-center gap-2 transition-opacity ${
+            isBusy || !file ? "opacity-50 cursor-not-allowed" : "hover:opacity-90"
           }`}
         >
           {isBusy && (
@@ -231,7 +290,7 @@ export default function UploadExcelPage() {
               />
             </svg>
           )}
-          Upload & Proceed
+          {isBusy ? "Uploading..." : "Upload & Proceed"}
         </button>
       </div>
     </div>

@@ -6,10 +6,12 @@ const nextConfig = {
     }],
   },
   
-  // Rewrite API calls to backend
   async rewrites() {
-    // In development, proxy to local FastAPI
+    console.log('🔧 Rewrites function called!'); // Add this
+    console.log('Environment:', process.env.NODE_ENV); // Add this
+    
     if (process.env.NODE_ENV === 'development') {
+      console.log('✅ Returning rewrites'); // Add this
       return [
         {
           source: '/api/:path*',
@@ -17,8 +19,7 @@ const nextConfig = {
         },
       ];
     }
-    
-    // In production on Vercel, API routes are handled by vercel.json
+    console.log('❌ Not in development mode'); // Add this
     return [];
   },
 };

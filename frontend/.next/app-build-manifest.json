@@ -16,20 +16,15 @@
       "static/chunks/main-app.js",
       "static/chunks/app/form/page.js"
     ],
-    "/visualization/page": [
+    "/upload-excel/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/visualization/page.js"
+      "static/chunks/app/upload-excel/page.js"
     ],
-    "/visualization/error": [
+    "/_not-found/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/visualization/error.js"
-    ],
-    "/visualization/loading": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/visualization/loading.js"
+      "static/chunks/app/_not-found/page.js"
     ]
   }
 }

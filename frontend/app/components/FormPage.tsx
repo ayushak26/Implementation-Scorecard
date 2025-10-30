@@ -248,7 +248,7 @@ export default function FormPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           responses,
-          questions: questionsWithId,
+          questions: questionsWithId
         }),
       });
 
@@ -283,7 +283,7 @@ export default function FormPage() {
       sessionStorage.setItem("scorecardSector", activeSector);
 
       // Navigate to results
-      router.push("/results");
+      router.push("/visualization");
     } catch (err: any) {
       console.error("Submission error:", err);
       setError(err.message || "Submission failed. Please try again.");
