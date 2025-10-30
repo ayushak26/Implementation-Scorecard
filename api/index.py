@@ -1,16 +1,15 @@
 # api/index.py
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from mangum import Mangum
 import sys
 import os
+from pathlib import Path
 
-# Add backend to Python path BEFORE importing
-backend_path = os.path.join(os.path.dirname(__file__), '..', 'backend')
-sys.path.insert(0, backend_path)
+# Add backend to path
+backend = Path(__file__).parent.parent / "backend"
+sys.path.insert(0, str(backend))
 
-# Now import routers
-from routers import upload_excel, questionnaire  # type: ignore
+from routers import upload_excel, questionnaire
 
 app = FastAPI(title="SDG Assessment API")
 
@@ -26,8 +25,5 @@ app.include_router(upload_excel.router)
 app.include_router(questionnaire.router)
 
 @app.get("/api/health")
-async def health():
+def health():
     return {"status": "healthy", "message": "Running on Vercel"}
-
-# Vercel serverless handler
-handler = Mangum(app, lifespan="off")
