@@ -4,7 +4,8 @@ import logging
 import re
 from dataclasses import dataclass, asdict
 from difflib import SequenceMatcher
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Union
+from io import BytesIO
 
 import openpyxl
 from openpyxl.utils import get_column_letter
@@ -71,7 +72,7 @@ RUBRIC_CANON: Dict[int, str] = {
     5: "Action plan operational - achieving the target set",
 }
 
-# Phrases to infer scores when numbers aren’t present
+# Phrases to infer scores when numbers aren't present
 RUBRIC_PHRASES: Dict[int, List[str]] = {
     0: ["n/a", "na", "not applicable"],
     1: ["issue identified", "no plans"],
@@ -81,7 +82,7 @@ RUBRIC_PHRASES: Dict[int, List[str]] = {
     5: ["operational", "achieving the target", "achieving target"],
 }
 
-# SDG block markers: “SDG” title at B1, then B2,B8,...,B98 for SDG 1..17
+# SDG block markers: "SDG" title at B1, then B2,B8,...,B98 for SDG 1..17
 SDG_MARKERS: Dict[int, int] = {
     1: 2,
     2: 8,
@@ -101,7 +102,7 @@ SDG_MARKERS: Dict[int, int] = {
     16: 92,
     17: 98,
 }
-SDG_TITLE_ROW = 1  # row with the title “SDG” in column B
+SDG_TITLE_ROW = 1  # row with the title "SDG" in column B
 
 
 # ============================== Data Model ==============================
@@ -133,6 +134,7 @@ class QuestionnaireParser:
       • Extracts score from text or phrases
       • Works with 'Textile_revised', 'Fertilizer_revised', 'Packaging_revised'
       • Lets you pick a sheet by name, fuzzy name (e.g. "packaging"), or "3" (3rd sheet)
+      • Supports both file paths (str) and BytesIO objects for serverless deployment
     """
 
     REQUIRED_HEADERS: Dict[str, List[str]] = {
@@ -147,9 +149,15 @@ class QuestionnaireParser:
         "comment": ["comment", "comments"],
     }
 
-    def __init__(self, file_path: str, sheet_names: Optional[List[str]] = None):
-        self.file_path = file_path
-        # defaults include Packaging
+    def __init__(self, file_source: Union[str, BytesIO], sheet_names: Optional[List[str]] = None):
+        """
+        Initialize parser with either a file path or BytesIO object.
+        
+        Args:
+            file_source: Either a file path (str) or BytesIO object containing Excel data
+            sheet_names: Optional list of sheet names to process
+        """
+        self.file_source = file_source
         self._requested_sheets = sheet_names or [
             "Textile_revised",
             "Fertilizer_revised",
@@ -157,8 +165,15 @@ class QuestionnaireParser:
         ]
 
         try:
-            self.wb = openpyxl.load_workbook(file_path, data_only=True)
-            logger.info(f"Loaded Excel: {file_path} | Sheets: {self.wb.sheetnames}")
+            # Load workbook from either file path or BytesIO
+            if isinstance(file_source, BytesIO):
+                # Reset pointer to beginning for BytesIO
+                file_source.seek(0)
+                self.wb = openpyxl.load_workbook(file_source, data_only=True)
+                logger.info(f"Loaded Excel from BytesIO | Sheets: {self.wb.sheetnames}")
+            else:
+                self.wb = openpyxl.load_workbook(file_source, data_only=True)
+                logger.info(f"Loaded Excel: {file_source} | Sheets: {self.wb.sheetnames}")
         except Exception as e:
             logger.exception(f"Failed to load workbook: {e}")
             raise
@@ -197,7 +212,7 @@ class QuestionnaireParser:
         if desired in sheetnames:
             return desired
 
-        # Index (“3” → 3rd sheet)
+        # Index ("3" → 3rd sheet)
         if isinstance(desired, str) and desired.isdigit():
             idx = int(desired)
             if 1 <= idx <= len(sheetnames):
@@ -288,7 +303,7 @@ class QuestionnaireParser:
         """Return 'Textiles'/'Fertilizers'/'Packaging' or None."""
         if not raw:
             return None
-        # remove the label “Sector:”
+        # remove the label "Sector:"
         s = re.sub(r"\bsector\b\s*[:\-–|]?\s*", "", str(raw), flags=re.IGNORECASE)
         tokens = re.split(r"[,/;|]+", s)
         candidates: List[str] = []
@@ -373,13 +388,13 @@ class QuestionnaireParser:
         if m:
             return int(m.group(1))
 
-        # If exactly one rubric-like “N:” appears
+        # If exactly one rubric-like "N:" appears
         nums = re.findall(r"(?<!\d)([0-5])\s*[:\-\–\.\)]", txt)
         uniq = sorted({int(n) for n in nums})
         if len(uniq) == 1:
             return uniq[0]
         if len(uniq) > 1:
-            return None  # too many numbers; don’t guess
+            return None  # too many numbers; don't guess
 
         # Phrase mapping
         low = re.sub(r"\s+", " ", txt).lower()
@@ -471,7 +486,7 @@ class QuestionnaireParser:
                 comment=get_cell_str(r, "comment"),
             )
 
-            # Strict skip: if all “detail” fields are empty, drop it
+            # Strict skip: if all "detail" fields are empty, drop it
             empties = [
                 row.sustainability_dimension,
                 row.kpi,
@@ -523,48 +538,77 @@ class QuestionnaireParser:
             key = self._norm_key(sheet) or sheet
             out[key] = self.extract_questionnaire_data(sheet)
         return out
+    
+    def close(self):
+        """Close the workbook to free resources."""
+        if hasattr(self, 'wb'):
+            self.wb.close()
 
 
 # ============================== Convenience Wrappers ==============================
-def parse_excel_questionnaire(file_path: str, sheet_names: Optional[List[str]] = None) -> Dict[str, Dict[str, Any]]:
-    parser = QuestionnaireParser(file_path, sheet_names)
-    return parser.parse_all_data()
+def parse_excel_questionnaire(file_source: Union[str, BytesIO], sheet_names: Optional[List[str]] = None) -> Dict[str, Dict[str, Any]]:
+    """
+    Parse Excel questionnaire from file path or BytesIO.
+    
+    Args:
+        file_source: Either a file path (str) or BytesIO object
+        sheet_names: Optional list of sheet names to process
+    
+    Returns:
+        Dictionary with parsed data for all requested sheets
+    """
+    parser = QuestionnaireParser(file_source, sheet_names)
+    try:
+        return parser.parse_all_data()
+    finally:
+        parser.close()
 
 
-def extract_questions_for_interactive(file_path: str, sheet_name: str) -> Dict[str, Any]:
+def extract_questions_for_interactive(file_source: Union[str, BytesIO], sheet_name: str) -> Dict[str, Any]:
     """
     Extract ONLY questions (no scores) for interactive UI.
+    Works with both file paths and BytesIO objects (for Vercel serverless).
 
     'sheet_name' may be:
       • Exact (e.g., 'Packaging_revised')
       • Fuzzy (e.g., 'packaging')
       • A 1-based index as string (e.g., '3' → 3rd sheet)
+    
+    Args:
+        file_source: Either a file path (str) or BytesIO object
+        sheet_name: Name or identifier of the sheet to extract
+    
+    Returns:
+        Dictionary with questions list and sector information
     """
-    parser = QuestionnaireParser(file_path, [sheet_name])
-    data = parser.extract_questionnaire_data(sheet_name)
+    parser = QuestionnaireParser(file_source, [sheet_name])
+    try:
+        data = parser.extract_questionnaire_data(sheet_name)
 
-    questions: List[Dict[str, Any]] = []
-    for idx, row in enumerate(data.get("rows", [])):
-        if row.get("question"):
-            questions.append(
-                {
-                    "id": f"q_{idx + 1}",
-                    "sdg_number": row.get("sdg_number"),
-                    "sdg_description": row.get("sdg_description"),
-                    "sdg_target": row.get("sdg_target"),
-                    "sustainability_dimension": row.get("sustainability_dimension"),
-                    "kpi": row.get("kpi"),
-                    "question": row.get("question"),
-                    "sector": row.get("sector"),
-                }
-            )
+        questions: List[Dict[str, Any]] = []
+        for idx, row in enumerate(data.get("rows", [])):
+            if row.get("question"):
+                questions.append(
+                    {
+                        "id": f"q_{idx + 1}",
+                        "sdg_number": row.get("sdg_number"),
+                        "sdg_description": row.get("sdg_description"),
+                        "sdg_target": row.get("sdg_target"),
+                        "sustainability_dimension": row.get("sustainability_dimension"),
+                        "kpi": row.get("kpi"),
+                        "question": row.get("question"),
+                        "sector": row.get("sector"),
+                    }
+                )
 
-    # Sector from first SDG mapping if present
-    sector = "Unknown"
-    if data.get("sector_by_sdg"):
-        sector = next(iter(data["sector_by_sdg"].values())) or "Unknown"
+        # Sector from first SDG mapping if present
+        sector = "Unknown"
+        if data.get("sector_by_sdg"):
+            sector = next(iter(data["sector_by_sdg"].values())) or "Unknown"
 
-    return {"questions": questions, "sector": sector}
+        return {"questions": questions, "sector": sector}
+    finally:
+        parser.close()
 
 
 # ============================== CLI ==============================

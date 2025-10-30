@@ -1,7 +1,6 @@
 from fastapi import APIRouter, UploadFile, File, HTTPException
 from parsers.excel_parser import extract_questions_for_interactive
-import tempfile
-import os
+from io import BytesIO
 import openpyxl
 
 router = APIRouter(prefix="/api", tags=["upload"])
@@ -11,19 +10,18 @@ async def upload_excel(file: UploadFile = File(...)):
     """
     Upload Excel and return QUESTIONS ONLY (for interactive questionnaire) from all sheets.
     NO SCORES returned - user will answer them.
+    Uses in-memory processing (BytesIO) - perfect for Vercel serverless deployment.
     """
     if not file.filename.endswith(('.xlsx', '.xls')):
-        raise HTTPException(400, "Only Excel files are supported")
-    
-    # Save uploaded file temporarily
-    with tempfile.NamedTemporaryFile(delete=False, suffix='.xlsx') as tmp:
-        content = await file.read()
-        tmp.write(content)
-        tmp_path = tmp.name
+        raise HTTPException(400, "Only Excel files (.xlsx, .xls) are supported")
     
     try:
-        # Load workbook to get sheet names
-        workbook = openpyxl.load_workbook(tmp_path, read_only=True)
+        # Read file content into memory
+        content = await file.read()
+        excel_file = BytesIO(content)
+        
+        # Load workbook from memory to get sheet names
+        workbook = openpyxl.load_workbook(excel_file, read_only=True)
         all_questions = []
         final_sector = None
         invalid_sheets = []
@@ -31,17 +29,27 @@ async def upload_excel(file: UploadFile = File(...)):
         # Process all sheets
         for sheet in workbook.sheetnames:
             try:
-                result = extract_questions_for_interactive(tmp_path, sheet)
+                # Reset BytesIO pointer for each sheet
+                excel_file.seek(0)
+                
+                # Pass BytesIO object to parser instead of file path
+                result = extract_questions_for_interactive(excel_file, sheet)
+                
                 if result["questions"]:
                     all_questions.extend(result["questions"])
                     final_sector = result["sector"]  # Use last non-empty sector
+                    
             except ValueError as e:
                 if "Header row not found" in str(e):
                     invalid_sheets.append(sheet)
                 else:
                     raise  # Re-raise unexpected errors
             except Exception as e:
-                raise HTTPException(500, f"Error processing sheet '{sheet}': {str(e)}")
+                # Log but continue with other sheets
+                print(f"Error processing sheet '{sheet}': {str(e)}")
+                continue
+        
+        workbook.close()  # Clean up
         
         if not all_questions:
             error_msg = "No valid questions found in the Excel file."
@@ -55,9 +63,11 @@ async def upload_excel(file: UploadFile = File(...)):
             "sector": final_sector,
             "total_questions": len(all_questions)
         }
+        
     except openpyxl.utils.exceptions.InvalidFileException:
-        raise HTTPException(400, "Invalid Excel file format")
+        raise HTTPException(400, "Invalid Excel file format. Please upload a valid .xlsx or .xls file.")
+    except HTTPException:
+        # Re-raise HTTP exceptions as-is
+        raise
     except Exception as e:
         raise HTTPException(500, f"Failed to parse Excel: {str(e)}")
-    finally:
-        os.unlink(tmp_path)
