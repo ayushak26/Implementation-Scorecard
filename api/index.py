@@ -1,6 +1,7 @@
 # api/index.py
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from mangum import Mangum
 import sys
 import os
 from pathlib import Path
@@ -27,3 +28,6 @@ app.include_router(questionnaire.router)
 @app.get("/api/health")
 def health():
     return {"status": "healthy", "message": "Running on Vercel"}
+
+# Mangum handler for Vercel
+handler = Mangum(app, lifespan="off")
