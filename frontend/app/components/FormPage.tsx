@@ -136,14 +136,25 @@ export default function FormPage() {
       setIsBusy(true);
       setError(null);
       try {
+        // ✅ FIXED: Direct call to FastAPI backend
+        // No Next.js API route needed - next.config.js handles the proxy
         const res = await fetch("/api/questionnaire/template", {
           method: "GET",
           cache: "no-store",
         });
 
         if (!res.ok) {
-          const data = await res.json().catch(() => ({}));
-          throw new Error(data?.error || "Failed to load questions");
+          const errorText = await res.text();
+          let errorMsg = "Failed to load questions";
+          
+          try {
+            const errorData = JSON.parse(errorText);
+            errorMsg = errorData?.detail || errorData?.error || errorMsg;
+          } catch {
+            errorMsg = errorText || errorMsg;
+          }
+          
+          throw new Error(errorMsg);
         }
 
         const data = await res.json();
@@ -164,6 +175,7 @@ export default function FormPage() {
           setRubric(data.score_rubric);
         }
       } catch (err: any) {
+        console.error("Failed to fetch questions:", err);
         setError(err.message || "Failed to load questionnaire");
         setCtxQuestions([]);
       } finally {
@@ -213,10 +225,10 @@ export default function FormPage() {
   };
 
   const handleSubmit = async () => {
-    if (!allComplete|| isBusy) return;
+    if (!allComplete || isBusy) return;
 
-      setIsBusy(true);
-      setError(null);
+    setIsBusy(true);
+    setError(null);
 
     try {
       const questionsWithId = pages.flat().map((q) => ({
@@ -229,31 +241,53 @@ export default function FormPage() {
         score: scoresByKey[makeKey(q)] ?? 3,
       }));
 
+      // ✅ FIXED: Direct call to FastAPI backend
+      // No Next.js API route needed - vercel.json routes this in production
       const res = await fetch("/api/questionnaire/calculate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           responses,
           questions: questionsWithId,
-          sector: activeSector,
         }),
       });
 
-      const payload = await res.json().catch(() => ({}));
-      if (!res.ok || payload.success === false) {
-        throw new Error(payload.error || "Failed to calculate results");
+      if (!res.ok) {
+        const errorText = await res.text();
+        let errorMsg = "Failed to calculate results";
+        
+        try {
+          const errorData = JSON.parse(errorText);
+          errorMsg = errorData?.detail || errorData?.error || errorMsg;
+        } catch {
+          errorMsg = errorText || errorMsg;
+        }
+        
+        throw new Error(errorMsg);
+      }
+
+      const payload = await res.json();
+
+      // Check if response has the expected structure
+      if (!payload || payload.success === false) {
+        throw new Error(payload?.error || "Calculation failed");
       }
 
       const result = payload.data;
       if (!result || typeof result !== "object" || !Object.keys(result).length) {
-        throw new Error("Invalid scorecard data");
+        throw new Error("Invalid scorecard data returned from server");
       }
 
+      // Store result in sessionStorage
       sessionStorage.setItem("scorecard", JSON.stringify(result));
+      sessionStorage.setItem("scorecardSector", activeSector);
 
-      router.push("/visualization");
+      // Navigate to results
+      router.push("/results");
     } catch (err: any) {
-      setError(err.message || "Submission failed");
+      console.error("Submission error:", err);
+      setError(err.message || "Submission failed. Please try again.");
+    } finally {
       setIsBusy(false);
     }
   };
@@ -282,18 +316,28 @@ export default function FormPage() {
       {/* Error */}
       {error && (
         <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg p-4 mb-6 animate-shake">
-          {error}
+          <div className="flex items-start gap-2">
+            <svg className="w-5 h-5 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+            </svg>
+            <div>
+              <p className="font-medium">Error</p>
+              <p className="text-sm">{error}</p>
+            </div>
+          </div>
         </div>
       )}
 
       {/* Loading / Empty / Content */}
-      {isBusy ? (
+      {isBusy && pages.length === 0 ? (
         <div className="text-center text-neutral py-12">
-          Loading questions for <strong>{activeSector}</strong>...
+          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary mb-4"></div>
+          <p>Loading questions for <strong>{activeSector}</strong>...</p>
         </div>
       ) : pages.length === 0 ? (
         <div className="text-center text-neutral py-12">
-          No complete 4-dimension cards available for <strong>{activeSector}</strong>.
+          <p>No complete 4-dimension cards available for <strong>{activeSector}</strong>.</p>
+          <p className="text-sm mt-2">Please try uploading an Excel file with questions.</p>
         </div>
       ) : (
         <>
@@ -360,9 +404,14 @@ export default function FormPage() {
                     />
                   </svg>
                 )}
-                Submit & View Results
+                {isBusy ? "Submitting..." : "Submit & View Results"}
               </button>
             )}
+          </div>
+
+          {/* Page indicator */}
+          <div className="text-center mt-4 text-sm text-gray-500">
+            Page {pageIdx + 1} of {totalPages}
           </div>
         </>
       )}
