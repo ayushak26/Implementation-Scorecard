@@ -131,13 +131,39 @@ export default function FormPage() {
       ? selectedSector
       : SECTOR_ORDER[0];
 
-  useEffect(() => {
-    const fetchQuestions = async () => {
-      setIsBusy(true);
-      setError(null);
-      try {
-        // ✅ FIXED: Direct call to FastAPI backend
-        // No Next.js API route needed - next.config.js handles the proxy
+// In FormPage.tsx, update the useEffect:
+
+useEffect(() => {
+  const fetchQuestions = async () => {
+    setIsBusy(true);
+    setError(null);
+    
+    try {
+      let raw: Question[] = [];
+      let dataSource = "";
+      
+      // 1️⃣ FIRST PRIORITY: Check localStorage for uploaded Excel
+      if (typeof window !== "undefined") {
+        const stored = localStorage.getItem("uploadedQuestions");
+        if (stored) {
+          try {
+            const parsed = JSON.parse(stored);
+            if (Array.isArray(parsed) && parsed.length > 0) {
+              raw = parsed;
+              dataSource = "Uploaded Excel (localStorage)";
+              console.log(`✅ Using uploaded Excel from localStorage (${parsed.length} questions)`);
+            }
+          } catch (e) {
+            console.warn("Failed to parse stored questions:", e);
+            localStorage.removeItem("uploadedQuestions"); // Clean up corrupted data
+          }
+        }
+      }
+      
+      // 2️⃣ FALLBACK: Use default Excel from API
+      if (raw.length === 0) {
+        console.log("📡 No uploaded Excel found, using default Excel...");
+        
         const res = await fetch("/api/questionnaire/template", {
           method: "GET",
           cache: "no-store",
@@ -158,33 +184,39 @@ export default function FormPage() {
         }
 
         const data = await res.json();
-        const raw: Question[] = Array.isArray(data.questions) ? data.questions : [];
-
-        if (raw.length === 0) throw new Error("No questions available");
-
-        const sanitized = sanitizeQuestions(raw);
-        setCtxQuestions(sanitized);
-
-        const init: Record<string, number> = {};
-        sanitized.forEach((q) => {
-          init[makeKey(q)] = 3;
-        });
-        setScoresByKey(init);
-
-        if (data.score_rubric && typeof data.score_rubric === "object") {
-          setRubric(data.score_rubric);
-        }
-      } catch (err: any) {
-        console.error("Failed to fetch questions:", err);
-        setError(err.message || "Failed to load questionnaire");
-        setCtxQuestions([]);
-      } finally {
-        setIsBusy(false);
+        raw = Array.isArray(data.questions) ? data.questions : [];
+        dataSource = "Default Excel (backend/data/final.xlsx)";
+        
+        console.log(`✅ Using default Excel from API (${raw.length} questions)`);
       }
-    };
 
-    fetchQuestions();
-  }, [setCtxQuestions]);
+      if (raw.length === 0) {
+        throw new Error("No questions available. Please upload an Excel file.");
+      }
+
+      console.log(`📊 Loaded ${raw.length} questions from: ${dataSource}`);
+
+      const sanitized = sanitizeQuestions(raw);
+      setCtxQuestions(sanitized);
+
+      // Initialize scores
+      const init: Record<string, number> = {};
+      sanitized.forEach((q) => {
+        init[makeKey(q)] = 3;
+      });
+      setScoresByKey(init);
+
+    } catch (err: any) {
+      console.error("Failed to fetch questions:", err);
+      setError(err.message || "Failed to load questionnaire");
+      setCtxQuestions([]);
+    } finally {
+      setIsBusy(false);
+    }
+  };
+
+  fetchQuestions();
+}, [setCtxQuestions]);
 
   const filteredQuestions = useMemo(() => {
     return ctxQuestions.filter((q) => canonicalSector(q.sector) === activeSector);

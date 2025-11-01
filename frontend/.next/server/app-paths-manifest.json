@@ -1,7 +1,3 @@
 {
-  "/_not-found/page": "app/_not-found/page.js",
-  "/upload-excel/page": "app/upload-excel/page.js",
-  "/page": "app/page.js",
-  "/form/page": "app/form/page.js",
-  "/visualization/page": "app/visualization/page.js"
+  "/sector-picker/page": "app/sector-picker/page.js"
 }
