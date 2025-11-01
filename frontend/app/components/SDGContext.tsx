@@ -1,7 +1,7 @@
 // app/components/SDGContext.tsx
 "use client";
 
-import React, { createContext, useState, ReactNode } from "react";
+import React, { createContext, useState, ReactNode, useEffect } from "react";
 
 type Question = {
   id: string;
@@ -32,67 +32,61 @@ export const SDGContext = createContext<SDGContextType | null>(null);
 export function SDGProvider({ children }: { children: ReactNode }) {
   const [questions, setQuestions] = useState<Question[]>([]);
   const [sector, setSector] = useState<string>("Textiles");
-  const [selectedSector, setSelectedSector] = useState<string>("Textiles");
+  const [selectedSector, setSelectedSector] = useState<string>(""); // Start empty
   const [file, setFile] = useState<File | null>(null);
 
-  /**
-   * reset() - Clears ONLY scorecard results, NOT uploaded questions
-   * Use this when user wants to retake the assessment with same questions
-   */
-  const reset = () => {
-    console.log("🔄 Resetting scorecard results (keeping uploaded Excel)...");
-    
-    // Clear only scorecard results from sessionStorage
+  // Load selected sector from sessionStorage on mount
+  useEffect(() => {
     if (typeof window !== "undefined") {
-      sessionStorage.removeItem("scorecard");
-      sessionStorage.removeItem("scorecardSector");
-      
-      // Check if uploaded questions exist
-      const hasUploadedQuestions = localStorage.getItem("uploadedQuestions");
-      if (hasUploadedQuestions) {
-        console.log("✅ Uploaded Excel preserved in localStorage");
+      const saved = sessionStorage.getItem("selectedSector");
+      if (saved) {
+        console.log("📂 Restored selected sector from session:", saved);
+        setSelectedSector(saved);
       }
     }
-    
-    // Reset context state
-    setSector("Textiles");
-    setSelectedSector("Textiles");
-    setFile(null);
-    
-    // DON'T clear questions - they will reload from localStorage
-    // setQuestions([]); ← DO NOT DO THIS
-    
-    console.log("✅ Reset complete - uploaded questions preserved");
-  };
+  }, []);
 
-  /**
-   * clearAll() - Clears EVERYTHING including uploaded Excel
-   * Use this when user wants to start completely fresh
-   */
-  const clearAll = () => {
-    console.log("🗑️ Clearing ALL data including uploaded Excel...");
+  // Save selected sector to sessionStorage when it changes
+  useEffect(() => {
+    if (selectedSector && typeof window !== "undefined") {
+      sessionStorage.setItem("selectedSector", selectedSector);
+      console.log("💾 Saved selected sector to session:", selectedSector);
+    }
+  }, [selectedSector]);
+
+  const reset = () => {
+    console.log("🔄 Resetting (keeping uploaded Excel)...");
     
     if (typeof window !== "undefined") {
-      // Clear scorecard results
       sessionStorage.removeItem("scorecard");
       sessionStorage.removeItem("scorecardSector");
-      
-      // Clear uploaded Excel data
+      sessionStorage.removeItem("selectedSector"); // Clear sector selection
+    }
+    
+    setSector("Textiles");
+    setSelectedSector(""); // Reset to empty
+    setFile(null);
+    
+    console.log("✅ Reset complete");
+  };
+
+  const clearAll = () => {
+    console.log("🗑️ Clearing all data...");
+    
+    if (typeof window !== "undefined") {
+      sessionStorage.clear();
       localStorage.removeItem("uploadedQuestions");
       localStorage.removeItem("uploadedSector");
       localStorage.removeItem("uploadedTimestamp");
       localStorage.removeItem("uploadedFilename");
-      
-      console.log("✅ All data cleared from storage");
     }
     
-    // Reset all context state
     setQuestions([]);
     setSector("Textiles");
-    setSelectedSector("Textiles");
+    setSelectedSector("");
     setFile(null);
     
-    console.log("✅ Complete reset - will use default Excel on next load");
+    console.log("✅ All data cleared");
   };
 
   return (

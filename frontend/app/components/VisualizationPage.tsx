@@ -1,18 +1,15 @@
 // app/components/VisualizationPage.tsx
 "use client";
 
-import React, { useState, useEffect, useMemo, useContext } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import { useRouter } from "next/navigation";
 import { SDGContext } from "./SDGContext";
 import SdgGridRouletteVisualization from "./scorecard-viz";
 
 type Question = {
-  id: string;
   sdg_number: number;
   sdg_description: string;
-  sdg_target: string;
   sustainability_dimension: string;
-  kpi: string;
   question: string;
   sector: string;
   score?: number;
@@ -20,67 +17,38 @@ type Question = {
 
 type SectorData = Record<string, { rows: Question[] }>;
 
-function normalizeKey(s: string | undefined | null) {
-  return (s ?? "").trim().toLowerCase();
-}
-
 export default function VisualizationPage() {
   const context = useContext(SDGContext);
   const router = useRouter();
 
   if (!context) return null;
-  const { sector: ctxSector, selectedSector: ctxSelectedSector, reset } = context;
+  const { reset } = context;
 
   const [isBusy, setIsBusy] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [sectorData, setSectorData] = useState<SectorData | null>(null);
+  const [currentSector, setCurrentSector] = useState<string>("");
+  const [rows, setRows] = useState<Question[]>([]);
 
-  // We keep two pieces of selection state:
-  // - selectedVizSectorUI: what the <select> shows (original key string)
-  // - selectedVizSectorKey: the actual original key used to read rows
-  const [selectedVizSectorUI, setSelectedVizSectorUI] = useState<string>("");
-
-  /** Build a lookup from normalized key -> original sector key, plus a stable ordered list of original keys */
-  const sectorKeyLookup = useMemo(() => {
-    const map = new Map<string, string>();
-    const originals: string[] = sectorData ? Object.keys(sectorData) : [];
-    for (const k of originals) map.set(normalizeKey(k), k);
-    // Sort originals for nicer UI
-    originals.sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" }));
-    return { map, originals };
-  }, [sectorData]);
-
-  /** Resolve any user/context provided sector name to the exact original key in sectorData */
-  const resolveToOriginalKey = (name: string | undefined | null): string | null => {
-    if (!name) return null;
-    const found = sectorKeyLookup.map.get(normalizeKey(name));
-    return found ?? null;
-  };
-
-  /** Initial load of visualization data (from sessionStorage or fallback API) */
+  // Load visualization data
   useEffect(() => {
-    const loadVisualizationData = async () => {
+    const loadData = async () => {
       setIsBusy(true);
       setError(null);
+      
       try {
         let data: SectorData | null = null;
 
-        // Primary: sessionStorage
+        // Load from sessionStorage
         if (typeof window !== "undefined") {
           const raw = sessionStorage.getItem("scorecard");
           if (raw) {
             try {
               data = JSON.parse(raw) as SectorData;
-            } catch {
-              data = null;
+            } catch (e) {
+              console.error("Failed to parse scorecard:", e);
             }
           }
-        }
-
-        // Fallback: temp API
-        if (!data) {
-          const r = await fetch("/api/result/latest", { cache: "no-store" });
-          if (r.ok) data = (await r.json()) as SectorData;
         }
 
         if (!data || typeof data !== "object" || Object.keys(data).length === 0) {
@@ -88,6 +56,12 @@ export default function VisualizationPage() {
         }
 
         setSectorData(data);
+
+        // Get first sector and its rows
+        const firstSector = Object.keys(data)[0];
+        setCurrentSector(firstSector);
+        setRows(data[firstSector]?.rows || []);
+
       } catch (e: any) {
         setError(e?.message || "Failed to load visualization data.");
         setSectorData(null);
@@ -95,84 +69,149 @@ export default function VisualizationPage() {
         setIsBusy(false);
       }
     };
-    loadVisualizationData();
+
+    loadData();
   }, []);
 
-  /** Decide the initial selected sector once sectorData + context are available */
-  useEffect(() => {
-    if (!sectorData) return;
-
-    // Try context.selectedSector (but ignore "All Sectors")
-    let initial =
-      ctxSelectedSector && normalizeKey(ctxSelectedSector) !== "all sectors"
-        ? resolveToOriginalKey(ctxSelectedSector)
-        : null;
-
-    // Then try context.sector
-    if (!initial) {
-      initial = resolveToOriginalKey(ctxSector);
-    }
-
-    // Then first available key
-    if (!initial) {
-      initial = sectorKeyLookup.originals[0] ?? "General";
-    }
-
-    setSelectedVizSectorUI(initial);
-  }, [sectorData, ctxSelectedSector, ctxSector, sectorKeyLookup.originals]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  /** Derive rows for the currently selected UI value */
-  const rows = useMemo(() => {
-    if (!sectorData) return [];
-    const originalKey =
-      resolveToOriginalKey(selectedVizSectorUI) ??
-      (sectorKeyLookup.originals.length ? sectorKeyLookup.originals[0] : "");
-    if (!originalKey) return [];
-    return sectorData[originalKey]?.rows ?? [];
-  }, [sectorData, selectedVizSectorUI, sectorKeyLookup.originals]); // eslint-disable-line react-hooks/exhaustive-deps
-
   const handleReset = () => {
-    try {
-      if (typeof window !== "undefined") sessionStorage.removeItem("scorecard");
-    } catch {}
+    if (typeof window !== "undefined") {
+      sessionStorage.removeItem("scorecard");
+      sessionStorage.removeItem("scorecardSector");
+    }
     reset();
     router.push("/");
   };
 
+  // 📥 CSV Download Function
+  const handleDownloadCSV = () => {
+    if (!rows || rows.length === 0) {
+      alert("No data available to download");
+      return;
+    }
+
+    try {
+      // CSV Headers
+      const headers = ["SDG", "Sustainability Dimension", "Question", "Score"];
+      
+      // Build CSV rows
+      const csvRows = rows.map(row => {
+        const sdg = row.sdg_number || "";
+        const dimension = row.sustainability_dimension || "";
+        const question = (row.question || "").replace(/"/g, '""'); // Escape quotes
+        const score = row.score !== undefined ? row.score : "";
+        
+        return [
+          `"${sdg}"`,
+          `"${dimension}"`,
+          `"${question}"`,
+          `"${score}"`
+        ].join(",");
+      });
+
+      // Combine headers and rows
+      const csvContent = [
+        headers.join(","),
+        ...csvRows
+      ].join("\n");
+
+      // Create blob and download
+      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+      const link = document.createElement("a");
+      
+      // Filename with timestamp
+      const timestamp = new Date().toISOString().split("T")[0];
+      const filename = `SDG_Assessment_${currentSector}_${timestamp}.csv`;
+      
+      const url = URL.createObjectURL(blob);
+      link.setAttribute("href", url);
+      link.setAttribute("download", filename);
+      link.style.visibility = "hidden";
+      
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      
+      console.log(`✅ Downloaded: ${filename}`);
+    } catch (error) {
+      console.error("CSV download error:", error);
+      alert("Failed to download CSV. Please try again.");
+    }
+  };
+
   return (
     <div className="bg-white rounded-2xl shadow-lg p-6 animate-fadeIn">
+      {/* Header */}
       <div className="text-center mb-6">
         <h2 className="text-2xl font-bold text-primary">SDG Performance Visualization</h2>
         <p className="text-neutral mt-2">
-          Explore your sector&apos;s ({selectedVizSectorUI || "—"}) SDG performance metrics and analytics.
+          Sector: <span className="font-medium">{currentSector}</span>
         </p>
       </div>
 
+      {/* Error Message */}
       {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg p-4 mb-6 animate-shake" role="alert">
-          {error}
+        <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg p-4 mb-6" role="alert">
+          <p className="font-medium">Error</p>
+          <p className="text-sm">{error}</p>
         </div>
       )}
 
+      {/* Loading State */}
       {isBusy ? (
-        <div className="text-center text-neutral">Loading visualization...</div>
+        <div className="text-center py-12">
+          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary mb-4"></div>
+          <p className="text-neutral">Loading visualization...</p>
+        </div>
       ) : (
         <>
+          {/* Visualization */}
           <div className="mb-6">
             {rows.length > 0 ? (
-              <SdgGridRouletteVisualization rows={rows} sector={selectedVizSectorUI} />
+              <SdgGridRouletteVisualization rows={rows} sector={currentSector} />
             ) : (
-              <div className="text-center text-neutral">
-                No data available for the selected sector. Please submit the questionnaire again.
+              <div className="text-center text-neutral py-12">
+                No data available. Please submit the questionnaire again.
               </div>
             )}
           </div>
         </>
       )}
 
-      <div className="flex justify-end mt-6">
-        <button onClick={handleReset} className="px-4 py-2 bg-black text-white rounded-lg opacity-100">
-          Reset & Start Over
+      {/* Action Buttons */}
+      <div className="flex justify-between items-center mt-6 gap-4">
+        {/* Left: Download CSV */}
+        <button 
+          onClick={handleDownloadCSV}
+          disabled={isBusy || !rows || rows.length === 0}
+          className={`px-4 py-2 bg-green-600 text-white rounded-lg transition flex items-center gap-2 ${
+            isBusy || !rows || rows.length === 0
+              ? "opacity-50 cursor-not-allowed"
+              : "hover:bg-green-700"
+          }`}
+        >
+          <svg 
+            className="w-5 h-5" 
+            fill="none" 
+            stroke="currentColor" 
+            viewBox="0 0 24 24"
+          >
+            <path 
+              strokeLinecap="round" 
+              strokeLinejoin="round" 
+              strokeWidth={2} 
+              d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" 
+            />
+          </svg>
+          Download CSV
+        </button>
+
+        {/* Right: Reset */}
+        <button 
+          onClick={handleReset} 
+          className="px-4 py-2 bg-black text-white rounded-lg hover:opacity-90 transition"
+        >
+          Back to Sector Selection
         </button>
       </div>
     </div>

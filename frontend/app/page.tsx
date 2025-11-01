@@ -1,3 +1,4 @@
+// app/page.tsx
 "use client";
 
 import { useEffect } from "react";
@@ -7,19 +8,9 @@ export default function HomePage() {
   const router = useRouter();
 
   useEffect(() => {
-    // Check if there's an uploaded Excel
-    const hasUpload = typeof window !== "undefined" && 
-                      localStorage.getItem("uploadedQuestions");
-    
-    if (hasUpload) {
-      // Has upload → Go to sector picker
-      console.log("📂 Found uploaded Excel, redirecting to sector picker");
-      router.push("/sector-picker");
-    } else {
-      // No upload → Show upload page or landing
-      console.log("📂 No uploaded Excel, showing upload page");
-      router.push("/upload-excel");
-    }
+    // Always redirect to sector picker
+    console.log("📂 Redirecting to sector picker");
+    router.push("/sector-picker");
   }, [router]);
 
   return (
