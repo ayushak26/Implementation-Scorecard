@@ -325,128 +325,154 @@ useEffect(() => {
   };
 
   return (
-    <div className="bg-white rounded-2xl shadow-lg p-6 animate-fadeIn max-w-4xl mx-auto">
-      {/* Header */}
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h2 className="text-2xl font-bold text-primary">BIORADAR - Implementation Scorecard</h2>
-          <p className="text-neutral text-sm">
-            Sector: <span className="font-medium">{activeSector}</span> | {filteredQuestions.length} Questions
-          </p>
-        </div>
-        <div className="relative w-64">
-          <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
-            <div
-              className="h-full bg-gradient-to-r from-primary to-gray-600 transition-all duration-300"
-              style={{ width: `${progress}%` }}
-            />
+    <div className="w-full flex justify-center bg-gray-50">
+      <div
+        className="
+          w-full
+          max-w-[95vw]              /* almost full width on small screens */
+          sm:max-w-[90vw]           /* a bit narrower on small tablets */
+          md:max-w-4xl              /* medium screen cap */
+          lg:max-w-5xl              /* large screen cap */
+          xl:max-w-6xl              /* very large displays */
+          2xl:max-w-7xl             /* ultra-wide monitors */
+          transition-all duration-300
+          bg-white rounded-2xl shadow-lg
+          p-4 sm:p-6 md:p-8
+          mx-auto
+        "
+      >
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-3">
+          <div>
+            <h2 className="text-2xl font-bold text-primary">
+              BIORADAR – Implementation Scorecard
+            </h2>
+            <p className="text-neutral text-sm">
+              Sector: <span className="font-medium">{activeSector}</span> |{" "}
+              {filteredQuestions.length} Questions
+            </p>
           </div>
-          <span className="absolute -top-6 right-0 text-xs text-neutral">{progress}% Complete</span>
-        </div>
-      </div>
-
-      {/* Error */}
-      {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg p-4 mb-6 animate-shake">
-          <div className="flex items-start gap-2">
-            <svg className="w-5 h-5 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-            </svg>
-            <div>
-              <p className="font-medium">Error</p>
-              <p className="text-sm">{error}</p>
+  
+          <div className="relative w-full sm:w-64">
+            <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-gradient-to-r from-primary to-gray-600 transition-all duration-300"
+                style={{ width: `${progress}%` }}
+              />
             </div>
+            <span className="absolute -top-6 right-0 text-xs text-neutral">
+              {progress}% Complete
+            </span>
           </div>
         </div>
-      )}
-
-      {/* Loading / Empty / Content */}
-      {isBusy && pages.length === 0 ? (
-        <div className="text-center text-neutral py-12">
-          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary mb-4"></div>
-          <p>Loading questions for <strong>{activeSector}</strong>...</p>
-        </div>
-      ) : pages.length === 0 ? (
-        <div className="text-center text-neutral py-12">
-          <p>No complete 4-dimension cards available for <strong>{activeSector}</strong>.</p>
-          <p className="text-sm mt-2">Please try uploading an Excel file with questions.</p>
-        </div>
-      ) : (
-        <>
-          <QuestionCard
-            questions={currentPage}
-            selectedScores={scoresByKey}
-            onScoreSelect={handleScoreSelect}
-            scoreRubric={rubric}
-          />
-
-          <div className="flex justify-between mt-8 gap-4">
-            {/* Previous */}
-            <button
-              onClick={goPrev}
-              disabled={pageIdx === 0 || isBusy}
-              className={`px-4 py-2 border border-gray-300 rounded-lg text-gray-600 transition-opacity ${
-                pageIdx === 0 || isBusy ? "opacity-50 cursor-not-allowed" : "hover:bg-gray-50"
-              }`}
-            >
-              Previous
-            </button>
-
-            {/* Next vs Submit */}
-            {pageIdx < totalPages - 1 ? (
+  
+        {/* Rest of your content remains unchanged */}
+        {error && (
+          <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg p-4 mb-6 animate-shake">
+            <p className="font-medium">Error</p>
+            <p className="text-sm">{error}</p>
+          </div>
+        )}
+  
+        {isBusy && pages.length === 0 ? (
+          <div className="text-center text-neutral py-12">
+            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary mb-4"></div>
+            <p>
+              Loading questions for <strong>{activeSector}</strong>...
+            </p>
+          </div>
+        ) : pages.length === 0 ? (
+          <div className="text-center text-neutral py-12">
+            <p>
+              No complete 4-dimension cards available for{" "}
+              <strong>{activeSector}</strong>.
+            </p>
+            <p className="text-sm mt-2">
+              Please try uploading an Excel file with questions.
+            </p>
+          </div>
+        ) : (
+          <>
+            <QuestionCard
+              questions={currentPage}
+              selectedScores={scoresByKey}
+              onScoreSelect={handleScoreSelect}
+              scoreRubric={rubric}
+            />
+  
+            <div className="flex justify-between mt-8 gap-4 flex-wrap">
               <button
-                onClick={goNext}
-                disabled={!pageComplete || isBusy}
-                className={`
-                  px-4 py-2 bg-black text-white rounded-lg font-medium
-                  transition-all duration-200
-                  ${
-                    !pageComplete || isBusy
-                      ? "opacity-50 cursor-not-allowed"
-                      : "hover:opacity-90 hover:shadow-md"
-                  }`}
+                onClick={goPrev}
+                disabled={pageIdx === 0 || isBusy}
+                className={`px-4 py-2 border border-gray-300 rounded-lg text-gray-600 transition-opacity ${
+                  pageIdx === 0 || isBusy
+                    ? "opacity-50 cursor-not-allowed"
+                    : "hover:bg-gray-50"
+                }`}
               >
-                Next
+                Previous
               </button>
-            ) : (
-              <button
-                onClick={handleSubmit}
-                disabled={!allComplete || isBusy}
-                className={`
-                  px-4 py-2 bg-black text-white rounded-lg font-medium
-                  transition-all duration-200 flex items-center gap-2
-                  ${
-                    !allComplete || isBusy
-                      ? "opacity-50 cursor-not-allowed"
-                      : "hover:opacity-90 hover:shadow-md"
-                  }`}
-              >
-                {isBusy && (
-                  <svg
-                    className="animate-spin h-5 w-5 text-white"
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                  >
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                    <path
-                      className="opacity-75"
-                      fill="currentColor"
-                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                    />
-                  </svg>
-                )}
-                {isBusy ? "Submitting..." : "Submit & View Results"}
-              </button>
-            )}
-          </div>
-
-          {/* Page indicator */}
-          <div className="text-center mt-4 text-sm text-gray-500">
-            Page {pageIdx + 1} of {totalPages}
-          </div>
-        </>
-      )}
+  
+              {pageIdx < totalPages - 1 ? (
+                <button
+                  onClick={goNext}
+                  disabled={!pageComplete || isBusy}
+                  className={`
+                    px-4 py-2 bg-black text-white rounded-lg font-medium
+                    transition-all duration-200
+                    ${
+                      !pageComplete || isBusy
+                        ? "opacity-50 cursor-not-allowed"
+                        : "hover:opacity-90 hover:shadow-md"
+                    }`}
+                >
+                  Next
+                </button>
+              ) : (
+                <button
+                  onClick={handleSubmit}
+                  disabled={!allComplete || isBusy}
+                  className={`
+                    px-4 py-2 bg-black text-white rounded-lg font-medium transition-all duration-200 flex items-center gap-2
+                    ${
+                      !allComplete || isBusy
+                        ? "opacity-50 cursor-not-allowed"
+                        : "hover:opacity-90 hover:shadow-md"
+                    }`}
+                >
+                  {isBusy && (
+                    <svg
+                      className="animate-spin h-5 w-5 text-white"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      />
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      />
+                    </svg>
+                  )}
+                  {isBusy ? "Submitting..." : "Submit & View Results"}
+                </button>
+              )}
+            </div>
+  
+            <div className="text-center mt-4 text-sm text-gray-500">
+              Page {pageIdx + 1} of {totalPages}
+            </div>
+          </>
+        )}
+      </div>
     </div>
   );
 }

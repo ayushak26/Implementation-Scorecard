@@ -462,59 +462,39 @@ export default function SdgGridRouletteVisualization({ rows, sector }: Props) {
           {/* Cell Details (vertical, fits inside, scrolls if long) */}
           <div className={`${PANEL_CLASS} h-full flex flex-col`}>
             <h3 className="font-semibold mb-3 text-gray-800">Cell Details</h3>
+            {hoveredCell ? (
+              <div className="space-y-3">
+                {/* SDG title */}
+                <div className="p-3 rounded-lg" style={{ backgroundColor: SDG_COLORS[hoveredCell.sdg] + "20" }}>
+                  <p className="text-sm font-bold" style={{ color: SDG_COLORS[hoveredCell.sdg] }}>
+                    SDG {hoveredCell.sdg}
+                  </p>
+                  <p className="text-xs text-gray-700 mt-1">
+                    {SDG_SHORT[hoveredCell.sdg]}
+                  </p>
+                </div>
 
-            {hoveredCell && hoveredDetails ? (
-              <div className="flex-1 overflow-y-auto pr-1">
-                <div className="flex flex-col gap-4 break-words">
-
-                  {/* SDG title (line 1) */}
-                  <div className="text-sm font-semibold"
-                    style={{ color: SDG_COLORS[hoveredCell.sdg] }}>
-                    SDG {hoveredCell.sdg} — {hoveredDetails.sdgTitle}
-                  </div>
-
-                  {/* Dimension chip (line 2) */}
-                  <div className="flex">
+                <div className="space-y-2">
+                  {/* Dimension */}
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-gray-600">Dimension:</span>
                     <span
-                      className="inline-block text-xs px-2 py-1 rounded text-white"
-                      style={{
-                        backgroundColor:
-                          DIMENSIONS.find(d => d.key === hoveredCell.dim)?.color
-                      }}
+                      className="font-medium px-2 py-1 rounded text-white text-xs"
+                      style={{ backgroundColor: DIMENSIONS.find(d => d.key === hoveredCell.dim)?.color }}
                     >
-                      {hoveredCell.dim.split(" ")[0]}
+                      {hoveredCell.dim.split(' ')[0]}
                     </span>
                   </div>
 
-                  {/* Sector (line 3) */}
-                  <div className="text-xs text-slate-600">
-                    Sector: <strong>{hoveredDetails.sectorVal}</strong>
-                  </div>
-
-                  {/* Question (line 4) */}
-                  <div className="flex flex-col gap-1">
-                    <div className="text-xs tracking-wide text-slate-500">Question</div>
-                    <div className="text-sm text-slate-800 leading-6 whitespace-pre-wrap break-words">
-                      {hoveredDetails.questionVal}
-                    </div>
-                  </div>
-
-                  {/* Score (line 5) */}
-                  <div className="flex">
+                  {/* Score */}
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-gray-600">Score:</span>
                     <div
-                      className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-white text-lg shrink-0"
-                      style={{
-                        backgroundColor:
-                          DIMENSIONS.find(d => d.key === hoveredCell.dim)?.color
-                      }}
+                      className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-white text-lg"
+                      style={{ backgroundColor: DIMENSIONS.find(d => d.key === hoveredCell.dim)?.color }}
                     >
                       {hoveredCell.score}
                     </div>
-                  </div>
-
-                  {/* Description (line 6) */}
-                  <div className="text-sm text-slate-700 leading-6 whitespace-pre-wrap break-words">
-                    {hoveredDetails.scoreDesc}
                   </div>
                 </div>
               </div>
