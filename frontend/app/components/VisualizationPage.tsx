@@ -141,14 +141,6 @@ export default function VisualizationPage() {
 
   return (
     <div className="bg-white rounded-2xl shadow-lg p-6 animate-fadeIn">
-      {/* Header */}
-      <div className="text-center mb-6">
-        <h2 className="text-2xl font-bold text-primary">SDG Performance Visualization</h2>
-        <p className="text-neutral mt-2">
-          Sector: <span className="font-medium">{currentSector}</span>
-        </p>
-      </div>
-
       {/* Error Message */}
       {error && (
         <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg p-4 mb-6" role="alert">

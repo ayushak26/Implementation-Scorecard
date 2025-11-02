@@ -20,27 +20,6 @@ export type QuestionnaireRow = {
 };
 
 // ---------------- Constants ----------------
-const SDG_SHORT: Record<number, string> = {
-  1: "No Poverty",
-  2: "Zero Hunger",
-  3: "Good Health & Well-being",
-  4: "Quality Education",
-  5: "Gender Equality",
-  6: "Clean Water & Sanitation",
-  7: "Affordable & Clean Energy",
-  8: "Decent Work & Economic Growth",
-  9: "Industry, Innovation & Infrastructure",
-  10: "Reduced Inequalities",
-  11: "Sustainable Cities & Communities",
-  12: "Responsible Consumption & Production",
-  13: "Climate Action",
-  14: "Life Below Water",
-  15: "Life on Land",
-  16: "Peace, Justice & Strong Institutions",
-  17: "Partnerships for the Goals",
-};
-
-// SDG icons
 const SDG_IMAGE_MAP: Record<number, string> = {
   1: "https://hive.forms.usercontent.microsoft/images/54d63e24-ac6d-4c5e-a8d6-ba978a0b286e/5d9fc63b-a62d-4897-99d0-d701dd178325/T6N2DXTAH45TTE4AOX8BRXCFKI/132ea41f-4040-48ef-81e6-a942e78402b9",
   2: "https://hive.forms.usercontent.microsoft/images/54d63e24-ac6d-4c5e-a8d6-ba978a0b286e/5d9fc63b-a62d-4897-99d0-d701dd178325/T6N2DXTAH45TTE4AOX8BRXCFKI/398dbeec-5c22-462d-bc89-0710a65a8ad9",
@@ -61,43 +40,12 @@ const SDG_IMAGE_MAP: Record<number, string> = {
   17: "https://hive.forms.usercontent.microsoft/images/54d63e24-ac6d-4c5e-a8d6-ba978a0b286e/5d9fc63b-a62d-4897-99d0-d701dd178325/T6N2DXTAH45TTE4AOX8BRXCFKI/e00ca088-236c-46ea-85db-c120c35ee7a4",
 };
 
-const SDG_COLORS: Record<number, string> = {
-  1: "#E5243B",
-  2: "#DDA63A",
-  3: "#4C9F38",
-  4: "#C5192D",
-  5: "#FF3A21",
-  6: "#26BDE2",
-  7: "#FCC30B",
-  8: "#A21942",
-  9: "#FD6925",
-  10: "#DD1367",
-  11: "#FD9D24",
-  12: "#BF8B2E",
-  13: "#3F7E44",
-  14: "#0A97D9",
-  15: "#56C02B",
-  16: "#00689D",
-  17: "#19486A",
-};
-
-// Dimensions
 const DIMENSIONS = [
   { key: "Economic Performance", color: "#FFB800", shortKey: "Economic" },
   { key: "Circular Performance", color: "#9B59B6", shortKey: "Circular" },
   { key: "Environmental Performance", color: "#27AE60", shortKey: "Environmental" },
   { key: "Social Performance", color: "#3498DB", shortKey: "Social" },
 ] as const;
-
-// Fallback rubric
-const DEFAULT_RUBRIC: Record<number, string> = {
-  0: "N/A",
-  1: "Issue identified, but no plans for further actions",
-  2: "Issue identified, starts planning further actions",
-  3: "Action plan with clear targets and deadlines in place",
-  4: "Action plan operational - partial implementation underway",
-  5: "Fully implemented and monitored for impact",
-};
 
 // ---------------- Helpers ----------------
 function canonicalSector(s?: string | null) {
@@ -108,7 +56,6 @@ function canonicalSector(s?: string | null) {
   if (t.includes("pack")) return "Packaging";
   return s;
 }
-
 function canonicalDim(s?: string | null): (typeof DIMENSIONS)[number]["key"] | null {
   if (!s) return null;
   const t = s.toLowerCase();
@@ -131,7 +78,6 @@ type Cell = {
 function makeCells(rows: QuestionnaireRow[], sector: string): Cell[] {
   const keep = rows.filter((r) => canonicalSector(r.sector) === sector);
   const bucket = new Map<string, { sum: number; n: number; items: QuestionnaireRow[] }>();
-
   for (const r of keep) {
     const sdg = Number(r.sdg_number ?? 0);
     const dim = canonicalDim(r.sustainability_dimension);
@@ -146,7 +92,6 @@ function makeCells(rows: QuestionnaireRow[], sector: string): Cell[] {
     }
     b.items.push(r);
   }
-
   const out: Cell[] = [];
   for (let sdg = 1; sdg <= 17; sdg++) {
     for (const d of DIMENSIONS) {
@@ -165,48 +110,47 @@ function makeCells(rows: QuestionnaireRow[], sector: string): Cell[] {
   return out;
 }
 
-// ---------------- Grid-based Roulette Visualization ----------------
+// -------------- Responsive Grid-based Roulette Visualization --------------
 function useGridRoulette({
   cells,
-  width = 900,
-  height = 900,
-  onCellClick
+  width,
+  height,
 }: {
   cells: Cell[];
-  width?: number;
-  height?: number;
-  onCellClick?: (cell: Cell) => void;
+  width: number;
+  height: number;
 }) {
   const ref = useRef<SVGSVGElement | null>(null);
-  const [hoveredCell, setHoveredCell] = useState<Cell | null>(null);
 
   useEffect(() => {
+    if (!width || !height) return;
+
     const svg = d3.select(ref.current);
     svg.selectAll("*").remove();
 
-    const W = width, H = height;
-    const outerRadius = Math.min(W, H) / 2 - 70;
+    const W = width;
+    const H = height;
+    const margin = Math.max(110, Math.min(W, H) * 0.12);
+    const outerRadius = Math.min(W, H) / 2 - margin;
     const innerRadius = 120;
 
     svg.attr("viewBox", `0 0 ${W} ${H}`);
+    const g = svg.append("g").attr("transform", `translate(${W / 2},${H / 2})`);
 
-    const g = svg.append("g")
-      .attr("transform", `translate(${W / 2},${H / 2})`);
-
-    // Angle scale (17 SDGs)
-    const angleScale = d3.scaleBand<number>()
+    const angleScale = d3
+      .scaleBand<number>()
       .domain(d3.range(1, 18))
       .range([0, 2 * Math.PI])
       .paddingInner(0.01);
 
-    const scoreRadiusWidth = (outerRadius - innerRadius) / 6;
-
+    const scoreRadiusWidth = (outerRadius - innerRadius) / 5;
     const polar = (r: number, a: number) => ({
       x: Math.cos(a - Math.PI / 2) * r,
       y: Math.sin(a - Math.PI / 2) * r,
     });
+    const deg2rad = (d: number) => (Math.PI / 180) * d;
 
-    // --- Draw SDG segments + grid ---
+    // --- Draw segments ---
     for (let sdg = 1; sdg <= 17; sdg++) {
       const startAngle = angleScale(sdg)!;
       const endAngle = startAngle + angleScale.bandwidth();
@@ -217,120 +161,145 @@ function useGridRoulette({
         const dimStartAngle = startAngle + dimIndex * dimensionAngleWidth;
         const dimEndAngle = dimStartAngle + dimensionAngleWidth;
 
-        const cellData = cells.find(c => c.sdg === sdg && c.dim === dim.key);
+        const cellData = cells.find((c) => c.sdg === sdg && c.dim === dim.key);
         const score = cellData ? cellData.score : 0;
 
-        // Bands for score levels (0–5)
-        for (let level = 0; level <= 5; level++) {
-          const levelInnerRadius = innerRadius + level * scoreRadiusWidth;
+        for (let level = 1; level <= 5; level++) {
+          const levelInnerRadius = innerRadius + (level - 1) * scoreRadiusWidth;
           const levelOuterRadius = levelInnerRadius + scoreRadiusWidth;
 
-          const arc = d3.arc()
+          const arc = d3
+            .arc()
             .innerRadius(levelInnerRadius)
             .outerRadius(levelOuterRadius)
             .startAngle(dimStartAngle)
-            .endAngle(dimEndAngle)
-            .padAngle(0);
+            .endAngle(dimEndAngle);
 
-          let fillColor = "#f9fafb";
-          let opacity = 1;
-          if (level === 0) { fillColor = "#f3f4f6"; opacity = 0.5; }
-          else if (level <= score) { fillColor = dim.color; opacity = 0.6 + level * 0.08; }
-
-          const cell = g.append("path")
+          g.append("path")
             .attr("d", arc as any)
-            .attr("fill", fillColor)
-            .attr("opacity", opacity)
+            .attr("fill", level <= score ? dim.color : "#f3f4f6")
+            .attr("opacity", level <= score ? 0.85 : 0.3)
             .attr("stroke", "#000")
-            .attr("stroke-width", 0.3)
-            .style("cursor", level > 0 && level <= score ? "pointer" : "default");
-
-          if (level > 0 && level <= score && cellData) {
-            cell
-              .on("mouseenter", function () {
-                d3.select(this)
-                  .transition().duration(150)
-                  .attr("opacity", 1)
-                  .attr("stroke-width", 1.5)
-                  .attr("stroke", dim.color);
-                setHoveredCell(cellData);
-              })
-              .on("mouseleave", function () {
-                d3.select(this)
-                  .transition().duration(150)
-                  .attr("opacity", opacity)
-                  .attr("stroke-width", 0.3)
-                  .attr("stroke", "#000");
-                setHoveredCell(null);
-              })
-              .on("click", () => onCellClick && onCellClick(cellData));
-          }
+            .attr("stroke-width", 0.35);
         }
 
-        // Light dimension separators
         if (dimIndex > 0) {
           const p1 = polar(innerRadius, dimStartAngle);
           const p2 = polar(outerRadius, dimStartAngle);
           g.append("line")
-            .attr("x1", p1.x).attr("y1", p1.y)
-            .attr("x2", p2.x).attr("y2", p2.y)
+            .attr("x1", p1.x)
+            .attr("y1", p1.y)
+            .attr("x2", p2.x)
+            .attr("y2", p2.y)
             .attr("stroke", "#000")
             .attr("stroke-width", 0.5)
             .attr("opacity", 0.3);
         }
       });
 
-      // SDG icon outside
+      // --- Bold SDG separator line ---
+      const p1 = polar(innerRadius, startAngle);
+      const p2 = polar(outerRadius, startAngle);
+      g.append("line")
+        .attr("x1", p1.x)
+        .attr("y1", p1.y)
+        .attr("x2", p2.x)
+        .attr("y2", p2.y)
+        .attr("stroke", "#000")
+        .attr("stroke-width", 1.8)
+        .attr("opacity", 0.9);
+
+      // --- SDG icon (shifted +6°) ---
       const midAngle = (startAngle + endAngle) / 2;
-      const icon = polar(outerRadius + 40, midAngle);
+      const iconAngle = midAngle + deg2rad(0);
+      const iconRadius = outerRadius + 64;
+      const icon = polar(iconRadius+25, iconAngle);
       g.append("image")
         .attr("href", SDG_IMAGE_MAP[sdg])
-        .attr("x", icon.x - 12)
-        .attr("y", icon.y - 12)
-        .attr("width", 40)
-        .attr("height", 40)
+        .attr("x", icon.x - 15)
+        .attr("y", icon.y - 40)
+        .attr("width", 60)
+        .attr("height", 70)
         .attr("preserveAspectRatio", "xMidYMid meet");
+
+      // --- Dimension indices 1..4 (a bit further than the outer ring) ---
+      {
+        const dotR = 10;
+        const gap = Math.max(6, outerRadius * 0.02);
+        const dimLabelRadius = outerRadius + dotR + gap;
+        for (let i = 0; i < 4; i++) {
+          const dmeta = DIMENSIONS[i];
+          const dimCenterAngle =
+            startAngle + i * (segmentAngle / 4) + segmentAngle / 8;
+          const p = polar(dimLabelRadius, dimCenterAngle);
+
+          g.append("circle")
+            .attr("cx", p.x)
+            .attr("cy", p.y)
+            .attr("r", dotR)
+            .attr("fill", dmeta.color)
+            .attr("stroke", dmeta.color)
+            .attr("stroke-width", 0.6)
+            .attr("opacity", 0.95);
+
+          g.append("text")
+            .attr("x", p.x)
+            .attr("y", p.y + 0.5)
+            .attr("text-anchor", "middle")
+            .attr("dominant-baseline", "middle")
+            .attr("font-size", 12)
+            .attr("font-weight", 700)
+            .attr("fill", "#fff")
+            .text(String(i + 1));
+        }
+      }
     }
 
-    // --- Concentric circles (back) ---
-    for (let level = 0; level <= 6; level++) {
+    // --- Concentric rings ---
+    for (let level = 0; level <= 5; level++) {
       const radius = innerRadius + level * scoreRadiusWidth;
       g.append("circle")
         .attr("r", radius)
         .attr("fill", "none")
         .attr("stroke", "#000")
-        .attr("stroke-width", level === 0 || level === 6 ? 2 : 1)
-        .attr("opacity", level === 0 || level === 6 ? 0.8 : 0.4);
+        .attr("stroke-width", level === 0 || level === 5 ? 2 : 1)
+        .attr("opacity", level === 0 || level === 5 ? 0.8 : 0.4);
     }
 
-    // --- Score labels: at EVERY SDG separator, in SAME local position as original ---
-    // We rotate a subgroup to the SDG separator angle, then draw labels at (x=2, y=-radius-2)
-    for (let sdg = 1; sdg <= 17; sdg++) {
-      const sepAngle = angleScale(sdg)!;                 // radians
-      const deg = (sepAngle * 180) / Math.PI;            // convert to degrees
-      const labelGroup = g.append("g").attr("transform", `rotate(${deg})`);
+    // --- Score labels (shifted +6° & nudged outward) ---
+    {
+      const labelOffsetOutward = scoreRadiusWidth * 0.35;
+      const rightShift = deg2rad(6);
+      for (let sdg = 1; sdg <= 17; sdg++) {
+        const startAngle = angleScale(sdg)!;
+        const labelAngle = startAngle + rightShift;
+        const deg = (labelAngle * 180) / Math.PI;
 
-      for (let level = 1; level < 6; level++) {
-        const radius = innerRadius + level * scoreRadiusWidth;
+        const labelGroup = g.append("g").attr("transform", `rotate(${deg})`);
+        for (let scoreLabel = 1; scoreLabel <= 5; scoreLabel++) {
+          const ringInnerRadius = innerRadius + (scoreLabel - 1) * scoreRadiusWidth;
+          const ringOuterRadius = ringInnerRadius + scoreRadiusWidth;
+          const ringCenterRadius = (ringInnerRadius + ringOuterRadius) / 2;
+          const r = ringCenterRadius + labelOffsetOutward;
 
-        // Background badge
-        labelGroup.append("rect")
-          .attr("x", 2)
-          .attr("y", -radius - 2)
-          .attr("width", 12)
-          .attr("height", 12)
-          .attr("fill", "#fff")
-          .attr("opacity", 0.9);
-
-        // Number
-        labelGroup.append("text")
-          .attr("x", 8)
-          .attr("y", -radius + 5)
-          .attr("text-anchor", "middle")
-          .attr("font-size", "10px")
-          .attr("fill", "#000")
-          .attr("font-weight", "bold")
-          .text(level);
+          labelGroup
+            .append("circle")
+            .attr("cx", 0)
+            .attr("cy", -r)
+            .attr("r", 10)
+            .attr("fill", "#000")
+            .attr("opacity", 0.9);
+          labelGroup
+            .append("text")
+            .attr("x", 0)
+            .attr("y", -r)
+            .attr("text-anchor", "middle")
+            .attr("dominant-baseline", "middle")
+            .attr("font-size", 12)
+            .attr("fill", "#fff")
+            .attr("font-weight", 700)
+            .text(scoreLabel);
+        }
       }
     }
 
@@ -340,208 +309,151 @@ function useGridRoulette({
       .attr("fill", "#fff")
       .attr("stroke", "#000")
       .attr("stroke-width", 2);
-
     g.append("text")
       .attr("y", -innerRadius + 45)
       .attr("text-anchor", "middle")
-      .attr("font-size", "16px")
-      .attr("font-weight", "bold")
+      .attr("font-size", 16)
+      .attr("font-weight", 700)
       .attr("fill", "#1e293b")
       .text("DIMENSIONS");
 
     DIMENSIONS.forEach((dim, i) => {
       const yPos = -innerRadius + 50 + i * 30;
-
-      // colored circle
       g.append("circle")
         .attr("cx", -innerRadius + 80)
         .attr("cy", yPos + 35)
         .attr("r", 12)
         .attr("fill", dim.color)
-        .attr("opacity", 0.8);
-
-      // number text (keep as-is; your “Not other one” note was about score labels)
+        .attr("opacity", 0.9);
       g.append("text")
         .attr("x", -innerRadius + 80)
         .attr("y", yPos + 35)
         .attr("text-anchor", "middle")
         .attr("dominant-baseline", "middle")
-        .attr("font-size", "15px")
-        .attr("font-weight", "bold")
+        .attr("font-size", 15)
+        .attr("font-weight", 700)
         .attr("fill", "#fff")
         .text(i + 1);
-
-      // name
       g.append("text")
         .attr("x", -innerRadius + 100)
         .attr("y", yPos + 39)
         .attr("text-anchor", "start")
-        .attr("font-size", "15px")
-        .attr("font-weight", "600")
+        .attr("font-size", 15)
+        .attr("font-weight", 600)
         .attr("fill", dim.color)
         .text(dim.shortKey);
     });
+  }, [cells, width, height]);
 
-    // --- Bold SDG separators last (on top) ---
-    for (let sdg = 1; sdg <= 17; sdg++) {
-      const a = angleScale(sdg)!;
-      const p1 = polar(innerRadius, a);
-      const p2 = polar(outerRadius, a);
-      g.append("line")
-        .attr("x1", p1.x).attr("y1", p1.y)
-        .attr("x2", p2.x).attr("y2", p2.y)
-        .attr("stroke", "#000")
-        .attr("stroke-width", 2)
-        .attr("opacity", 0.95);
-    }
-
-  }, [cells, width, height, onCellClick]);
-
-  return { ref, hoveredCell };
+  return { ref };
 }
 
 // ---------------- Main Component ----------------
 type Props = { rows: QuestionnaireRow[]; sector: string };
 
 export default function SdgGridRouletteVisualization({ rows, sector }: Props) {
-  const [selectedCell, setSelectedCell] = useState<Cell | null>(null);
+  const [size, setSize] = useState<{ w: number; h: number }>({ w: 0, h: 0 });
+  const cardRef = useRef<HTMLDivElement | null>(null);
+
+  // Observe container width and compute a good height that auto-fits page/padding
+  useEffect(() => {
+    if (!cardRef.current) return;
+    const el = cardRef.current;
+
+    const ro = new ResizeObserver(entries => {
+      for (const entry of entries) {
+        const cw = Math.floor(entry.contentRect.width);
+        // Make the viz roughly square, but limit extremes; add a tiny offset for padding
+        const target = Math.max(700, Math.min(1300, cw));
+        setSize({ w: target, h: target }); // square; change ratio here if needed
+      }
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
   const cells = useMemo(() => makeCells(rows, sector), [rows, sector]);
+  const { ref } = useGridRoulette({ cells, width: size.w, height: size.h });
 
-  const { ref, hoveredCell } = useGridRoulette({
-    cells,
-    onCellClick: (cell) => setSelectedCell(cell)
-  });
-
-  // Dimension totals
+  // Compute Performance by Dimension (vertical panel)
   const dimensionTotals = useMemo(() => {
     const totals: Record<string, number> = {};
-    DIMENSIONS.forEach(d => {
+    for (const d of DIMENSIONS) {
       totals[d.key] = cells
-        .filter(c => c.dim === d.key)
+        .filter((c) => c.dim === d.key)
         .reduce((sum, c) => sum + c.score, 0);
-    });
+    }
     return totals;
   }, [cells]);
 
-  const PANEL_CLASS = "bg-white rounded-xl shadow-md p-5 overflow-hidden";
-
-  // derive details for the hovered cell (clean, full-width typography)
-  const hoveredDetails = useMemo(() => {
-    if (!hoveredCell) return null;
-    const first =
-      hoveredCell.items.find(i => i && i.question) ??
-      hoveredCell.items[0] ??
-      ({} as QuestionnaireRow);
-    const sectorVal = canonicalSector(first?.sector ?? undefined) ?? "—";
-    const questionVal = first?.question || "—";
-    const scoreDesc =
-      first?.score_description || DEFAULT_RUBRIC[hoveredCell.score] || "—";
-    const sdgTitle = SDG_SHORT[hoveredCell.sdg] || "";
-    return { sectorVal, questionVal, scoreDesc, sdgTitle };
-  }, [hoveredCell]);
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-8">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-6 md:p-8">
       <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="bg-white rounded-xl shadow-md p-6 mb-6">
-          <div className="flex items-center justify-between">
-            <h1 className="text-3xl font-bold text-gray-800">
-              BIORADAR - Implementation Scorecard
-            </h1>
+        {/* Header + Sector */}
+        <div className="bg-white rounded-xl shadow-md p-6 mb-4">
+          <h1 className="text-3xl font-bold text-gray-800">
+            BIORADAR - Implementation Scorecard
+          </h1>
+          <div className="mt-4">
+            <span className="text-sm text-gray-600 mr-2">Sector:</span>
+            <span
+              className="inline-flex items-center rounded-full px-3 py-1 text-sm font-medium"
+              style={{ backgroundColor: "#eef2ff", color: "#3730a3" }}
+            >
+              {sector || "—"}
+            </span>
           </div>
         </div>
 
-        {/* Chart & Panels */}
-        <div className="grid grid-cols-1 gap-6">
-          {/* Roulette Visualization */}
-          <div className="bg-white rounded-xl shadow-md p-6">
-            <svg ref={ref} width="100%" height="700" />
-          </div>
+        {/* Visualization (auto-fit) */}
+        <div ref={cardRef} className="bg-white rounded-xl shadow-md p-4 md:p-6 mb-6">
+          <svg
+            ref={ref}
+            width={size.w || "100%"}
+            height={size.h || 800}
+            style={{ display: "block", margin: "0 auto" }}
+          />
+        </div>
 
-          {/* Cell Details (vertical, fits inside, scrolls if long) */}
-          <div className={`${PANEL_CLASS} h-full flex flex-col`}>
-            <h3 className="font-semibold mb-3 text-gray-800">Cell Details</h3>
-            {hoveredCell ? (
-              <div className="space-y-3">
-                {/* SDG title */}
-                <div className="p-3 rounded-lg" style={{ backgroundColor: SDG_COLORS[hoveredCell.sdg] + "20" }}>
-                  <p className="text-sm font-bold" style={{ color: SDG_COLORS[hoveredCell.sdg] }}>
-                    SDG {hoveredCell.sdg}
-                  </p>
-                  <p className="text-xs text-gray-700 mt-1">
-                    {SDG_SHORT[hoveredCell.sdg]}
-                  </p>
-                </div>
-
-                <div className="space-y-2">
-                  {/* Dimension */}
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600">Dimension:</span>
-                    <span
-                      className="font-medium px-2 py-1 rounded text-white text-xs"
-                      style={{ backgroundColor: DIMENSIONS.find(d => d.key === hoveredCell.dim)?.color }}
+        {/* Performance by Dimension — vertical */}
+        <div className="bg-white rounded-xl shadow-md p-5">
+          <h3 className="font-semibold mb-4 text-gray-800">Performance by Dimension</h3>
+          <div className="flex flex-col gap-4">
+            {DIMENSIONS.map((d, idx) => {
+              const score = dimensionTotals[d.key];
+              const percentage = Math.round((score / 85) * 100);
+              return (
+                <div
+                  key={d.key}
+                  className="rounded-lg p-3 bg-gradient-to-r from-white to-slate-50 shadow-sm"
+                >
+                  <div className="flex items-center gap-2 mb-2">
+                    <div
+                      className="w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-bold shadow"
+                      style={{ backgroundColor: d.color }}
                     >
-                      {hoveredCell.dim.split(' ')[0]}
+                      {idx + 1}
+                    </div>
+                    <span className="font-medium text-sm text-gray-800">
+                      {d.shortKey}
                     </span>
                   </div>
-
-                  {/* Score */}
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600">Score:</span>
+                  <div className="flex justify-between text-xs mb-1 text-gray-600">
+                    <span>Score: {score}/85</span>
+                    <span className="font-bold text-gray-700">{percentage}%</span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
                     <div
-                      className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-white text-lg"
-                      style={{ backgroundColor: DIMENSIONS.find(d => d.key === hoveredCell.dim)?.color }}
-                    >
-                      {hoveredCell.score}
-                    </div>
+                      className="rounded-full h-2 transition-all duration-500"
+                      style={{ width: `${percentage}%`, backgroundColor: d.color }}
+                    />
                   </div>
                 </div>
-              </div>
-            ) : (
-              <p className="text-sm text-gray-500 italic">
-                Hover over filled cells to see details
-              </p>
-            )}
+              );
+            })}
           </div>
-
-
-          {/* Performance by Dimension (same clean style) */}
-          <div className={`${PANEL_CLASS} h-full flex flex-col`}>
-            <h3 className="font-semibold mb-3 text-gray-800">
-              Performance by Dimension
-            </h3>
-            <div className="flex-1 space-y-3">
-              {DIMENSIONS.map((d, idx) => {
-                const score = dimensionTotals[d.key];
-                const percentage = Math.round((score / 85) * 100); // 17 SDGs * 5
-                return (
-                  <div key={d.key} className="bg-white rounded-lg p-3">
-                    <div className="flex items-center gap-2 mb-2">
-                      <div
-                        className="w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-bold"
-                        style={{ backgroundColor: d.color }}
-                      >
-                        {idx + 1}
-                      </div>
-                      <span className="font-medium text-sm">{d.shortKey}</span>
-                    </div>
-                    <div className="flex justify-between text-xs mb-1">
-                      <span>Score: {score}/85</span>
-                      <span className="font-bold">{percentage}%</span>
-                    </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div
-                        className="rounded-full h-2 transition-all duration-500"
-                        style={{ width: `${percentage}%`, backgroundColor: d.color }}
-                      />
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </div>{/* /panels */}
+        </div>
+        {/* End panel */}
       </div>
     </div>
   );
