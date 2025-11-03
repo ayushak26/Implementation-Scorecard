@@ -415,7 +415,7 @@ export default function RecommendationsPage({ rows, sector }: Props) {
         {/* Dimension Performance */}
         <div className="mb-8">
           <h2 className="text-2xl font-bold text-gray-900 mb-6">
-            Performance by Dimension
+            Average Score by Dimension
           </h2>
           <div className="grid md:grid-cols-2 gap-6">
             {dimensionAverages.map((dim) => {
