@@ -209,7 +209,7 @@ function useGridRoulette({
         .attr("stroke-width", 1.8)
         .attr("opacity", 0.9);
 
-      // --- SDG icon (shifted +6°) ---
+      // --- SDG icon ---
       const midAngle = (startAngle + endAngle) / 2;
       const iconAngle = midAngle + deg2rad(0);
       const iconRadius = outerRadius + 64;
@@ -222,7 +222,7 @@ function useGridRoulette({
         .attr("height", 70)
         .attr("preserveAspectRatio", "xMidYMid meet");
 
-      // --- Dimension indices 1..4 (a bit further than the outer ring) ---
+      // --- Dimension indices 1..4 ---
       {
         const dotR = 10;
         const gap = Math.max(6, outerRadius * 0.02);
@@ -266,11 +266,13 @@ function useGridRoulette({
         .attr("opacity", level === 0 || level === 5 ? 0.8 : 0.4);
     }
 
-    // --- Score labels (shifted +6° & nudged outward) ---
+    // --- Score labels ONLY at SDG 1 ---
     {
       const labelOffsetOutward = scoreRadiusWidth * 0.35;
       const rightShift = deg2rad(6);
-      for (let sdg = 1; sdg <= 17; sdg++) {
+      const labelSDGs = [1];
+
+      for (const sdg of labelSDGs) {
         const startAngle = angleScale(sdg)!;
         const labelAngle = startAngle + rightShift;
         const deg = (labelAngle * 180) / Math.PI;
@@ -355,7 +357,7 @@ export default function SdgGridRouletteVisualization({ rows, sector }: Props) {
   const [size, setSize] = useState<{ w: number; h: number }>({ w: 0, h: 0 });
   const cardRef = useRef<HTMLDivElement | null>(null);
 
-  // Observe container width and compute a good height that auto-fits page/padding
+  // Observe container width
   useEffect(() => {
     if (!cardRef.current) return;
     const el = cardRef.current;
@@ -363,9 +365,8 @@ export default function SdgGridRouletteVisualization({ rows, sector }: Props) {
     const ro = new ResizeObserver(entries => {
       for (const entry of entries) {
         const cw = Math.floor(entry.contentRect.width);
-        // Make the viz roughly square, but limit extremes; add a tiny offset for padding
         const target = Math.max(700, Math.min(1300, cw));
-        setSize({ w: target, h: target }); // square; change ratio here if needed
+        setSize({ w: target, h: target });
       }
     });
     ro.observe(el);
@@ -375,7 +376,7 @@ export default function SdgGridRouletteVisualization({ rows, sector }: Props) {
   const cells = useMemo(() => makeCells(rows, sector), [rows, sector]);
   const { ref } = useGridRoulette({ cells, width: size.w, height: size.h });
 
-  // Compute Performance by Dimension (vertical panel)
+  // Compute Performance by Dimension
   const dimensionTotals = useMemo(() => {
     const totals: Record<string, number> = {};
     for (const d of DIMENSIONS) {
@@ -385,6 +386,52 @@ export default function SdgGridRouletteVisualization({ rows, sector }: Props) {
     }
     return totals;
   }, [cells]);
+
+  // Download CSV Function
+  const handleDownloadCSV = () => {
+    if (!rows || rows.length === 0) {
+      alert("No data available to download");
+      return;
+    }
+
+    try {
+      const headers = ["SDG", "Sustainability Dimension", "Question", "Score"];
+      const csvRows = rows.map(row => {
+        const sdg = row.sdg_number || "";
+        const dimension = row.sustainability_dimension || "";
+        const question = (row.question || "").replace(/"/g, '""');
+        const score = row.score !== undefined ? row.score : "";
+
+        return [
+          `"${sdg}"`,
+          `"${dimension}"`,
+          `"${question}"`,
+          `"${score}"`
+        ].join(",");
+      });
+
+      const csvContent = [headers.join(","), ...csvRows].join("\n");
+      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+      const link = document.createElement("a");
+      const timestamp = new Date().toISOString().split("T")[0];
+      const filename = `SDG_Assessment_${sector}_${timestamp}.csv`;
+
+      const url = URL.createObjectURL(blob);
+      link.setAttribute("href", url);
+      link.setAttribute("download", filename);
+      link.style.visibility = "hidden";
+
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      console.log(`✅ Downloaded: ${filename}`);
+    } catch (error) {
+      console.error("CSV download error:", error);
+      alert("Failed to download CSV. Please try again.");
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-6 md:p-8">
@@ -405,17 +452,48 @@ export default function SdgGridRouletteVisualization({ rows, sector }: Props) {
           </div>
         </div>
 
-        {/* Visualization (auto-fit) */}
-        <div ref={cardRef} className="bg-white rounded-xl shadow-md p-4 md:p-6 mb-6">
-          <svg
-            ref={ref}
-            width={size.w || "100%"}
-            height={size.h || 800}
-            style={{ display: "block", margin: "0 auto" }}
-          />
+        {/* Visualization Card with Download Button */}
+        <div className="bg-white rounded-xl shadow-md p-4 md:p-6 mb-6">
+          {/* Download Score Button - Top Right */}
+          <div className="flex justify-end mb-4">
+            <button
+              onClick={handleDownloadCSV}
+              disabled={!rows || rows.length === 0}
+              className={`px-4 py-2 bg-green-600 text-white rounded-lg transition flex items-center gap-2 shadow-md ${
+                !rows || rows.length === 0
+                  ? "opacity-50 cursor-not-allowed"
+                  : "hover:bg-green-700"
+              }`}
+            >
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                />
+              </svg>
+              Download Score
+            </button>
+          </div>
+
+          {/* SVG Visualization */}
+          <div ref={cardRef}>
+            <svg
+              ref={ref}
+              width={size.w || "100%"}
+              height={size.h || 800}
+              style={{ display: "block", margin: "0 auto" }}
+            />
+          </div>
         </div>
 
-        {/* Performance by Dimension — vertical */}
+        {/* Performance by Dimension */}
         <div className="bg-white rounded-xl shadow-md p-5">
           <h3 className="font-semibold mb-4 text-gray-800">Performance by Dimension</h3>
           <div className="flex flex-col gap-4">
@@ -453,7 +531,6 @@ export default function SdgGridRouletteVisualization({ rows, sector }: Props) {
             })}
           </div>
         </div>
-        {/* End panel */}
       </div>
     </div>
   );
