@@ -202,9 +202,8 @@ function useGridRoulette({
           g.append("path")
             .attr("d", arc as any)
             .attr("fill", level <= score ? dim.color : "#f3f4f6")
-            .attr("opacity", level <= score ? 0.85 : 0.3)
             .attr("stroke", "#000")
-            .attr("stroke-width", 0.35)
+            .attr("stroke-width", 2)
             .attr("role", "graphics-symbol")
             .attr("aria-label", `SDG ${sdg} ${dim.shortKey} dimension score level ${level} of 5${level <= score ? ' - achieved' : ' - not achieved'}`);
         }
@@ -218,22 +217,9 @@ function useGridRoulette({
             .attr("x2", p2.x)
             .attr("y2", p2.y)
             .attr("stroke", "#000")
-            .attr("stroke-width", 0.5)
-            .attr("opacity", 0.3);
+            .attr("stroke-width", 1);
         }
       });
-
-      // --- Bold SDG separator line ---
-      const p1 = polar(innerRadius, startAngle);
-      const p2 = polar(outerRadius, startAngle);
-      g.append("line")
-        .attr("x1", p1.x)
-        .attr("y1", p1.y)
-        .attr("x2", p2.x)
-        .attr("y2", p2.y)
-        .attr("stroke", "#000")
-        .attr("stroke-width", 1.8)
-        .attr("opacity", 0.9);
 
       // --- SDG icon ---
       const midAngle = (startAngle + endAngle) / 2;
@@ -250,38 +236,51 @@ function useGridRoulette({
         .attr("aria-label", `SDG ${sdg}: ${SDG_DESCRIPTIONS[sdg]}`);
 
       // --- Dimension indices 1..4 ---
-      {
-        const dotR = 10;
-        const gap = Math.max(6, outerRadius * 0.02);
-        const dimLabelRadius = outerRadius + dotR + gap;
-        for (let i = 0; i < 4; i++) {
-          const dmeta = DIMENSIONS[i];
-          const dimCenterAngle =
-            startAngle + i * (segmentAngle / 4) + segmentAngle / 8;
-          const p = polar(dimLabelRadius, dimCenterAngle);
+      const dotR = 10;
+      const gap = Math.max(6, outerRadius * 0.02);
+      const dimLabelRadius = outerRadius + dotR + gap;
+      for (let i = 0; i < 4; i++) {
+        const dmeta = DIMENSIONS[i];
+        const dimCenterAngle =
+          startAngle + i * (segmentAngle / 4) + segmentAngle / 8;
+        const p = polar(dimLabelRadius, dimCenterAngle);
 
-          g.append("circle")
-            .attr("cx", p.x)
-            .attr("cy", p.y)
-            .attr("r", dotR)
-            .attr("fill", dmeta.color)
-            .attr("stroke", dmeta.color)
-            .attr("stroke-width", 0.6)
-            .attr("opacity", 0.95)
-            .attr("aria-label", `Dimension ${i + 1}: ${dmeta.shortKey}`);
+        g.append("circle")
+          .attr("cx", p.x)
+          .attr("cy", p.y)
+          .attr("r", dotR)
+          .attr("fill", dmeta.color)
+          .attr("stroke", dmeta.color)
+          .attr("stroke-width", 5)
+          .attr("opacity", 0.95)
+          .attr("aria-label", `Dimension ${i + 1}: ${dmeta.shortKey}`);
 
-          g.append("text")
-            .attr("x", p.x)
-            .attr("y", p.y + 0.5)
-            .attr("text-anchor", "middle")
-            .attr("dominant-baseline", "middle")
-            .attr("font-size", 12)
-            .attr("font-weight", 700)
-            .attr("fill", "#fff")
-            .attr("aria-hidden", "true")
-            .text(String(i + 1));
-        }
+        g.append("text")
+          .attr("x", p.x)
+          .attr("y", p.y + 0.5)
+          .attr("text-anchor", "middle")
+          .attr("dominant-baseline", "middle")
+          .attr("font-size", 12)
+          .attr("font-weight", 700)
+          .attr("fill", "#fff")
+          .attr("aria-hidden", "true")
+          .text(String(i + 1));
       }
+    }
+
+    // --- Draw ALL bold SDG separator lines AFTER segments (prevents overlapping) ---
+    for (let sdg = 1; sdg <= 17; sdg++) {
+      const startAngle = angleScale(sdg)!;
+      const p1 = polar(innerRadius, startAngle);
+      const p2 = polar(outerRadius, startAngle);
+      g.append("line")
+        .attr("x1", p1.x)
+        .attr("y1", p1.y)
+        .attr("x2", p2.x)
+        .attr("y2", p2.y)
+        .attr("stroke", "#000")
+        .attr("stroke-width", 8)
+        .attr("opacity", 0.9);
     }
 
     // --- Concentric rings ---
@@ -297,42 +296,40 @@ function useGridRoulette({
     }
 
     // --- Score labels ONLY at SDG 1 ---
-    {
-      const labelOffsetOutward = scoreRadiusWidth * 0.35;
-      const rightShift = deg2rad(6);
-      const labelSDGs = [1];
+    const labelOffsetOutward = scoreRadiusWidth * 0.35;
+    const rightShift = deg2rad(5.5);
+    const labelSDGs = [1];
 
-      for (const sdg of labelSDGs) {
-        const startAngle = angleScale(sdg)!;
-        const labelAngle = startAngle + rightShift;
-        const deg = (labelAngle * 180) / Math.PI;
+    for (const sdg of labelSDGs) {
+      const startAngle = angleScale(sdg)!;
+      const labelAngle = startAngle + rightShift;
+      const deg = (labelAngle * 180) / Math.PI;
 
-        const labelGroup = g.append("g").attr("transform", `rotate(${deg})`);
-        for (let scoreLabel = 1; scoreLabel <= 5; scoreLabel++) {
-          const ringInnerRadius = innerRadius + (scoreLabel - 1) * scoreRadiusWidth;
-          const ringOuterRadius = ringInnerRadius + scoreRadiusWidth;
-          const ringCenterRadius = (ringInnerRadius + ringOuterRadius) / 2;
-          const r = ringCenterRadius + labelOffsetOutward;
+      const labelGroup = g.append("g").attr("transform", `rotate(${deg})`);
+      for (let scoreLabel = 1; scoreLabel <= 5; scoreLabel++) {
+        const ringInnerRadius = innerRadius + (scoreLabel - 1) * scoreRadiusWidth;
+        const ringOuterRadius = ringInnerRadius + scoreRadiusWidth;
+        const ringCenterRadius = (ringInnerRadius + ringOuterRadius) / 2;
+        const r = ringCenterRadius + labelOffsetOutward;
 
-          labelGroup
-            .append("circle")
-            .attr("cx", 0)
-            .attr("cy", -r)
-            .attr("r", 10)
-            .attr("fill", "#000")
-            .attr("opacity", 0.9);
-          labelGroup
-            .append("text")
-            .attr("x", 0)
-            .attr("y", -r)
-            .attr("text-anchor", "middle")
-            .attr("dominant-baseline", "middle")
-            .attr("font-size", 12)
-            .attr("fill", "#fff")
-            .attr("font-weight", 700)
-            .attr("aria-label", `Score level ${scoreLabel}`)
-            .text(scoreLabel);
-        }
+        labelGroup
+          .append("circle")
+          .attr("cx", 0)
+          .attr("cy", -r)
+          .attr("r", 10)
+          .attr("fill", "#000")
+          .attr("opacity", 0.9);
+        labelGroup
+          .append("text")
+          .attr("x", 0)
+          .attr("y", -r)
+          .attr("text-anchor", "middle")
+          .attr("dominant-baseline", "middle")
+          .attr("font-size", 12)
+          .attr("fill", "#fff")
+          .attr("font-weight", 700)
+          .attr("aria-label", `Score level ${scoreLabel}`)
+          .text(scoreLabel);
       }
     }
 
@@ -389,7 +386,6 @@ export default function SdgGridRouletteVisualization({ rows, sector }: Props) {
   const [size, setSize] = useState<{ w: number; h: number }>({ w: 0, h: 0 });
   const cardRef = useRef<HTMLDivElement | null>(null);
 
-  // Observe container width
   useEffect(() => {
     if (!cardRef.current) return;
     const el = cardRef.current;
@@ -408,7 +404,6 @@ export default function SdgGridRouletteVisualization({ rows, sector }: Props) {
   const cells = useMemo(() => makeCells(rows, sector), [rows, sector]);
   const { ref } = useGridRoulette({ cells, width: size.w, height: size.h });
 
-  // Compute Performance by Dimension
   const dimensionTotals = useMemo(() => {
     const totals: Record<string, number> = {};
     for (const d of DIMENSIONS) {
@@ -419,10 +414,8 @@ export default function SdgGridRouletteVisualization({ rows, sector }: Props) {
     return totals;
   }, [cells]);
 
-  // Compute Performance by SDG
   const sdgTotals = useMemo(() => {
     const totals: Array<{ sdg: number; score: number; description: string }> = [];
-
     for (let sdg = 1; sdg <= 17; sdg++) {
       const score = cells
         .filter((c) => c.sdg === sdg)
@@ -439,7 +432,6 @@ export default function SdgGridRouletteVisualization({ rows, sector }: Props) {
   const topSDGs = sdgTotals.slice(0, 2);
   const bottomSDGs = sdgTotals.slice(-2).reverse();
 
-  // Download CSV Function
   const handleDownloadCSV = () => {
     if (!rows || rows.length === 0) {
       alert("No data available to download");
@@ -488,9 +480,7 @@ export default function SdgGridRouletteVisualization({ rows, sector }: Props) {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-6 md:p-8">
       <div className="max-w-7xl mx-auto">
-        {/* Visualization Card with Download Button */}
         <div className="bg-white rounded-xl shadow-md p-4 md:p-6 mb-6">
-          {/* Download Score Button - Top Right */}
           <div className="flex justify-end mb-4">
             <button
               onClick={handleDownloadCSV}
@@ -520,7 +510,6 @@ export default function SdgGridRouletteVisualization({ rows, sector }: Props) {
             </button>
           </div>
 
-          {/* SVG Visualization */}
           <div ref={cardRef}>
             <svg
               ref={ref}
@@ -531,13 +520,11 @@ export default function SdgGridRouletteVisualization({ rows, sector }: Props) {
           </div>
         </div>
 
-        {/* Performance Section */}
         <section className="bg-white rounded-xl shadow-md p-6" aria-labelledby="performance-heading">
           <h2 id="performance-heading" className="text-2xl font-bold mb-6 text-gray-800">
             Performance
           </h2>
 
-          {/* Performance by Dimension */}
           <div className="mb-8">
             <h3 className="font-semibold mb-4 text-gray-800 text-lg" id="dimension-heading">
               By Dimension
@@ -587,13 +574,11 @@ export default function SdgGridRouletteVisualization({ rows, sector }: Props) {
             </div>
           </div>
 
-          {/* Performance by SDG */}
           <div>
             <h3 className="font-semibold mb-4 text-gray-800 text-lg" id="sdg-heading">
               By SDG
             </h3>
 
-            {/* Best Performing SDGs */}
             <div className="mb-6">
               <h4 className="text-sm font-semibold text-green-700 mb-3" id="best-sdg-heading">
                 Best Performing
@@ -642,7 +627,6 @@ export default function SdgGridRouletteVisualization({ rows, sector }: Props) {
               </div>
             </div>
 
-            {/* Lowest Performing SDGs */}
             <div>
               <h4 className="text-sm font-semibold text-red-700 mb-3" id="lowest-sdg-heading">
                 Lowest Performing
