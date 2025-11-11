@@ -278,12 +278,6 @@ export default function SectorPickerPage() {
               </svg>
               <span>Select a sector to begin your assessment</span>
             </div>
-            <button
-              onClick={() => router.push("/upload-excel")}
-              className="w-full sm:w-auto px-5 sm:px-6 py-2 sm:py-2.5 text-xs sm:text-sm font-medium border-2 border-gray-300 rounded-lg sm:rounded-xl text-gray-700 hover:border-blue-600 hover:text-blue-600 hover:bg-blue-50 transition-all duration-200 whitespace-nowrap"
-            >
-              Upload Different Data
-            </button>
           </div>
         </div>
       </div>
