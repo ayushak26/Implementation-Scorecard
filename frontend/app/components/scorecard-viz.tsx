@@ -40,9 +40,29 @@ const SDG_IMAGE_MAP: Record<number, string> = {
   17: "https://www.un.org/sustainabledevelopment/wp-content/uploads/2018/05/E_SDG-goals_icons-individual-rgb-17.png?resize=148%2C148&ssl=1",
 };
 
+const SDG_DESCRIPTIONS: Record<number, string> = {
+  1: "No Poverty",
+  2: "Zero Hunger",
+  3: "Good Health and Well-being",
+  4: "Quality Education",
+  5: "Gender Equality",
+  6: "Clean Water and Sanitation",
+  7: "Affordable and Clean Energy",
+  8: "Decent Work and Economic Growth",
+  9: "Industry, Innovation and Infrastructure",
+  10: "Reduced Inequalities",
+  11: "Sustainable Cities and Communities",
+  12: "Responsible Consumption and Production",
+  13: "Climate Action",
+  14: "Life Below Water",
+  15: "Life on Land",
+  16: "Peace, Justice and Strong Institutions",
+  17: "Partnerships for the Goals",
+};
+
 const DIMENSIONS = [
-  { key: "Economic Performance", color: "#FFB800", shortKey: "Economic" },
-  { key: "Circular Performance", color: "#9B59B6", shortKey: "Circular" },
+  { key: "Economic Performance", color: "#DC2626", shortKey: "Economic" },
+  { key: "Circular Performance", color: "#FFB800", shortKey: "Circular" },
   { key: "Environmental Performance", color: "#27AE60", shortKey: "Environmental" },
   { key: "Social Performance", color: "#3498DB", shortKey: "Social" },
 ] as const;
@@ -56,6 +76,7 @@ function canonicalSector(s?: string | null) {
   if (t.includes("pack")) return "Packaging";
   return s;
 }
+
 function canonicalDim(s?: string | null): (typeof DIMENSIONS)[number]["key"] | null {
   if (!s) return null;
   const t = s.toLowerCase();
@@ -134,7 +155,10 @@ function useGridRoulette({
     const outerRadius = Math.min(W, H) / 2 - margin;
     const innerRadius = 120;
 
-    svg.attr("viewBox", `0 0 ${W} ${H}`);
+    svg.attr("viewBox", `0 0 ${W} ${H}`)
+       .attr("role", "img")
+       .attr("aria-label", "SDG Performance Roulette Visualization showing scores across 17 Sustainable Development Goals and 4 dimensions");
+    
     const g = svg.append("g").attr("transform", `translate(${W / 2},${H / 2})`);
 
     const angleScale = d3
@@ -180,7 +204,9 @@ function useGridRoulette({
             .attr("fill", level <= score ? dim.color : "#f3f4f6")
             .attr("opacity", level <= score ? 0.85 : 0.3)
             .attr("stroke", "#000")
-            .attr("stroke-width", 0.35);
+            .attr("stroke-width", 0.35)
+            .attr("role", "graphics-symbol")
+            .attr("aria-label", `SDG ${sdg} ${dim.shortKey} dimension score level ${level} of 5${level <= score ? ' - achieved' : ' - not achieved'}`);
         }
 
         if (dimIndex > 0) {
@@ -213,14 +239,15 @@ function useGridRoulette({
       const midAngle = (startAngle + endAngle) / 2;
       const iconAngle = midAngle + deg2rad(0);
       const iconRadius = outerRadius + 64;
-      const icon = polar(iconRadius+25, iconAngle);
+      const icon = polar(iconRadius + 25, iconAngle);
       g.append("image")
         .attr("href", SDG_IMAGE_MAP[sdg])
         .attr("x", icon.x - 15)
         .attr("y", icon.y - 40)
         .attr("width", 60)
         .attr("height", 70)
-        .attr("preserveAspectRatio", "xMidYMid meet");
+        .attr("preserveAspectRatio", "xMidYMid meet")
+        .attr("aria-label", `SDG ${sdg}: ${SDG_DESCRIPTIONS[sdg]}`);
 
       // --- Dimension indices 1..4 ---
       {
@@ -240,7 +267,8 @@ function useGridRoulette({
             .attr("fill", dmeta.color)
             .attr("stroke", dmeta.color)
             .attr("stroke-width", 0.6)
-            .attr("opacity", 0.95);
+            .attr("opacity", 0.95)
+            .attr("aria-label", `Dimension ${i + 1}: ${dmeta.shortKey}`);
 
           g.append("text")
             .attr("x", p.x)
@@ -250,6 +278,7 @@ function useGridRoulette({
             .attr("font-size", 12)
             .attr("font-weight", 700)
             .attr("fill", "#fff")
+            .attr("aria-hidden", "true")
             .text(String(i + 1));
         }
       }
@@ -263,7 +292,8 @@ function useGridRoulette({
         .attr("fill", "none")
         .attr("stroke", "#000")
         .attr("stroke-width", level === 0 || level === 5 ? 2 : 1)
-        .attr("opacity", level === 0 || level === 5 ? 0.8 : 0.4);
+        .attr("opacity", level === 0 || level === 5 ? 0.8 : 0.4)
+        .attr("aria-label", level === 0 ? "Inner boundary" : level === 5 ? "Outer boundary" : `Score level ${level}`);
     }
 
     // --- Score labels ONLY at SDG 1 ---
@@ -300,6 +330,7 @@ function useGridRoulette({
             .attr("font-size", 12)
             .attr("fill", "#fff")
             .attr("font-weight", 700)
+            .attr("aria-label", `Score level ${scoreLabel}`)
             .text(scoreLabel);
         }
       }
@@ -335,6 +366,7 @@ function useGridRoulette({
         .attr("font-size", 15)
         .attr("font-weight", 700)
         .attr("fill", "#fff")
+        .attr("aria-hidden", "true")
         .text(i + 1);
       g.append("text")
         .attr("x", -innerRadius + 100)
@@ -362,7 +394,7 @@ export default function SdgGridRouletteVisualization({ rows, sector }: Props) {
     if (!cardRef.current) return;
     const el = cardRef.current;
 
-    const ro = new ResizeObserver(entries => {
+    const ro = new ResizeObserver((entries) => {
       for (const entry of entries) {
         const cw = Math.floor(entry.contentRect.width);
         const target = Math.max(700, Math.min(1300, cw));
@@ -387,6 +419,26 @@ export default function SdgGridRouletteVisualization({ rows, sector }: Props) {
     return totals;
   }, [cells]);
 
+  // Compute Performance by SDG
+  const sdgTotals = useMemo(() => {
+    const totals: Array<{ sdg: number; score: number; description: string }> = [];
+
+    for (let sdg = 1; sdg <= 17; sdg++) {
+      const score = cells
+        .filter((c) => c.sdg === sdg)
+        .reduce((sum, c) => sum + c.score, 0);
+      totals.push({
+        sdg,
+        score,
+        description: SDG_DESCRIPTIONS[sdg] || `SDG ${sdg}`,
+      });
+    }
+    return totals.sort((a, b) => b.score - a.score);
+  }, [cells]);
+
+  const topSDGs = sdgTotals.slice(0, 2);
+  const bottomSDGs = sdgTotals.slice(-2).reverse();
+
   // Download CSV Function
   const handleDownloadCSV = () => {
     if (!rows || rows.length === 0) {
@@ -396,7 +448,7 @@ export default function SdgGridRouletteVisualization({ rows, sector }: Props) {
 
     try {
       const headers = ["SDG", "Sustainability Dimension", "Question", "Score"];
-      const csvRows = rows.map(row => {
+      const csvRows = rows.map((row) => {
         const sdg = row.sdg_number || "";
         const dimension = row.sustainability_dimension || "";
         const question = (row.question || "").replace(/"/g, '""');
@@ -406,7 +458,7 @@ export default function SdgGridRouletteVisualization({ rows, sector }: Props) {
           `"${sdg}"`,
           `"${dimension}"`,
           `"${question}"`,
-          `"${score}"`
+          `"${score}"`,
         ].join(",");
       });
 
@@ -436,22 +488,6 @@ export default function SdgGridRouletteVisualization({ rows, sector }: Props) {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-6 md:p-8">
       <div className="max-w-7xl mx-auto">
-        {/* Header + Sector */}
-        <div className="bg-white rounded-xl shadow-md p-6 mb-4">
-          <h1 className="text-3xl font-bold text-gray-800">
-            BIORADAR - Implementation Scorecard
-          </h1>
-          <div className="mt-4">
-            <span className="text-sm text-gray-600 mr-2">Sector:</span>
-            <span
-              className="inline-flex items-center rounded-full px-3 py-1 text-sm font-medium"
-              style={{ backgroundColor: "#eef2ff", color: "#3730a3" }}
-            >
-              {sector || "—"}
-            </span>
-          </div>
-        </div>
-
         {/* Visualization Card with Download Button */}
         <div className="bg-white rounded-xl shadow-md p-4 md:p-6 mb-6">
           {/* Download Score Button - Top Right */}
@@ -459,7 +495,8 @@ export default function SdgGridRouletteVisualization({ rows, sector }: Props) {
             <button
               onClick={handleDownloadCSV}
               disabled={!rows || rows.length === 0}
-              className={`px-4 py-2 bg-green-600 text-white rounded-lg transition flex items-center gap-2 shadow-md ${
+              aria-label="Download SDG assessment scores as CSV file"
+              className={`px-4 py-2 bg-green-600 text-white rounded-lg transition flex items-center gap-2 shadow-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 ${
                 !rows || rows.length === 0
                   ? "opacity-50 cursor-not-allowed"
                   : "hover:bg-green-700"
@@ -470,6 +507,7 @@ export default function SdgGridRouletteVisualization({ rows, sector }: Props) {
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
+                aria-hidden="true"
               >
                 <path
                   strokeLinecap="round"
@@ -493,44 +531,167 @@ export default function SdgGridRouletteVisualization({ rows, sector }: Props) {
           </div>
         </div>
 
-        {/* Performance by Dimension */}
-        <div className="bg-white rounded-xl shadow-md p-5">
-          <h3 className="font-semibold mb-4 text-gray-800">Performance by Dimension</h3>
-          <div className="flex flex-col gap-4">
-            {DIMENSIONS.map((d, idx) => {
-              const score = dimensionTotals[d.key];
-              const percentage = Math.round((score / 85) * 100);
-              return (
-                <div
-                  key={d.key}
-                  className="rounded-lg p-3 bg-gradient-to-r from-white to-slate-50 shadow-sm"
-                >
-                  <div className="flex items-center gap-2 mb-2">
-                    <div
-                      className="w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-bold shadow"
-                      style={{ backgroundColor: d.color }}
-                    >
-                      {idx + 1}
+        {/* Performance Section */}
+        <section className="bg-white rounded-xl shadow-md p-6" aria-labelledby="performance-heading">
+          <h2 id="performance-heading" className="text-2xl font-bold mb-6 text-gray-800">
+            Performance
+          </h2>
+
+          {/* Performance by Dimension */}
+          <div className="mb-8">
+            <h3 className="font-semibold mb-4 text-gray-800 text-lg" id="dimension-heading">
+              By Dimension
+            </h3>
+            <div className="flex flex-col gap-4" role="list" aria-labelledby="dimension-heading">
+              {DIMENSIONS.map((d, idx) => {
+                const score = dimensionTotals[d.key];
+                const percentage = Math.round((score / 85) * 100);
+                return (
+                  <div
+                    key={d.key}
+                    className="rounded-lg p-3 bg-gradient-to-r from-white to-slate-50 shadow-sm"
+                    role="listitem"
+                  >
+                    <div className="flex items-center gap-2 mb-2">
+                      <div
+                        className="w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-bold shadow"
+                        style={{ backgroundColor: d.color }}
+                        aria-label={`Dimension ${idx + 1}`}
+                      >
+                        {idx + 1}
+                      </div>
+                      <span className="font-medium text-sm text-gray-800">
+                        {d.shortKey}
+                      </span>
                     </div>
-                    <span className="font-medium text-sm text-gray-800">
-                      {d.shortKey}
-                    </span>
-                  </div>
-                  <div className="flex justify-between text-xs mb-1 text-gray-600">
-                    <span>Score: {score}/85</span>
-                    <span className="font-bold text-gray-700">{percentage}%</span>
-                  </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+                    <div className="flex justify-between text-xs mb-1 text-gray-600">
+                      <span>Score: {score}/85</span>
+                      <span className="font-bold text-gray-700">{percentage}%</span>
+                    </div>
                     <div
-                      className="rounded-full h-2 transition-all duration-500"
-                      style={{ width: `${percentage}%`, backgroundColor: d.color }}
-                    />
+                      className="w-full bg-gray-200 rounded-full h-2 overflow-hidden"
+                      role="progressbar"
+                      aria-valuenow={percentage}
+                      aria-valuemin={0}
+                      aria-valuemax={100}
+                      aria-label={`${d.shortKey} performance: ${percentage}%`}
+                    >
+                      <div
+                        className="rounded-full h-2 transition-all duration-500"
+                        style={{ width: `${percentage}%`, backgroundColor: d.color }}
+                      />
+                    </div>
                   </div>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
           </div>
-        </div>
+
+          {/* Performance by SDG */}
+          <div>
+            <h3 className="font-semibold mb-4 text-gray-800 text-lg" id="sdg-heading">
+              By SDG
+            </h3>
+
+            {/* Best Performing SDGs */}
+            <div className="mb-6">
+              <h4 className="text-sm font-semibold text-green-700 mb-3" id="best-sdg-heading">
+                Best Performing
+              </h4>
+              <div className="flex flex-col gap-3" role="list" aria-labelledby="best-sdg-heading">
+                {topSDGs.map((sdg) => {
+                  const percentage = Math.round((sdg.score / 20) * 100);
+                  return (
+                    <div
+                      key={sdg.sdg}
+                      className="rounded-lg p-3 bg-gradient-to-r from-green-50 to-white shadow-sm border border-green-100"
+                      role="listitem"
+                    >
+                      <div className="flex items-center gap-3 mb-2">
+                        <img
+                          src={SDG_IMAGE_MAP[sdg.sdg]}
+                          alt={`SDG ${sdg.sdg}: ${sdg.description}`}
+                          className="w-10 h-10 rounded"
+                        />
+                        <div className="flex-1">
+                          <div className="font-semibold text-sm text-gray-800">
+                            SDG {sdg.sdg}: {sdg.description}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex justify-between text-xs mb-1 text-gray-600">
+                        <span>Score: {sdg.score}/20</span>
+                        <span className="font-bold text-green-700">{percentage}%</span>
+                      </div>
+                      <div
+                        className="w-full bg-gray-200 rounded-full h-2 overflow-hidden"
+                        role="progressbar"
+                        aria-valuenow={percentage}
+                        aria-valuemin={0}
+                        aria-valuemax={100}
+                        aria-label={`SDG ${sdg.sdg} ${sdg.description} performance: ${percentage}%`}
+                      >
+                        <div
+                          className="rounded-full h-2 transition-all duration-500 bg-green-600"
+                          style={{ width: `${percentage}%` }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Lowest Performing SDGs */}
+            <div>
+              <h4 className="text-sm font-semibold text-red-700 mb-3" id="lowest-sdg-heading">
+                Lowest Performing
+              </h4>
+              <div className="flex flex-col gap-3" role="list" aria-labelledby="lowest-sdg-heading">
+                {bottomSDGs.map((sdg) => {
+                  const percentage = Math.round((sdg.score / 20) * 100);
+                  return (
+                    <div
+                      key={sdg.sdg}
+                      className="rounded-lg p-3 bg-gradient-to-r from-red-50 to-white shadow-sm border border-red-100"
+                      role="listitem"
+                    >
+                      <div className="flex items-center gap-3 mb-2">
+                        <img
+                          src={SDG_IMAGE_MAP[sdg.sdg]}
+                          alt={`SDG ${sdg.sdg}: ${sdg.description}`}
+                          className="w-10 h-10 rounded"
+                        />
+                        <div className="flex-1">
+                          <div className="font-semibold text-sm text-gray-800">
+                            SDG {sdg.sdg}: {sdg.description}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex justify-between text-xs mb-1 text-gray-600">
+                        <span>Score: {sdg.score}/20</span>
+                        <span className="font-bold text-red-700">{percentage}%</span>
+                      </div>
+                      <div
+                        className="w-full bg-gray-200 rounded-full h-2 overflow-hidden"
+                        role="progressbar"
+                        aria-valuenow={percentage}
+                        aria-valuemin={0}
+                        aria-valuemax={100}
+                        aria-label={`SDG ${sdg.sdg} ${sdg.description} performance: ${percentage}%`}
+                      >
+                        <div
+                          className="rounded-full h-2 transition-all duration-500 bg-red-600"
+                          style={{ width: `${percentage}%` }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        </section>
       </div>
     </div>
   );

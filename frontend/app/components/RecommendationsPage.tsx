@@ -386,7 +386,6 @@ export default function RecommendationsPage({ rows, sector }: Props) {
             Sector: <span className="font-semibold">{sector}</span>
           </p>
         </div>
-
         {/* Overall Performance */}
         <div
           className="rounded-xl p-6 mb-8"
@@ -411,7 +410,37 @@ export default function RecommendationsPage({ rows, sector }: Props) {
             </div>
           </div>
         </div>
-
+                        {/* Priority Actions Summary */}
+                        <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-6 mb-8">
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">
+            🎯 Priority Actions
+          </h2>
+          <div className="space-y-3">
+            {sdgAverages
+              .filter((s) => s.avgScore < 2)
+              .slice(0, 3)
+              .map((sdgData) => (
+                <div
+                  key={sdgData.sdg}
+                  className="bg-white rounded-lg p-4 border-l-4 border-red-500"
+                >
+                  <p className="font-semibold text-gray-900">
+                    SDG {sdgData.sdg}: {SDG_NAMES[sdgData.sdg]}
+                  </p>
+                  <p className="text-sm text-gray-600 mt-1">
+                    Critical priority - Score: {sdgData.avgScore.toFixed(1)} / 5.0
+                  </p>
+                </div>
+              ))}
+            {sdgAverages.filter((s) => s.avgScore < 2).length === 0 && (
+              <p className="text-gray-600 text-center py-4">
+                ✅ No critical priority areas identified. Continue monitoring and
+                improvement efforts.
+              </p>
+            )}
+          </div>
+        </div>
+        
         {/* Dimension Performance */}
         <div className="mb-8">
           <h2 className="text-2xl font-bold text-gray-900 mb-6">
@@ -533,38 +562,6 @@ export default function RecommendationsPage({ rows, sector }: Props) {
             })}
           </div>
         </div>
-
-        {/* Priority Actions Summary */}
-        <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-6 mb-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">
-            🎯 Priority Actions
-          </h2>
-          <div className="space-y-3">
-            {sdgAverages
-              .filter((s) => s.avgScore < 2)
-              .slice(0, 3)
-              .map((sdgData) => (
-                <div
-                  key={sdgData.sdg}
-                  className="bg-white rounded-lg p-4 border-l-4 border-red-500"
-                >
-                  <p className="font-semibold text-gray-900">
-                    SDG {sdgData.sdg}: {SDG_NAMES[sdgData.sdg]}
-                  </p>
-                  <p className="text-sm text-gray-600 mt-1">
-                    Critical priority - Score: {sdgData.avgScore.toFixed(1)} / 5.0
-                  </p>
-                </div>
-              ))}
-            {sdgAverages.filter((s) => s.avgScore < 2).length === 0 && (
-              <p className="text-gray-600 text-center py-4">
-                ✅ No critical priority areas identified. Continue monitoring and
-                improvement efforts.
-              </p>
-            )}
-          </div>
-        </div>
-
         {/* Navigation */}
         <div className="flex flex-col sm:flex-row justify-between gap-4 pt-6 border-t border-gray-200">
           <button

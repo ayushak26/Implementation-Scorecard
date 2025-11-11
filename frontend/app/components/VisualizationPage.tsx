@@ -17,6 +17,19 @@ type Question = {
 
 type SectorData = Record<string, { rows: Question[] }>;
 
+type DimensionScore = {
+  dimension: string;
+  averageScore: number;
+  questionCount: number;
+};
+
+type SDGScore = {
+  sdgNumber: number;
+  sdgDescription: string;
+  averageScore: number;
+  questionCount: number;
+};
+
 export default function VisualizationPage() {
   const context = useContext(SDGContext);
   const router = useRouter();
@@ -29,6 +42,65 @@ export default function VisualizationPage() {
   const [sectorData, setSectorData] = useState<SectorData | null>(null);
   const [currentSector, setCurrentSector] = useState<string>("");
   const [rows, setRows] = useState<Question[]>([]);
+  const [dimensionScores, setDimensionScores] = useState<DimensionScore[]>([]);
+  const [topSDGs, setTopSDGs] = useState<SDGScore[]>([]);
+  const [bottomSDGs, setBottomSDGs] = useState<SDGScore[]>([]);
+
+  // Calculate dimension and SDG performance
+  const calculatePerformance = (questions: Question[]) => {
+    // Calculate dimension scores
+    const dimensionMap = new Map<string, { total: number; count: number }>();
+    questions.forEach((q) => {
+      if (q.score !== undefined) {
+        const existing = dimensionMap.get(q.sustainability_dimension) || { total: 0, count: 0 };
+        dimensionMap.set(q.sustainability_dimension, {
+          total: existing.total + q.score,
+          count: existing.count + 1,
+        });
+      }
+    });
+
+    const dimensions: DimensionScore[] = Array.from(dimensionMap.entries()).map(
+      ([dimension, data]) => ({
+        dimension,
+        averageScore: data.total / data.count,
+        questionCount: data.count,
+      })
+    );
+
+    // Calculate SDG scores
+    const sdgMap = new Map<number, { description: string; total: number; count: number }>();
+    questions.forEach((q) => {
+      if (q.score !== undefined) {
+        const existing = sdgMap.get(q.sdg_number) || {
+          description: q.sdg_description,
+          total: 0,
+          count: 0,
+        };
+        sdgMap.set(q.sdg_number, {
+          description: q.sdg_description,
+          total: existing.total + q.score,
+          count: existing.count + 1,
+        });
+      }
+    });
+
+    const sdgs: SDGScore[] = Array.from(sdgMap.entries()).map(([sdgNumber, data]) => ({
+      sdgNumber,
+      sdgDescription: data.description,
+      averageScore: data.total / data.count,
+      questionCount: data.count,
+    }));
+
+    // Sort and get top/bottom 2
+    const sortedSDGs = [...sdgs].sort((a, b) => b.averageScore - a.averageScore);
+    const top2 = sortedSDGs.slice(0, 2);
+    const bottom2 = sortedSDGs.slice(-2).reverse();
+
+    setDimensionScores(dimensions.sort((a, b) => b.averageScore - a.averageScore));
+    setTopSDGs(top2);
+    setBottomSDGs(bottom2);
+  };
 
   // Load visualization data
   useEffect(() => {
@@ -60,7 +132,11 @@ export default function VisualizationPage() {
         // Get first sector and its rows
         const firstSector = Object.keys(data)[0];
         setCurrentSector(firstSector);
-        setRows(data[firstSector]?.rows || []);
+        const sectorRows = data[firstSector]?.rows || [];
+        setRows(sectorRows);
+
+        // Calculate performance metrics
+        calculatePerformance(sectorRows);
 
       } catch (e: any) {
         setError(e?.message || "Failed to load visualization data.");
@@ -82,8 +158,39 @@ export default function VisualizationPage() {
     router.push("/");
   };
 
+  const getScoreColor = (score: number) => {
+    if (score >= 4) return "text-green-600 bg-green-50";
+    if (score >= 3) return "text-yellow-600 bg-yellow-50";
+    return "text-red-600 bg-red-50";
+  };
+
+  const getScoreBadgeColor = (score: number) => {
+    if (score >= 4) return "bg-green-600";
+    if (score >= 3) return "bg-yellow-600";
+    return "bg-red-600";
+  };
+
   return (
     <div className="bg-white rounded-2xl shadow-lg p-6 animate-fadeIn">
+      {/* Header with Logo */}
+      <div className="mb-8">
+        <div className="flex justify-center mb-6">
+          <a href="https://www.bioradar.org" target="_blank" rel="noopener noreferrer">
+            <img
+              src="https://www.bioradar.org/themes/custom/b5subtheme/logo.svg"
+              alt="BIORADAR Logo"
+              className="h-20 sm:h-24 object-contain"
+            />
+          </a>
+        </div>
+        <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-2 text-center">
+          Sustainability Assessment
+        </h1>
+        <p className="text-gray-600 text-center">
+          Sector: <span className="font-semibold">{currentSector}</span>
+        </p>
+      </div>
+
       {/* Error Message */}
       {error && (
         <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg p-4 mb-6" role="alert">
@@ -113,7 +220,6 @@ export default function VisualizationPage() {
               No data available. Please submit the questionnaire again.
             </div>
           )}
-
           {/* Bottom Navigation Row */}
           <div className="flex justify-between items-center gap-4 mt-6">
             {/* Left: Back to Sector Selection */}
