@@ -1,5 +1,7 @@
 {
-  "/form/page": "app/form/page.js",
+  "/sector-picker/page": "app/sector-picker/page.js",
   "/visualization/page": "app/visualization/page.js",
+  "/form/page": "app/form/page.js",
+  "/page": "app/page.js",
   "/favicon.ico/route": "app/favicon.ico/route.js"
 }
