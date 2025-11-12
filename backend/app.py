@@ -11,6 +11,8 @@ app.add_middleware(
         "http://localhost:3000",
         "http://127.0.0.1:3000",
         "https://*.vercel.app",
+        "https://bioradar-implementation-scorecard.com",  # Add your domain
+        "http://bioradar-implementation-scorecard.com",   # HTTP version
     ],
     allow_methods=["*"],
     allow_headers=["*"],

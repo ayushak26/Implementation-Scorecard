@@ -7,20 +7,19 @@ const nextConfig = {
   },
   
   async rewrites() {
-    console.log('🔧 Rewrites function called!'); // Add this
-    console.log('Environment:', process.env.NODE_ENV); // Add this
+    const isDev = process.env.NODE_ENV === 'development';
     
-    if (process.env.NODE_ENV === 'development') {
-      console.log('✅ Returning rewrites'); // Add this
-      return [
-        {
-          source: '/api/:path*',
-          destination: 'http://localhost:8000/api/:path*',
-        },
-      ];
-    }
-    console.log('❌ Not in development mode'); // Add this
-    return [];
+    console.log('🔧 Rewrites function called!');
+    console.log('Environment:', process.env.NODE_ENV);
+    
+    return [
+      {
+        source: '/api/:path*',
+        destination: isDev 
+        ? 'http://localhost:8000/api/:path*'
+        : 'https://bioradar-implementation-scorecard.com/api/:path*',
+      },
+    ];
   },
 };
 
