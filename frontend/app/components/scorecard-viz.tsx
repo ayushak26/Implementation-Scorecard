@@ -229,7 +229,7 @@ function useGridRoulette({
       const icon = polar(iconRadius + 25, iconAngle);
       g.append("image")
         .attr("href", SDG_IMAGE_MAP[sdg])
-        .attr("x", icon.x - 15)
+        .attr("x", icon.x - 30)
         .attr("y", icon.y - 40)
         .attr("width", 60)
         .attr("height", 70)
