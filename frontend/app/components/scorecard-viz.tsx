@@ -384,6 +384,7 @@ type Props = { rows: QuestionnaireRow[]; sector: string };
 
 export default function SdgGridRouletteVisualization({ rows, sector }: Props) {
   const [size, setSize] = useState<{ w: number; h: number }>({ w: 0, h: 0 });
+  const [isDownloading, setIsDownloading] = useState(false);
   const cardRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -477,6 +478,132 @@ export default function SdgGridRouletteVisualization({ rows, sector }: Props) {
     }
   };
 
+  const handleDownloadChart = async () => {
+    if (!ref.current) {
+      alert("Chart not available");
+      return;
+    }
+
+    setIsDownloading(true);
+
+    try {
+      const svgElement = ref.current.cloneNode(true) as SVGSVGElement;
+      
+      // Get all image elements
+      const images = svgElement.querySelectorAll("image");
+      
+      // Load all images into canvas first, then convert to base64
+      const imagePromises = Array.from(images).map(async (imgEl) => {
+        const href = imgEl.getAttribute("href");
+        if (!href || href.startsWith("data:")) return;
+        
+        try {
+          // Use CORS proxy or load through Image element
+          const imgElement = new Image();
+          imgElement.crossOrigin = "anonymous";
+          
+          await new Promise<void>((resolve, reject) => {
+            imgElement.onload = () => resolve();
+            imgElement.onerror = () => reject(new Error("Failed to load"));
+            imgElement.src = href;
+          });
+          
+          // Convert loaded image to base64
+          const canvas = document.createElement("canvas");
+          canvas.width = imgElement.width;
+          canvas.height = imgElement.height;
+          const ctx = canvas.getContext("2d");
+          if (ctx) {
+            ctx.drawImage(imgElement, 0, 0);
+            const base64 = canvas.toDataURL("image/png");
+            imgEl.setAttribute("href", base64);
+          }
+        } catch (err) {
+          console.warn("Failed to convert image:", href, err);
+          // If conversion fails, try using a CORS proxy
+          try {
+            const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(href)}`;
+            const response = await fetch(proxyUrl);
+            const blob = await response.blob();
+            const base64 = await new Promise<string>((resolve) => {
+              const reader = new FileReader();
+              reader.onloadend = () => resolve(reader.result as string);
+              reader.readAsDataURL(blob);
+            });
+            imgEl.setAttribute("href", base64);
+          } catch (proxyErr) {
+            console.warn("Proxy also failed:", proxyErr);
+          }
+        }
+      });
+
+      await Promise.all(imagePromises);
+
+      // Now convert to canvas
+      const svgData = new XMLSerializer().serializeToString(svgElement);
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d");
+      
+      if (!ctx) {
+        alert("Canvas not supported");
+        setIsDownloading(false);
+        return;
+      }
+
+      const img = new Image();
+      const svgBlob = new Blob([svgData], { type: "image/svg+xml;charset=utf-8" });
+      const url = URL.createObjectURL(svgBlob);
+
+      img.onload = () => {
+        canvas.width = size.w || 1000;
+        canvas.height = size.h || 1000;
+        
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        ctx.drawImage(img, 0, 0);
+        URL.revokeObjectURL(url);
+
+        canvas.toBlob((blob) => {
+          if (!blob) {
+            alert("Failed to generate image");
+            setIsDownloading(false);
+            return;
+          }
+
+          const link = document.createElement("a");
+          const timestamp = new Date().toISOString().split("T")[0];
+          const filename = `SDG_Chart_${sector}_${timestamp}.png`;
+          
+          const downloadUrl = URL.createObjectURL(blob);
+          link.setAttribute("href", downloadUrl);
+          link.setAttribute("download", filename);
+          link.style.visibility = "hidden";
+
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          URL.revokeObjectURL(downloadUrl);
+
+          console.log(`✅ Downloaded: ${filename}`);
+          setIsDownloading(false);
+        }, "image/png");
+      };
+
+      img.onerror = () => {
+        URL.revokeObjectURL(url);
+        alert("Failed to load chart for download");
+        setIsDownloading(false);
+      };
+
+      img.src = url;
+    } catch (error) {
+      console.error("Chart download error:", error);
+      alert("Failed to download chart. Please try again.");
+      setIsDownloading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-6 md:p-8">
       <div className="max-w-7xl mx-auto">
@@ -517,6 +644,63 @@ export default function SdgGridRouletteVisualization({ rows, sector }: Props) {
               height={size.h || 800}
               style={{ display: "block", margin: "0 auto" }}
             />
+          </div>
+
+          <div className="flex justify-end mt-4">
+            <button
+              onClick={handleDownloadChart}
+              disabled={!size.w || isDownloading}
+              aria-label="Download SDG chart as PNG image"
+              className={`px-4 py-2 bg-green-600 text-white rounded-lg transition flex items-center gap-2 shadow-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 ${
+                !size.w || isDownloading
+                  ? "opacity-50 cursor-not-allowed"
+                  : "hover:bg-green-700"
+              }`}
+            >
+              {isDownloading ? (
+                <>
+                  <svg
+                    className="w-5 h-5 animate-spin"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    aria-hidden="true"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    />
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    />
+                  </svg>
+                  Preparing...
+                </>
+              ) : (
+                <>
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    aria-hidden="true"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                    />
+                  </svg>
+                  Download Chart
+                </>
+              )}
+            </button>
           </div>
         </div>
 
