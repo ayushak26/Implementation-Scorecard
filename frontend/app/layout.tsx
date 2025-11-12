@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   title: "Implementation Scorecard",
   description: "BioRadar Implementation Scorecard - A tool to assess Sustainable Development Goals performance",
   icons: {
-    icon: '/favicon.ico',
+    icon: '/favicon.ico?v=2',
   },
 };
 
