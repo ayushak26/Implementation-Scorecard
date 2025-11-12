@@ -218,7 +218,7 @@ function useGridRoulette({
             .attr("x2", p2.x)
             .attr("y2", p2.y)
             .attr("stroke", "#000")
-            .attr("stroke-width", 3);
+            .attr("stroke-width", 0.5);
         }
       });
 
@@ -252,7 +252,7 @@ function useGridRoulette({
           .attr("r", dotR)
           .attr("fill", dmeta.color)
           .attr("stroke", dmeta.color)
-          .attr("stroke-width", 2)
+          .attr("stroke-width", 1)
           .attr("opacity", 0.95)
           .attr("aria-label", `Dimension ${i + 1}: ${dmeta.shortKey}`);
 
@@ -291,8 +291,8 @@ function useGridRoulette({
         .attr("r", radius)
         .attr("fill", "none")
         .attr("stroke", "#000")
-        .attr("stroke-width", level === 0 || level === 5 ? 4 : 1)
-        .attr("opacity", level === 0 || level === 5 ? 0.8 : 0.4)
+        .attr("stroke-width", level === 0 || level === 5 ? 6 : 3)
+        .attr("opacity", level === 0 || level === 5 ? 2 : 1)
         .attr("aria-label", level === 0 ? "Inner boundary" : level === 5 ? "Outer boundary" : `Score level ${level}`);
     }
 
