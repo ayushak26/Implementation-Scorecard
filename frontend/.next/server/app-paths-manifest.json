@@ -1,5 +1,6 @@
 {
   "/sector-picker/page": "app/sector-picker/page.js",
+  "/visualization/page": "app/visualization/page.js",
   "/form/page": "app/form/page.js",
-  "/visualization/page": "app/visualization/page.js"
+  "/favicon.ico/route": "app/favicon.ico/route.js"
 }

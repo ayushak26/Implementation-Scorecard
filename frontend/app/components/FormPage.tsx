@@ -1,7 +1,7 @@
 // app/components/FormPage.tsx
 "use client";
 
-import React, { useEffect, useMemo, useState, useContext } from "react";
+import React, { useEffect, useMemo, useState, useContext, useRef } from "react";
 import { useRouter } from "next/navigation";
 import QuestionCard from "./QuestionCard";
 import { SDGContext } from "./SDGContext";
@@ -112,6 +112,8 @@ const buildPages = (questions: Question[], activeSector: string): Question[][] =
 export default function FormPage() {
   const router = useRouter();
   const context = useContext(SDGContext);
+  const containerRef = useRef<HTMLDivElement>(null);
+  
   if (!context) return null;
 
   const {
@@ -131,92 +133,86 @@ export default function FormPage() {
       ? selectedSector
       : SECTOR_ORDER[0];
 
-// In FormPage.tsx, update the useEffect:
-
-useEffect(() => {
-  const fetchQuestions = async () => {
-    setIsBusy(true);
-    setError(null);
-    
-    try {
-      let raw: Question[] = [];
-      let dataSource = "";
+  useEffect(() => {
+    const fetchQuestions = async () => {
+      setIsBusy(true);
+      setError(null);
       
-      // 1️⃣ FIRST PRIORITY: Check localStorage for uploaded Excel
-      if (typeof window !== "undefined") {
-        const stored = localStorage.getItem("uploadedQuestions");
-        if (stored) {
-          try {
-            const parsed = JSON.parse(stored);
-            if (Array.isArray(parsed) && parsed.length > 0) {
-              raw = parsed;
-              dataSource = "Uploaded Excel (localStorage)";
-              console.log(`✅ Using uploaded Excel from localStorage (${parsed.length} questions)`);
+      try {
+        let raw: Question[] = [];
+        let dataSource = "";
+        
+        // 1️⃣ FIRST PRIORITY: Check localStorage for uploaded Excel
+        if (typeof window !== "undefined") {
+          const stored = localStorage.getItem("uploadedQuestions");
+          if (stored) {
+            try {
+              const parsed = JSON.parse(stored);
+              if (Array.isArray(parsed) && parsed.length > 0) {
+                raw = parsed;
+                dataSource = "Uploaded Excel (localStorage)";
+                console.log(`✅ Using uploaded Excel from localStorage (${parsed.length} questions)`);
+              }
+            } catch (e) {
+              console.warn("Failed to parse stored questions:", e);
+              localStorage.removeItem("uploadedQuestions");
             }
-          } catch (e) {
-            console.warn("Failed to parse stored questions:", e);
-            localStorage.removeItem("uploadedQuestions"); // Clean up corrupted data
           }
         }
-      }
-      
-      // 2️⃣ FALLBACK: Use default Excel from API
-      if (raw.length === 0) {
-        console.log("📡 No uploaded Excel found, using default Excel...");
         
-        const res = await fetch("/api/questionnaire/template", {
-          method: "GET",
-          cache: "no-store",
-        });
+        // 2️⃣ FALLBACK: Use default Excel from API
+        if (raw.length === 0) {
+          console.log("📡 No uploaded Excel found, using default Excel...");
+          
+          const res = await fetch("/api/questionnaire/template", {
+            method: "GET",
+            cache: "no-store",
+          });
 
-        if (!res.ok) {
-          const errorText = await res.text();
-          let errorMsg = "Failed to load questions";
-          
-          try {
-            const errorData = JSON.parse(errorText);
-            errorMsg = errorData?.detail || errorData?.error || errorMsg;
-          } catch {
-            errorMsg = errorText || errorMsg;
+          if (!res.ok) {
+            const errorText = await res.text();
+            let errorMsg = "Failed to load questions";
+            
+            try {
+              const errorData = JSON.parse(errorText);
+              errorMsg = errorData?.detail || errorData?.error || errorMsg;
+            } catch {
+              errorMsg = errorText || errorMsg;
+            }
+            
+            throw new Error(errorMsg);
           }
+
+          const data = await res.json();
+          raw = Array.isArray(data.questions) ? data.questions : [];
+          dataSource = "Default Excel (backend/data/final.xlsx)";
           
-          throw new Error(errorMsg);
+          console.log(`✅ Using default Excel from API (${raw.length} questions)`);
         }
 
-        const data = await res.json();
-        raw = Array.isArray(data.questions) ? data.questions : [];
-        dataSource = "Default Excel (backend/data/final.xlsx)";
-        
-        console.log(`✅ Using default Excel from API (${raw.length} questions)`);
+        if (raw.length === 0) {
+          throw new Error("No questions available. Please upload an Excel file.");
+        }
+
+        console.log(`📊 Loaded ${raw.length} questions from: ${dataSource}`);
+
+        const sanitized = sanitizeQuestions(raw);
+        setCtxQuestions(sanitized);
+
+        // ✅ CHANGED: Don't initialize scores - let them be undefined
+        setScoresByKey({});
+
+      } catch (err: any) {
+        console.error("Failed to fetch questions:", err);
+        setError(err.message || "Failed to load questionnaire");
+        setCtxQuestions([]);
+      } finally {
+        setIsBusy(false);
       }
+    };
 
-      if (raw.length === 0) {
-        throw new Error("No questions available. Please upload an Excel file.");
-      }
-
-      console.log(`📊 Loaded ${raw.length} questions from: ${dataSource}`);
-
-      const sanitized = sanitizeQuestions(raw);
-      setCtxQuestions(sanitized);
-
-      // Initialize scores
-      const init: Record<string, number> = {};
-      sanitized.forEach((q) => {
-        init[makeKey(q)] = 3;
-      });
-      setScoresByKey(init);
-
-    } catch (err: any) {
-      console.error("Failed to fetch questions:", err);
-      setError(err.message || "Failed to load questionnaire");
-      setCtxQuestions([]);
-    } finally {
-      setIsBusy(false);
-    }
-  };
-
-  fetchQuestions();
-}, [setCtxQuestions]);
+    fetchQuestions();
+  }, [setCtxQuestions]);
 
   const filteredQuestions = useMemo(() => {
     return ctxQuestions.filter((q) => canonicalSector(q.sector) === activeSector);
@@ -233,23 +229,33 @@ useEffect(() => {
     setPageIdx(0);
   }, [activeSector]);
 
+  // ✅ NEW: Scroll to top when page changes
+  useEffect(() => {
+    if (containerRef.current) {
+      containerRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, [pageIdx]);
+
   const handleScoreSelect = (key: string, score: number) => {
     const bounded = Math.max(0, Math.min(5, score));
     setScoresByKey((prev) => ({ ...prev, [key]: bounded }));
   };
 
+  // ✅ CHANGED: Check that all questions have a defined score (not just finite)
   const pageComplete =
     currentPage.length === 4 &&
-    currentPage.every((q) => Number.isFinite(scoresByKey[makeKey(q)]));
+    currentPage.every((q) => scoresByKey[makeKey(q)] !== undefined);
 
   const allComplete =
     pages.length > 0 &&
-    pages.every((page) => page.every((q) => Number.isFinite(scoresByKey[makeKey(q)])));
+    pages.every((page) => page.every((q) => scoresByKey[makeKey(q)] !== undefined));
 
   const progress =
     totalPages > 0 ? Math.round(((pageIdx + 1) / totalPages) * 100) : 0;
 
   const goPrev = () => setPageIdx((i) => Math.max(0, i - 1));
+  
+  // ✅ UPDATED: Next button scrolls to top
   const goNext = () => {
     if (pageIdx < totalPages - 1 && pageComplete) {
       setPageIdx((i) => i + 1);
@@ -273,8 +279,6 @@ useEffect(() => {
         score: scoresByKey[makeKey(q)] ?? 3,
       }));
 
-      // ✅ FIXED: Direct call to FastAPI backend
-      // No Next.js API route needed - vercel.json routes this in production
       const res = await fetch("/api/questionnaire/calculate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -300,7 +304,6 @@ useEffect(() => {
 
       const payload = await res.json();
 
-      // Check if response has the expected structure
       if (!payload || payload.success === false) {
         throw new Error(payload?.error || "Calculation failed");
       }
@@ -310,11 +313,9 @@ useEffect(() => {
         throw new Error("Invalid scorecard data returned from server");
       }
 
-      // Store result in sessionStorage
       sessionStorage.setItem("scorecard", JSON.stringify(result));
       sessionStorage.setItem("scorecardSector", activeSector);
 
-      // Navigate to results
       router.push("/visualization");
     } catch (err: any) {
       console.error("Submission error:", err);
@@ -327,14 +328,15 @@ useEffect(() => {
   return (
     <div className="w-full flex justify-center bg-gray-50">
       <div
+        ref={containerRef}
         className="
           w-full
-          max-w-[95vw]              /* almost full width on small screens */
-          sm:max-w-[90vw]           /* a bit narrower on small tablets */
-          md:max-w-4xl              /* medium screen cap */
-          lg:max-w-5xl              /* large screen cap */
-          xl:max-w-6xl              /* very large displays */
-          2xl:max-w-7xl             /* ultra-wide monitors */
+          max-w-[95vw]
+          sm:max-w-[90vw]
+          md:max-w-4xl
+          lg:max-w-5xl
+          xl:max-w-6xl
+          2xl:max-w-7xl
           transition-all duration-300
           bg-white rounded-2xl shadow-lg
           p-4 sm:p-6 md:p-8
@@ -366,7 +368,6 @@ useEffect(() => {
           </div>
         </div>
   
-        {/* Rest of your content remains unchanged */}
         {error && (
           <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg p-4 mb-6 animate-shake">
             <p className="font-medium">Error</p>
