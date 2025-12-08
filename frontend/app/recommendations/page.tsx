@@ -57,7 +57,7 @@ export default function RecommendationsRoute() {
 
   if (isLoading) {
     return (
-      <div className="w-full flex justify-center bg-gray-50 min-h-screen items-center p-4 sm:p-6 md:p-8">
+      <div className="w-full flex justify-center bg-green-50 min-h-screen items-center p-4 sm:p-6 md:p-8">
         <div className="bg-white rounded-2xl shadow-lg p-12 max-w-md w-full">
           <div className="text-center">
             <div className="inline-block relative">
@@ -73,7 +73,7 @@ export default function RecommendationsRoute() {
 
   if (error || !rows || rows.length === 0) {
     return (
-      <div className="w-full flex justify-center bg-gray-50 min-h-screen items-center p-4 sm:p-6 md:p-8">
+      <div className="w-full flex justify-center bg-green-50 min-h-screen items-center p-4 sm:p-6 md:p-8">
         <div className="bg-white rounded-2xl shadow-lg p-12 max-w-md w-full">
           <div className="text-center">
             <div className="w-20 h-20 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-6">

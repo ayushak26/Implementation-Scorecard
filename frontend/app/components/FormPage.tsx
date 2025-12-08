@@ -32,6 +32,14 @@ const DEFAULT_RUBRIC: Record<number, string> = {
   5: "Action plan operational - achieving the target set",
 };
 
+// Tooltip definitions
+const TOOLTIPS: Record<string, string> = {
+  "Implementation Scorecard": "A comprehensive assessment tool to evaluate your organization's sustainability performance across multiple dimensions and SDGs",
+  "Sector": "The industry category your organization belongs to, which determines the relevant sustainability questions",
+  "SDG": "Sustainable Development Goals - 17 global objectives adopted by the UN to achieve a better future for all by 2030",
+  "Score": "Rating from 0-5 indicating your organization's level of action and achievement on sustainability targets",
+};
+
 const norm = (s: string) => (s || "").trim().toLowerCase();
 const makeKey = (q: Question) =>
   `${norm(q.sector)}|${q.sdg_number}|${norm(q.sustainability_dimension)}`;
@@ -109,6 +117,31 @@ const buildPages = (questions: Question[], activeSector: string): Question[][] =
   return pages;
 };
 
+// Tooltip Component - Appears below on hover
+const Tooltip = ({ text, children }: { text: string; children: React.ReactNode }) => {
+  const [show, setShow] = useState(false);
+  
+  return (
+    <span className="relative inline-block">
+      <span
+        onMouseEnter={() => setShow(true)}
+        onMouseLeave={() => setShow(false)}
+        className="cursor-help border-b border-dotted border-green-600"
+      >
+        {children}
+      </span>
+      {show && (
+        <div className="absolute z-50 top-full left-1/2 transform -translate-x-1/2 mt-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg shadow-lg w-64 pointer-events-none">
+          <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-0">
+            <div className="border-4 border-transparent border-b-gray-900"></div>
+          </div>
+          {text}
+        </div>
+      )}
+    </span>
+  );
+};
+
 export default function FormPage() {
   const router = useRouter();
   const context = useContext(SDGContext);
@@ -142,7 +175,6 @@ export default function FormPage() {
         let raw: Question[] = [];
         let dataSource = "";
         
-        // 1️⃣ FIRST PRIORITY: Check localStorage for uploaded Excel
         if (typeof window !== "undefined") {
           const stored = localStorage.getItem("uploadedQuestions");
           if (stored) {
@@ -160,7 +192,6 @@ export default function FormPage() {
           }
         }
         
-        // 2️⃣ FALLBACK: Use default Excel from API
         if (raw.length === 0) {
           console.log("📡 No uploaded Excel found, using default Excel...");
           
@@ -198,8 +229,6 @@ export default function FormPage() {
 
         const sanitized = sanitizeQuestions(raw);
         setCtxQuestions(sanitized);
-
-        // ✅ CHANGED: Don't initialize scores - let them be undefined
         setScoresByKey({});
 
       } catch (err: any) {
@@ -229,7 +258,6 @@ export default function FormPage() {
     setPageIdx(0);
   }, [activeSector]);
 
-  // ✅ NEW: Scroll to top when page changes
   useEffect(() => {
     if (containerRef.current) {
       containerRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -241,7 +269,6 @@ export default function FormPage() {
     setScoresByKey((prev) => ({ ...prev, [key]: bounded }));
   };
 
-  // ✅ CHANGED: Check that all questions have a defined score (not just finite)
   const pageComplete =
     currentPage.length === 4 &&
     currentPage.every((q) => scoresByKey[makeKey(q)] !== undefined);
@@ -255,7 +282,6 @@ export default function FormPage() {
 
   const goPrev = () => setPageIdx((i) => Math.max(0, i - 1));
   
-  // ✅ UPDATED: Next button scrolls to top
   const goNext = () => {
     if (pageIdx < totalPages - 1 && pageComplete) {
       setPageIdx((i) => i + 1);
@@ -326,7 +352,7 @@ export default function FormPage() {
   };
 
   return (
-    <div className="w-full flex justify-center bg-gray-50">
+    <div className="w-full flex justify-center" style={{ background: 'linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 50%, #d1fae5 100%)', minHeight: '100vh' }}>
       <div
         ref={containerRef}
         className="
@@ -338,55 +364,97 @@ export default function FormPage() {
           xl:max-w-6xl
           2xl:max-w-7xl
           transition-all duration-300
-          bg-white rounded-2xl shadow-lg
+          bg-white rounded-2xl shadow-lg border-2 border-green-200
           p-4 sm:p-6 md:p-8
-          mx-auto
+          mx-auto my-8
         "
       >
         {/* Header */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-3">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-3 pb-4 border-b-2 border-green-100">
           <div>
-            <h2 className="text-2xl font-bold text-primary">
-              BIORADAR – Implementation Scorecard
+            <h2 className="text-2xl font-bold text-green-700 flex items-center gap-2">
+              <Tooltip text={TOOLTIPS["Implementation Scorecard"]}>
+                BIORADAR – Implementation Scorecard
+              </Tooltip>
             </h2>
-            <p className="text-neutral text-sm">
-              Sector: <span className="font-medium">{activeSector}</span> |{" "}
+            <p className="text-gray-600 text-sm mt-1">
+              <Tooltip text={TOOLTIPS.Sector}>
+                <span className="font-medium">Sector:</span>
+              </Tooltip>{" "}
+              <span className="font-semibold text-green-700">{activeSector}</span>
+              {" | "}
               {filteredQuestions.length} Questions
             </p>
           </div>
   
           <div className="relative w-full sm:w-64">
-            <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="text-xs font-semibold text-gray-700">Progress</span>
+              <span className="text-xs font-bold text-green-700 ml-auto">
+                {progress}%
+              </span>
+            </div>
+            <div className="w-full h-3 bg-green-100 rounded-full overflow-hidden shadow-inner">
               <div
-                className="h-full bg-gradient-to-r from-primary to-gray-600 transition-all duration-300"
+                className="h-full bg-gradient-to-r from-green-500 to-emerald-600 transition-all duration-300 rounded-full"
                 style={{ width: `${progress}%` }}
               />
             </div>
-            <span className="absolute -top-6 right-0 text-xs text-neutral">
-              {progress}% Complete
-            </span>
+          </div>
+        </div>
+
+        {/* Info Banner */}
+        <div className="mb-6 bg-gradient-to-r from-green-50 to-emerald-50 border-l-4 border-green-500 rounded-r-lg p-4">
+          <div className="flex items-start gap-3">
+            <svg className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <div className="flex-1">
+              <p className="text-sm text-gray-700">
+                <Tooltip text={TOOLTIPS.SDG}>
+                  <strong className="text-green-700">SDG Questions:</strong>
+                </Tooltip>{" "}
+                Answer all questions for each{" "}
+                <Tooltip text={TOOLTIPS.Score}>
+                  <span className="font-medium">sustainability dimension</span>
+                </Tooltip>
+                . Hover over underlined terms for more information.
+              </p>
+            </div>
           </div>
         </div>
   
         {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg p-4 mb-6 animate-shake">
-            <p className="font-medium">Error</p>
-            <p className="text-sm">{error}</p>
+          <div className="bg-red-50 border-2 border-red-200 text-red-700 rounded-lg p-4 mb-6 animate-shake">
+            <div className="flex items-start gap-2">
+              <svg className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <div>
+                <p className="font-medium">Error</p>
+                <p className="text-sm">{error}</p>
+              </div>
+            </div>
           </div>
         )}
   
         {isBusy && pages.length === 0 ? (
-          <div className="text-center text-neutral py-12">
-            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary mb-4"></div>
-            <p>
-              Loading questions for <strong>{activeSector}</strong>...
+          <div className="text-center text-gray-600 py-12">
+            <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-green-200 border-t-green-600 mb-4"></div>
+            <p className="text-lg">
+              Loading questions for <strong className="text-green-700">{activeSector}</strong>...
             </p>
           </div>
         ) : pages.length === 0 ? (
-          <div className="text-center text-neutral py-12">
-            <p>
+          <div className="text-center text-gray-600 py-12">
+            <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg className="w-10 h-10 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+            </div>
+            <p className="text-lg font-semibold mb-2">
               No complete 4-dimension cards available for{" "}
-              <strong>{activeSector}</strong>.
+              <strong>{activeSector}</strong>
             </p>
             <p className="text-sm mt-2">
               Please try uploading an Excel file with questions.
@@ -405,12 +473,15 @@ export default function FormPage() {
               <button
                 onClick={goPrev}
                 disabled={pageIdx === 0 || isBusy}
-                className={`px-4 py-2 border border-gray-300 rounded-lg text-gray-600 transition-opacity ${
+                className={`px-6 py-3 border-2 border-green-300 rounded-lg text-green-700 font-medium transition-all flex items-center gap-2 ${
                   pageIdx === 0 || isBusy
                     ? "opacity-50 cursor-not-allowed"
-                    : "hover:bg-gray-50"
+                    : "hover:bg-green-50 hover:border-green-500"
                 }`}
               >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
                 Previous
               </button>
   
@@ -419,26 +490,30 @@ export default function FormPage() {
                   onClick={goNext}
                   disabled={!pageComplete || isBusy}
                   className={`
-                    px-4 py-2 bg-black text-white rounded-lg font-medium
-                    transition-all duration-200
+                    px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-lg font-medium
+                    transition-all duration-200 flex items-center gap-2 shadow-md
                     ${
                       !pageComplete || isBusy
                         ? "opacity-50 cursor-not-allowed"
-                        : "hover:opacity-90 hover:shadow-md"
+                        : "hover:from-green-700 hover:to-emerald-700 hover:shadow-lg"
                     }`}
                 >
                   Next
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
                 </button>
               ) : (
                 <button
                   onClick={handleSubmit}
                   disabled={!allComplete || isBusy}
                   className={`
-                    px-4 py-2 bg-black text-white rounded-lg font-medium transition-all duration-200 flex items-center gap-2
+                    px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-lg font-medium 
+                    transition-all duration-200 flex items-center gap-2 shadow-md
                     ${
                       !allComplete || isBusy
                         ? "opacity-50 cursor-not-allowed"
-                        : "hover:opacity-90 hover:shadow-md"
+                        : "hover:from-green-700 hover:to-emerald-700 hover:shadow-lg"
                     }`}
                 >
                   {isBusy && (
@@ -464,12 +539,19 @@ export default function FormPage() {
                     </svg>
                   )}
                   {isBusy ? "Submitting..." : "Submit & View Results"}
+                  {!isBusy && (
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                    </svg>
+                  )}
                 </button>
               )}
             </div>
   
-            <div className="text-center mt-4 text-sm text-gray-500">
-              Page {pageIdx + 1} of {totalPages}
+            <div className="text-center mt-6 pt-4 border-t-2 border-green-100">
+              <span className="text-sm font-medium text-gray-600">
+                Page <span className="text-green-700 font-bold">{pageIdx + 1}</span> of <span className="text-green-700 font-bold">{totalPages}</span>
+              </span>
             </div>
           </>
         )}

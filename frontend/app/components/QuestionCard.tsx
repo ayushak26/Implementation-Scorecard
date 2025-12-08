@@ -67,7 +67,7 @@ const DIMENSION_COLORS: Record<string, { bg: string; text: string; badge: string
 
 const getDimensionColor = (dimension: string) => {
   const key = dimension.toLowerCase();
-  return DIMENSION_COLORS[key] || { bg: "bg-gray-50", text: "text-gray-800", badge: "bg-gray-100" };
+  return DIMENSION_COLORS[key] || { bg: "bg-green-50", text: "text-gray-800", badge: "bg-green-100" };
 };
 
 export default function QuestionCard({
@@ -121,13 +121,23 @@ export default function QuestionCard({
                 {scores.map((score) => (
                   <th
                     key={score}
-                    className="px-3 py-4 text-center w-[10%]"
+                    className="px-3 py-4 text-center w-[10%] relative group"
                   >
                     <div className="flex flex-col items-center gap-2">
                       <div className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-white text-gray-900 font-bold shadow-md text-sm">
                         {score}
                       </div>
-                      <div className="text-xs text-white font-normal leading-tight px-1">
+                      
+                      {/* Tooltip - appears below on hover, aligned based on position */}
+                      <div className={`
+                        absolute top-full mt-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg shadow-lg 
+                        opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-10 w-48 text-center
+                        ${score === 0 ? 'left-0' : score === 5 ? 'right-0' : 'left-1/2 transform -translate-x-1/2'}
+                      `}>
+                        <div className={`
+                          absolute -top-1 w-2 h-2 bg-gray-900 rotate-45
+                          ${score === 0 ? 'left-4' : score === 5 ? 'right-4' : 'left-1/2 transform -translate-x-1/2'}
+                        `}></div>
                         {scoreRubric[score as 0 | 1 | 2 | 3 | 4 | 5]}
                       </div>
                     </div>
@@ -147,7 +157,7 @@ export default function QuestionCard({
                     key={ckey} 
                     className={`
                       transition-all duration-200 hover:bg-green-50
-                      ${idx % 2 === 0 ? "bg-white" : "bg-gray-50"}
+                      ${idx % 2 === 0 ? "bg-white" : "bg-green-50"}
                     `}
                   >
                     <td className="px-6 py-5">

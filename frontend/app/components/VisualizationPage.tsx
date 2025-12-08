@@ -225,7 +225,7 @@ export default function VisualizationPage() {
             {/* Left: Back to Sector Selection */}
             <button
               onClick={handleReset}
-              className="px-4 py-2 border-2 border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition"
+              className="px-4 py-2 border-2 border-gray-300 rounded-lg text-gray-700 hover:bg-green-50 transition"
             >
               Back to Sector Selection
             </button>

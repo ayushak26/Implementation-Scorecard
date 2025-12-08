@@ -150,13 +150,13 @@ export default function SectorPickerPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-100 flex items-center justify-center p-4 sm:p-6 lg:p-8">
-        <div className="bg-white rounded-2xl shadow-2xl p-8 sm:p-12 w-full max-w-md">
+      <div className="min-h-screen flex items-center justify-center p-4 sm:p-6 lg:p-8" style={{ background: 'linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 50%, #d1fae5 100%)' }}>
+        <div className="bg-white rounded-2xl shadow-2xl p-8 sm:p-12 w-full max-w-md border-2 border-green-200">
           <div className="text-center">
             <div className="inline-block relative">
-              <div className="w-16 h-16 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
+              <div className="w-16 h-16 border-4 border-green-200 border-t-green-600 rounded-full animate-spin"></div>
               <div className="absolute inset-0 flex items-center justify-center">
-                <div className="w-8 h-8 bg-blue-600 rounded-full opacity-20 animate-pulse"></div>
+                <div className="w-8 h-8 bg-green-600 rounded-full opacity-20 animate-pulse"></div>
               </div>
             </div>
             <p className="text-gray-700 font-medium mt-6 text-lg">Loading sectors...</p>
@@ -169,8 +169,8 @@ export default function SectorPickerPage() {
 
   if (availableSectors.length === 0) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-100 flex items-center justify-center p-4 sm:p-6 lg:p-8">
-        <div className="bg-white rounded-2xl shadow-2xl p-8 sm:p-12 w-full max-w-md">
+      <div className="min-h-screen flex items-center justify-center p-4 sm:p-6 lg:p-8" style={{ background: 'linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 50%, #d1fae5 100%)' }}>
+        <div className="bg-white rounded-2xl shadow-2xl p-8 sm:p-12 w-full max-w-md border-2 border-green-200">
           <div className="text-center">
             <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
               <svg className="w-10 h-10 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -181,7 +181,7 @@ export default function SectorPickerPage() {
             <p className="text-gray-600 mb-8">Please upload an Excel file with valid sector data to begin your assessment.</p>
             <button
               onClick={() => router.push("/upload-excel")}
-              className="w-full px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold rounded-xl hover:from-blue-700 hover:to-blue-800 transform hover:scale-105 transition-all duration-200 shadow-lg hover:shadow-xl"
+              className="w-full px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-700 text-white font-semibold rounded-xl hover:from-green-700 hover:to-emerald-800 transform hover:scale-105 transition-all duration-200 shadow-lg hover:shadow-xl"
             >
               Upload Excel File
             </button>
@@ -192,7 +192,7 @@ export default function SectorPickerPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-100 py-6 sm:py-8 lg:py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen py-6 sm:py-8 lg:py-12 px-4 sm:px-6 lg:px-8" style={{ background: 'linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 50%, #d1fae5 100%)' }}>
       <div className="w-full max-w-7xl mx-auto">
         {/* Header Section with Logo */}
         <div className="text-center mb-8 sm:mb-12 animate-[fadeIn_0.6s_ease-out]">
@@ -212,17 +212,20 @@ export default function SectorPickerPage() {
             Implementation Scorecard
           </h1>
           <p className="text-base sm:text-lg text-gray-600 max-w-3xl mx-auto leading-relaxed px-4">
-            Assess your company's sustainability performance and SDG contributions across <span className="font-semibold text-blue-600">Environmental, Economic, Social, and Circular</span> dimensions.
+            Assess your company's sustainability performance and SDG contributions across <span className="font-semibold text-green-700">Environmental, Economic, Social, and Circular</span> dimensions.
           </p>
         </div>
 
         {/* Main Card - Responsive Width */}
-        <div className="bg-white rounded-2xl sm:rounded-3xl shadow-2xl p-6 sm:p-8 lg:p-10 animate-[fadeIn_0.6s_ease-out] max-w-6xl mx-auto">
+        <div className="bg-white rounded-2xl sm:rounded-3xl shadow-2xl p-6 sm:p-8 lg:p-10 animate-[fadeIn_0.6s_ease-out] max-w-6xl mx-auto border-2 border-green-200">
           {/* Section Title */}
-          <div className="mb-6 sm:mb-8 pb-4 sm:pb-6">
+          <div className="mb-6 sm:mb-8 pb-4 sm:pb-6 border-b-2 border-green-100">
             <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 mb-2">
               Select Your Industry Sector
             </h2>
+            <p className="text-sm sm:text-base text-gray-600">
+              Choose your sector to start the sustainability assessment
+            </p>
           </div>
 
           {/* Sector Cards Grid - Auto-sizing based on content */}
@@ -240,44 +243,58 @@ export default function SectorPickerPage() {
                 <button
                   key={sector}
                   onClick={() => handleSectorSelect(sector)}
-                  className="group relative bg-gradient-to-br from-white to-gray-50 border-2 border-gray-200 rounded-xl sm:rounded-2xl p-5 sm:p-6 hover:border-blue-500 hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300 text-left animate-[fadeInUp_0.6s_ease-out_forwards]"
+                  className="group relative bg-gradient-to-br from-white to-green-50 border-2 border-green-200 rounded-xl sm:rounded-2xl p-5 sm:p-6 hover:border-green-500 hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300 text-left animate-[fadeInUp_0.6s_ease-out_forwards]"
                   style={{ animationDelay: `${index * 100}ms` }}
                 >
                   {/* Icon */}
                   <div className="flex items-start justify-between mb-3 sm:mb-4">
-                    <div className="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-xl flex items-center justify-center text-2xl sm:text-3xl group-hover:scale-110 transition-transform duration-300">
+                    <div className="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-green-100 to-emerald-100 rounded-xl flex items-center justify-center text-2xl sm:text-3xl group-hover:scale-110 transition-transform duration-300 shadow-md">
                       {getSectorIcon(sector)}
                     </div>
                     <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                      <svg className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-5 h-5 sm:w-6 sm:h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                       </svg>
                     </div>
                   </div>
 
                   {/* Content */}
-                  <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2 group-hover:text-blue-600 transition-colors">
+                  <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2 group-hover:text-green-600 transition-colors">
                     {sector}
                   </h3>
                   <p className="text-sm text-gray-600 mb-3 sm:mb-4 leading-relaxed">
                     {getSectorDescription(sector)}
                   </p>
 
+                  {/* Question Count Badge */}
+                  <div className="flex items-center gap-2 text-xs text-green-700 font-medium">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    <span>{questionCount} questions available</span>
+                  </div>
+
                   {/* Hover Gradient Border Effect */}
-                  <div className="absolute inset-0 rounded-xl sm:rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-700 opacity-0 group-hover:opacity-10 transition-opacity duration-300 pointer-events-none"></div>
+                  <div className="absolute inset-0 rounded-xl sm:rounded-2xl bg-gradient-to-br from-green-600 to-emerald-700 opacity-0 group-hover:opacity-10 transition-opacity duration-300 pointer-events-none"></div>
                 </button>
               );
             })}
           </div>
 
           {/* Footer Actions */}
-          <div className="pt-4 sm:pt-6 flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4">
+          <div className="pt-4 sm:pt-6 border-t-2 border-green-100 flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4">
             <div className="flex items-center gap-2 text-xs sm:text-sm text-gray-600">
-              <svg className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-4 h-4 sm:w-5 sm:h-5 text-green-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
               <span>Select a sector to begin your assessment</span>
             </div>
+            <button
+              onClick={() => router.push("/upload-excel")}
+              className="text-xs sm:text-sm text-green-700 hover:text-green-800 font-medium underline underline-offset-2 transition-colors"
+            >
+              Upload custom Excel file
+            </button>
           </div>
         </div>
       </div>

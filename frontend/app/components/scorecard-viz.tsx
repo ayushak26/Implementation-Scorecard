@@ -60,12 +60,22 @@ const SDG_DESCRIPTIONS: Record<number, string> = {
   17: "Partnerships for the Goals",
 };
 
+// Updated colors: Economic-Blue, Social-Yellow, Environmental-Green, Circular-Orange
 const DIMENSIONS = [
-  { key: "Economic Performance", color: "#DC2626", shortKey: "Economic" },
-  { key: "Circular Performance", color: "#FFB800", shortKey: "Circular" },
-  { key: "Environmental Performance", color: "#27AE60", shortKey: "Environmental" },
-  { key: "Social Performance", color: "#3498DB", shortKey: "Social" },
+  { key: "Economic Performance", color: "#3b82f6", shortKey: "Economic" },
+  { key: "Social Performance", color: "#fbbf24", shortKey: "Social" },
+  { key: "Environmental Performance", color: "#22c55e", shortKey: "Environmental" },
+  { key: "Circular Performance", color: "#f97316", shortKey: "Circular" },
 ] as const;
+
+const TOOLTIPS: Record<string, string> = {
+  "Economic": "Economic sustainability measures financial viability, cost efficiency, and economic growth",
+  "Social": "Social sustainability addresses labor practices, community impact, and social equity",
+  "Environmental": "Environmental sustainability focuses on ecological impact, resource conservation, and climate action",
+  "Circular": "Circular economy principles include waste reduction, material reuse, and closed-loop systems",
+  "SDG": "Sustainable Development Goals are 17 global objectives adopted by the UN to achieve a better future for all",
+  "Score": "Scores range from 0-5, where 5 represents full achievement of sustainability targets",
+};
 
 // ---------------- Helpers ----------------
 function canonicalSector(s?: string | null) {
@@ -204,7 +214,7 @@ function useGridRoulette({
             .attr("fill", level <= score ? dim.color : "#f3f4f6")
             .attr("stroke", "#000")
             .attr("stroke-width", 0.5)
-            .attr("opacity", level <= score ? 5 : 0.4)
+            .attr("opacity", level <= score ? 0.9 : 0.4)
             .attr("role", "graphics-symbol")
             .attr("aria-label", `SDG ${sdg} ${dim.shortKey} dimension score level ${level} of 5${level <= score ? ' - achieved' : ' - not achieved'}`);
         }
@@ -235,41 +245,9 @@ function useGridRoulette({
         .attr("height", 70)
         .attr("preserveAspectRatio", "xMidYMid meet")
         .attr("aria-label", `SDG ${sdg}: ${SDG_DESCRIPTIONS[sdg]}`);
-
-      // --- Dimension indices 1..4 ---
-      const dotR = 10;
-      const gap = Math.max(6, outerRadius * 0.02);
-      const dimLabelRadius = outerRadius + dotR + gap;
-      for (let i = 0; i < 4; i++) {
-        const dmeta = DIMENSIONS[i];
-        const dimCenterAngle =
-          startAngle + i * (segmentAngle / 4) + segmentAngle / 8;
-        const p = polar(dimLabelRadius, dimCenterAngle);
-
-        g.append("circle")
-          .attr("cx", p.x)
-          .attr("cy", p.y)
-          .attr("r", dotR)
-          .attr("fill", dmeta.color)
-          .attr("stroke", dmeta.color)
-          .attr("stroke-width", 1)
-          .attr("opacity", 0.95)
-          .attr("aria-label", `Dimension ${i + 1}: ${dmeta.shortKey}`);
-
-        g.append("text")
-          .attr("x", p.x)
-          .attr("y", p.y + 0.5)
-          .attr("text-anchor", "middle")
-          .attr("dominant-baseline", "middle")
-          .attr("font-size", 12)
-          .attr("font-weight", 700)
-          .attr("fill", "#fff")
-          .attr("aria-hidden", "true")
-          .text(String(i + 1));
-      }
     }
 
-    // --- Draw ALL bold SDG separator lines AFTER segments (prevents overlapping) ---
+    // --- Draw ALL bold SDG separator lines AFTER segments ---
     for (let sdg = 1; sdg <= 17; sdg++) {
       const startAngle = angleScale(sdg)!;
       const p1 = polar(innerRadius, startAngle);
@@ -292,7 +270,7 @@ function useGridRoulette({
         .attr("fill", "none")
         .attr("stroke", "#000")
         .attr("stroke-width", level === 0 || level === 5 ? 6 : 3)
-        .attr("opacity", level === 0 || level === 5 ? 2 : 1)
+        .attr("opacity", level === 0 || level === 5 ? 1 : 0.8)
         .attr("aria-label", level === 0 ? "Inner boundary" : level === 5 ? "Outer boundary" : `Score level ${level}`);
     }
 
@@ -380,6 +358,31 @@ function useGridRoulette({
   return { ref };
 }
 
+// ---------------- Tooltip Component ----------------
+const Tooltip = ({ text, children }: { text: string; children: React.ReactNode }) => {
+  const [show, setShow] = useState(false);
+  
+  return (
+    <div className="relative inline-block">
+      <span
+        onMouseEnter={() => setShow(true)}
+        onMouseLeave={() => setShow(false)}
+        className="cursor-help border-b border-dotted border-green-600"
+      >
+        {children}
+      </span>
+      {show && (
+        <div className="absolute z-50 bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg shadow-lg w-64">
+          {text}
+          <div className="absolute top-full left-1/2 transform -translate-x-1/2 -mt-1">
+            <div className="border-4 border-transparent border-t-gray-900"></div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
 // ---------------- Main Component ----------------
 type Props = { rows: QuestionnaireRow[]; sector: string };
 
@@ -387,6 +390,9 @@ export default function SdgGridRouletteVisualization({ rows, sector }: Props) {
   const [size, setSize] = useState<{ w: number; h: number }>({ w: 0, h: 0 });
   const [isDownloading, setIsDownloading] = useState(false);
   const cardRef = useRef<HTMLDivElement | null>(null);
+
+  // Ensure rows is always an array
+  const safeRows = rows || [];
 
   useEffect(() => {
     if (!cardRef.current) return;
@@ -403,7 +409,7 @@ export default function SdgGridRouletteVisualization({ rows, sector }: Props) {
     return () => ro.disconnect();
   }, []);
 
-  const cells = useMemo(() => makeCells(rows, sector), [rows, sector]);
+  const cells = useMemo(() => makeCells(safeRows, sector), [safeRows, sector]);
   const { ref } = useGridRoulette({ cells, width: size.w, height: size.h });
 
   const dimensionTotals = useMemo(() => {
@@ -435,14 +441,14 @@ export default function SdgGridRouletteVisualization({ rows, sector }: Props) {
   const bottomSDGs = sdgTotals.slice(-2).reverse();
 
   const handleDownloadCSV = () => {
-    if (!rows || rows.length === 0) {
+    if (!safeRows || safeRows.length === 0) {
       alert("No data available to download");
       return;
     }
 
     try {
       const headers = ["SDG", "Sustainability Dimension", "Question", "Score"];
-      const csvRows = rows.map((row) => {
+      const csvRows = safeRows.map((row) => {
         const sdg = row.sdg_number || "";
         const dimension = row.sustainability_dimension || "";
         const question = (row.question || "").replace(/"/g, '""');
@@ -489,17 +495,13 @@ export default function SdgGridRouletteVisualization({ rows, sector }: Props) {
 
     try {
       const svgElement = ref.current.cloneNode(true) as SVGSVGElement;
-      
-      // Get all image elements
       const images = svgElement.querySelectorAll("image");
       
-      // Load all images into canvas first, then convert to base64
       const imagePromises = Array.from(images).map(async (imgEl) => {
         const href = imgEl.getAttribute("href");
         if (!href || href.startsWith("data:")) return;
         
         try {
-          // Use CORS proxy or load through Image element
           const imgElement = new Image();
           imgElement.crossOrigin = "anonymous";
           
@@ -509,7 +511,6 @@ export default function SdgGridRouletteVisualization({ rows, sector }: Props) {
             imgElement.src = href;
           });
           
-          // Convert loaded image to base64
           const canvas = document.createElement("canvas");
           canvas.width = imgElement.width;
           canvas.height = imgElement.height;
@@ -521,26 +522,11 @@ export default function SdgGridRouletteVisualization({ rows, sector }: Props) {
           }
         } catch (err) {
           console.warn("Failed to convert image:", href, err);
-          // If conversion fails, try using a CORS proxy
-          try {
-            const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(href)}`;
-            const response = await fetch(proxyUrl);
-            const blob = await response.blob();
-            const base64 = await new Promise<string>((resolve) => {
-              const reader = new FileReader();
-              reader.onloadend = () => resolve(reader.result as string);
-              reader.readAsDataURL(blob);
-            });
-            imgEl.setAttribute("href", base64);
-          } catch (proxyErr) {
-            console.warn("Proxy also failed:", proxyErr);
-          }
         }
       });
 
       await Promise.all(imagePromises);
 
-      // Now convert to canvas
       const svgData = new XMLSerializer().serializeToString(svgElement);
       const canvas = document.createElement("canvas");
       const ctx = canvas.getContext("2d");
@@ -606,16 +592,16 @@ export default function SdgGridRouletteVisualization({ rows, sector }: Props) {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-6 md:p-8">
+    <div className="min-h-screen p-6 md:p-8" style={{ background: 'linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 50%, #d1fae5 100%)' }}>
       <div className="max-w-7xl mx-auto">
-        <div className="bg-white rounded-xl shadow-md p-4 md:p-6 mb-6">
+        <div className="bg-white rounded-xl shadow-md border-2 border-green-200 p-4 md:p-6 mb-6">
           <div className="flex justify-end mb-4">
             <button
               onClick={handleDownloadCSV}
-              disabled={!rows || rows.length === 0}
+              disabled={!safeRows || safeRows.length === 0}
               aria-label="Download SDG assessment scores as CSV file"
               className={`px-4 py-2 bg-green-600 text-white rounded-lg transition flex items-center gap-2 shadow-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 ${
-                !rows || rows.length === 0
+                !safeRows || safeRows.length === 0
                   ? "opacity-50 cursor-not-allowed"
                   : "hover:bg-green-700"
               }`}
@@ -705,14 +691,14 @@ export default function SdgGridRouletteVisualization({ rows, sector }: Props) {
           </div>
         </div>
 
-        <section className="bg-white rounded-xl shadow-md p-6" aria-labelledby="performance-heading">
+        <section className="bg-white rounded-xl shadow-md border-2 border-green-200 p-6" aria-labelledby="performance-heading">
           <h2 id="performance-heading" className="text-2xl font-bold mb-6 text-gray-800">
-            Performance
+            Performance Summary
           </h2>
 
           <div className="mb-8">
-            <h3 className="font-semibold mb-4 text-gray-800 text-lg" id="dimension-heading">
-              By Dimension
+            <h3 className="font-semibold mb-4 text-gray-800 text-lg flex items-center gap-2" id="dimension-heading">
+              By <Tooltip text={TOOLTIPS.SDG}>Dimension</Tooltip>
             </h3>
             <div className="flex flex-col gap-4" role="list" aria-labelledby="dimension-heading">
               {DIMENSIONS.map((d, idx) => {
@@ -721,7 +707,7 @@ export default function SdgGridRouletteVisualization({ rows, sector }: Props) {
                 return (
                   <div
                     key={d.key}
-                    className="rounded-lg p-3 bg-gradient-to-r from-white to-slate-50 shadow-sm"
+                    className="rounded-lg p-4 bg-gradient-to-r from-green-50 to-white shadow-sm border border-green-100"
                     role="listitem"
                   >
                     <div className="flex items-center gap-2 mb-2">
@@ -732,16 +718,20 @@ export default function SdgGridRouletteVisualization({ rows, sector }: Props) {
                       >
                         {idx + 1}
                       </div>
-                      <span className="font-medium text-sm text-gray-800">
-                        {d.shortKey}
-                      </span>
+                      <Tooltip text={TOOLTIPS[d.shortKey]}>
+                        <span className="font-medium text-sm text-gray-800">
+                          {d.shortKey}
+                        </span>
+                      </Tooltip>
                     </div>
                     <div className="flex justify-between text-xs mb-1 text-gray-600">
-                      <span>Score: {score}/85</span>
+                      <Tooltip text={TOOLTIPS.Score}>
+                        <span>Score: {score}/85</span>
+                      </Tooltip>
                       <span className="font-bold text-gray-700">{percentage}%</span>
                     </div>
                     <div
-                      className="w-full bg-gray-200 rounded-full h-2 overflow-hidden"
+                      className="w-full bg-green-100 rounded-full h-2 overflow-hidden"
                       role="progressbar"
                       aria-valuenow={percentage}
                       aria-valuemin={0}
@@ -760,8 +750,8 @@ export default function SdgGridRouletteVisualization({ rows, sector }: Props) {
           </div>
 
           <div>
-            <h3 className="font-semibold mb-4 text-gray-800 text-lg" id="sdg-heading">
-              By SDG
+            <h3 className="font-semibold mb-4 text-gray-800 text-lg flex items-center gap-2" id="sdg-heading">
+              By <Tooltip text={TOOLTIPS.SDG}>SDG</Tooltip>
             </h3>
 
             <div className="mb-6">
@@ -774,7 +764,7 @@ export default function SdgGridRouletteVisualization({ rows, sector }: Props) {
                   return (
                     <div
                       key={sdg.sdg}
-                      className="rounded-lg p-3 bg-gradient-to-r from-green-50 to-white shadow-sm border border-green-100"
+                      className="rounded-lg p-3 bg-gradient-to-r from-green-50 to-white shadow-sm border border-green-200"
                       role="listitem"
                     >
                       <div className="flex items-center gap-3 mb-2">
@@ -794,7 +784,7 @@ export default function SdgGridRouletteVisualization({ rows, sector }: Props) {
                         <span className="font-bold text-green-700">{percentage}%</span>
                       </div>
                       <div
-                        className="w-full bg-gray-200 rounded-full h-2 overflow-hidden"
+                        className="w-full bg-green-100 rounded-full h-2 overflow-hidden"
                         role="progressbar"
                         aria-valuenow={percentage}
                         aria-valuemin={0}
@@ -842,7 +832,7 @@ export default function SdgGridRouletteVisualization({ rows, sector }: Props) {
                         <span className="font-bold text-red-700">{percentage}%</span>
                       </div>
                       <div
-                        className="w-full bg-gray-200 rounded-full h-2 overflow-hidden"
+                        className="w-full bg-green-100 rounded-full h-2 overflow-hidden"
                         role="progressbar"
                         aria-valuenow={percentage}
                         aria-valuemin={0}
