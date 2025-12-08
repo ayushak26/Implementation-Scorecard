@@ -202,7 +202,7 @@ export default function RecommendationsPage({ rows, sector }: Props) {
         avgScore: data.count > 0 ? data.sum / data.count : 0,
         dimension: data.dimension,
       }))
-      .sort((a, b) => a.sdg - b.sdg);
+      .sort((a, b) => a.avgScore - b.avgScore); // Sort by score (lowest first)
   }, [rows]);
 
   // Calculate dimension averages
@@ -261,31 +261,6 @@ export default function RecommendationsPage({ rows, sector }: Props) {
           <p className="text-gray-600 text-center">
             Sector: <span className="font-semibold">{sector}</span>
           </p>
-        </div>
-
-        {/* Overall Performance */}
-        <div
-          className="rounded-xl p-6 mb-8"
-          style={{ backgroundColor: overallLevel.bgColor }}
-        >
-          <div className="flex items-center gap-4 mb-4">
-            <span className="text-4xl">{overallLevel.icon}</span>
-            <div className="flex-1">
-              <h2
-                className="text-2xl font-bold mb-1"
-                style={{ color: overallLevel.color }}
-              >
-                Overall Performance: {overallLevel.level}
-              </h2>
-              <p className="text-gray-700">{overallLevel.message}</p>
-            </div>
-            <div className="text-right">
-              <div className="text-3xl font-bold" style={{ color: overallLevel.color }}>
-                {overallAverage.toFixed(1)}
-              </div>
-              <div className="text-sm text-gray-600">out of 5</div>
-            </div>
-          </div>
         </div>
 
         {/* Priority Actions Summary */}
