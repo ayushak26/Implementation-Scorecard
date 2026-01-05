@@ -4,14 +4,17 @@
 import React, { createContext, useState, ReactNode, useEffect } from "react";
 
 type Question = {
-  id: string;
   sdg_number: number;
   sdg_description: string;
-  sdg_target: string;
   sustainability_dimension: string;
-  kpi: string;
   question: string;
   sector: string;
+  score?: number;
+  recommendations?: {  // ← ADD THIS!
+    awareness?: { text?: string; source?: string };
+    developing?: { text?: string; source?: string };
+    leading?: { text?: string; source?: string };
+  };
 };
 
 type SDGContextType = {

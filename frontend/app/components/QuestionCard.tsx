@@ -10,6 +10,11 @@ type Question = {
   kpi: string;
   question: string;
   sector: string;
+  recommendations?: {  // ← ADD THIS!
+    awareness?: { text?: string; source?: string };
+    developing?: { text?: string; source?: string };
+    leading?: { text?: string; source?: string };
+  };
 };
 
 type Props = {

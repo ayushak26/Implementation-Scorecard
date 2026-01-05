@@ -3,7 +3,6 @@
 
 import React, { useMemo } from "react";
 import { useRouter } from "next/navigation";
-import recommendationsData from "../data/recommendations_612_nested.json";
 
 export type QuestionnaireRow = {
   sdg_number?: number | null;
@@ -19,6 +18,11 @@ export type QuestionnaireRow = {
   notes?: string | null;
   status?: string | null;
   comment?: string | null;
+  recommendations?: {
+    awareness?: { text?: string; source?: string };
+    developing?: { text?: string; source?: string };
+    leading?: { text?: string; source?: string };
+  };
 };
 
 type Props = {
@@ -49,76 +53,42 @@ const SDG_NAMES: Record<number, string> = {
 
 // Dimensions
 const DIMENSIONS = [
-  { key: "Economic Performance", color: "#FFB800", shortKey: "Economic" },
-  { key: "Circular Performance", color: "#9B59B6", shortKey: "Circular" },
-  { key: "Environmental Performance", color: "#27AE60", shortKey: "Environmental" },
-  { key: "Social Performance", color: "#3498DB", shortKey: "Social" },
+  { key: "Economic Performance", color: "#3B82F6", shortKey: "Economic" },
+  { key: "Circular Performance", color: "#F97316", shortKey: "Circular" },
+  { key: "Environmental Performance", color: "#22C55E", shortKey: "Environmental" },
+  { key: "Social Performance", color: "#EAB308", shortKey: "Social" },
 ] as const;
 
-// Performance Level Definitions
-type PerformanceLevel = {
-  level: string;
-  color: string;
-  bgColor: string;
-  icon: string;
-  message: string;
-};
-
-const getPerformanceLevel = (avgScore: number): PerformanceLevel => {
-  if (avgScore < 2) {
-    return {
-      level: "Critical - Immediate Action Required",
-      color: "#DC2626",
-      bgColor: "#FEE2E2",
-      icon: "🚨",
-      message: "Significant gaps identified. Immediate strategic intervention needed.",
-    };
-  } else if (avgScore < 3) {
-    return {
-      level: "Needs Improvement",
-      color: "#EA580C",
-      bgColor: "#FFEDD5",
-      icon: "⚠️",
-      message: "Basic practices in place, but substantial improvements required.",
-    };
-  } else if (avgScore < 4) {
-    return {
-      level: "Developing",
-      color: "#F59E0B",
-      bgColor: "#FEF3C7",
-      icon: "📊",
-      message: "Good foundation established. Continue building and monitoring.",
-    };
-  } else if (avgScore < 4.5) {
-    return {
-      level: "Strong Performance",
-      color: "#10B981",
-      bgColor: "#D1FAE5",
-      icon: "✅",
-      message: "Excellent practices in place. Focus on optimization and innovation.",
-    };
-  } else {
-    return {
-      level: "Leading Excellence",
-      color: "#059669",
-      bgColor: "#A7F3D0",
-      icon: "🏆",
-      message: "Industry-leading performance. Share best practices and maintain momentum.",
-    };
+// Maturity level styling - Red, Yellow, Green
+const MATURITY_STYLES = {
+  awareness: {
+    bg: "bg-red-50",
+    text: "text-red-800",
+    badge: "bg-red-100 text-red-800",
+    icon: "🔴",
+    label: "Awareness"
+  },
+  developing: {
+    bg: "bg-yellow-50",
+    text: "text-yellow-800",
+    badge: "bg-yellow-100 text-yellow-800",
+    icon: "🟡",
+    label: "Developing"
+  },
+  leading: {
+    bg: "bg-green-50",
+    text: "text-green-800",
+    badge: "bg-green-100 text-green-800",
+    icon: "🟢",
+    label: "Leading"
   }
 };
 
-// Helper function to determine recommendation level based on score
-// Score mapping: 1-1.9 = Awareness, 2-3.9 = Developing, 4-5 = Leading
-const getRecommendationLevel = (score: number): string => {
-  if (score >= 1 && score < 2) {
-    return "Awareness";
-  } else if (score >= 2 && score < 4) {
-    return "Developing";
-  } else if (score >= 4 && score <= 5) {
-    return "Leading";
-  }
-  return "Awareness"; // Default fallback
+// Helper to get maturity level from score
+const getMaturityLevel = (score: number): keyof typeof MATURITY_STYLES => {
+  if (score < 2) return "awareness";
+  if (score < 4) return "developing";
+  return "leading";
 };
 
 // Helper function to normalize dimension names
@@ -133,54 +103,22 @@ function canonicalDim(s?: string | null): (typeof DIMENSIONS)[number]["key"] | n
   return m ? m.key : null;
 }
 
-// Helper function to map dimension name to JSON key
-const getDimensionKey = (dimension: string): string => {
-  const dimMap: Record<string, string> = {
-    "Economic Performance": "Economic",
-    "Circular Performance": "Circular",
-    "Environmental Performance": "Environmental",
-    "Social Performance": "Social",
-  };
-  return dimMap[dimension] || dimension;
-};
-
-// Helper function to get recommendation from nested JSON
-const getRecommendationFromJSON = (
-  sector: string,
-  sdgNumber: number,
-  dimension: string,
-  score: number
-): string => {
-  try {
-    const level = getRecommendationLevel(score);
-    const sdgKey = `SDG_${sdgNumber}`;
-    const dimensionKey = getDimensionKey(dimension);
-    
-    const data = recommendationsData as any;
-    
-    // Navigate through the nested structure: Sector -> SDG -> Dimension -> Level
-    if (
-      data[sector] &&
-      data[sector][sdgKey] &&
-      data[sector][sdgKey][dimensionKey] &&
-      data[sector][sdgKey][dimensionKey][level]
-    ) {
-      return data[sector][sdgKey][dimensionKey][level];
-    }
-    
-    return "No specific recommendation available for this assessment.";
-  } catch (error) {
-    console.error("Error fetching recommendation:", error);
-    return "Error loading recommendation.";
-  }
-};
-
 export default function RecommendationsPage({ rows, sector }: Props) {
   const router = useRouter();
 
-  // Calculate average scores per SDG
-  const sdgAverages = useMemo(() => {
-    const sdgScores: Record<number, { sum: number; count: number; dimension: string }> = {};
+  // Group by SDG, with all dimensions and their recommendations
+  const sdgData = useMemo(() => {
+    const sdgMap: Record<number, {
+      dimensions: Record<string, {
+        score: number;
+        count: number;
+        maturityLevel: string;
+        recommendations: QuestionnaireRow['recommendations'];
+        color: string;
+      }>;
+      totalScore: number;
+      totalCount: number;
+    }> = {};
 
     rows.forEach((row) => {
       const sdg = Number(row.sdg_number);
@@ -188,24 +126,61 @@ export default function RecommendationsPage({ rows, sector }: Props) {
       const dim = canonicalDim(row.sustainability_dimension);
 
       if (sdg && !isNaN(score) && dim) {
-        if (!sdgScores[sdg]) {
-          sdgScores[sdg] = { sum: 0, count: 0, dimension: dim };
+        if (!sdgMap[sdg]) {
+          sdgMap[sdg] = {
+            dimensions: {},
+            totalScore: 0,
+            totalCount: 0
+          };
         }
-        sdgScores[sdg].sum += score;
-        sdgScores[sdg].count += 1;
+
+        if (!sdgMap[sdg].dimensions[dim]) {
+          const dimColor = DIMENSIONS.find(d => d.key === dim)?.color || "#000";
+          sdgMap[sdg].dimensions[dim] = {
+            score: 0,
+            count: 0,
+            maturityLevel: "awareness",
+            recommendations: {},
+            color: dimColor
+          };
+        }
+
+        sdgMap[sdg].dimensions[dim].score += score;
+        sdgMap[sdg].dimensions[dim].count += 1;
+        sdgMap[sdg].totalScore += score;
+        sdgMap[sdg].totalCount += 1;
+
+        // Keep first non-empty recommendations for this dimension
+        if (row.recommendations && Object.keys(row.recommendations).length > 0 && 
+            Object.keys(sdgMap[sdg].dimensions[dim].recommendations || {}).length === 0) {
+          sdgMap[sdg].dimensions[dim].recommendations = row.recommendations;
+        }
       }
     });
 
-    return Object.entries(sdgScores)
+    // Calculate averages and maturity levels
+    Object.keys(sdgMap).forEach(sdg => {
+      Object.keys(sdgMap[Number(sdg)].dimensions).forEach(dim => {
+        const dimData = sdgMap[Number(sdg)].dimensions[dim];
+        const avgScore = dimData.count > 0 ? dimData.score / dimData.count : 0;
+        dimData.score = avgScore;
+        dimData.maturityLevel = getMaturityLevel(avgScore);
+      });
+    });
+
+    // Convert to array and sort by average SDG score (lowest first)
+    return Object.entries(sdgMap)
       .map(([sdg, data]) => ({
         sdg: Number(sdg),
-        avgScore: data.count > 0 ? data.sum / data.count : 0,
-        dimension: data.dimension,
+        sdgDescription: SDG_NAMES[Number(sdg)],
+        avgScore: data.totalCount > 0 ? data.totalScore / data.totalCount : 0,
+        maturityLevel: getMaturityLevel(data.totalCount > 0 ? data.totalScore / data.totalCount : 0),
+        dimensions: data.dimensions
       }))
-      .sort((a, b) => a.avgScore - b.avgScore); // Sort by score (lowest first)
+      .sort((a, b) => a.avgScore - b.avgScore);
   }, [rows]);
 
-  // Calculate dimension averages
+  // Calculate dimension averages for summary
   const dimensionAverages = useMemo(() => {
     const dimScores: Record<string, { sum: number; count: number }> = {};
 
@@ -227,20 +202,10 @@ export default function RecommendationsPage({ rows, sector }: Props) {
       dimension: d.key,
       color: d.color,
       shortKey: d.shortKey,
-      avgScore:
-        dimScores[d.key].count > 0
-          ? dimScores[d.key].sum / dimScores[d.key].count
-          : 0,
+      avgScore: dimScores[d.key].count > 0 ? dimScores[d.key].sum / dimScores[d.key].count : 0,
+      maturityLevel: getMaturityLevel(dimScores[d.key].count > 0 ? dimScores[d.key].sum / dimScores[d.key].count : 0)
     }));
   }, [rows]);
-
-  // Calculate overall average
-  const overallAverage = useMemo(() => {
-    const total = dimensionAverages.reduce((sum, d) => sum + d.avgScore, 0);
-    return dimensionAverages.length > 0 ? total / dimensionAverages.length : 0;
-  }, [dimensionAverages]);
-
-  const overallLevel = getPerformanceLevel(overallAverage);
 
   return (
     <div className="w-full flex justify-center bg-gray-50 min-h-screen py-6 sm:py-8 md:py-12 px-4 sm:px-6 md:px-8">
@@ -263,62 +228,31 @@ export default function RecommendationsPage({ rows, sector }: Props) {
           </p>
         </div>
 
-        {/* Priority Actions Summary */}
-        <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-6 mb-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">
-            🎯 Priority Actions
-          </h2>
-          <div className="space-y-3">
-            {sdgAverages
-              .filter((s) => s.avgScore < 2)
-              .slice(0, 3)
-              .map((sdgData) => (
-                <div
-                  key={sdgData.sdg}
-                  className="bg-white rounded-lg p-4 border-l-4 border-red-500"
-                >
-                  <p className="font-semibold text-gray-900">
-                    SDG {sdgData.sdg}: {SDG_NAMES[sdgData.sdg]}
-                  </p>
-                  <p className="text-sm text-gray-600 mt-1">
-                    Critical priority - Score: {sdgData.avgScore.toFixed(1)} / 5.0
-                  </p>
-                </div>
-              ))}
-            {sdgAverages.filter((s) => s.avgScore < 2).length === 0 && (
-              <p className="text-gray-600 text-center py-4">
-                ✅ No critical priority areas identified. Continue monitoring and
-                improvement efforts.
-              </p>
-            )}
-          </div>
-        </div>
-        
-        {/* Dimension Performance */}
+        {/* Dimension Summary Cards */}
         <div className="mb-8">
           <h2 className="text-2xl font-bold text-gray-900 mb-6">
-            Average Score by Dimension
+            Performance by Dimension
           </h2>
           <div className="grid md:grid-cols-2 gap-6">
             {dimensionAverages.map((dim) => {
-              const level = getPerformanceLevel(dim.avgScore);
+              const maturityStyle = MATURITY_STYLES[dim.maturityLevel];
               return (
                 <div
                   key={dim.dimension}
-                  className="border-2 border-gray-200 rounded-xl p-5 hover:shadow-lg transition-shadow"
+                  className={`${maturityStyle.bg} rounded-xl p-5 transition-shadow hover:shadow-lg`}
                 >
                   <div className="flex items-center justify-between mb-3">
                     <h3 className="font-bold text-lg" style={{ color: dim.color }}>
                       {dim.shortKey}
                     </h3>
                     <div className="flex items-center gap-2">
-                      <span className="text-2xl">{level.icon}</span>
-                      <span className="text-2xl font-bold" style={{ color: level.color }}>
+                      <span className="text-2xl">{maturityStyle.icon}</span>
+                      <span className="text-2xl font-bold" style={{ color: dim.color }}>
                         {dim.avgScore.toFixed(1)}
                       </span>
                     </div>
                   </div>
-                  <div className="w-full bg-gray-200 rounded-full h-3 mb-2">
+                  <div className="w-full bg-white rounded-full h-3 mb-2">
                     <div
                       className="h-3 rounded-full transition-all duration-500"
                       style={{
@@ -327,81 +261,103 @@ export default function RecommendationsPage({ rows, sector }: Props) {
                       }}
                     />
                   </div>
-                  <p className="text-sm text-gray-600">{level.message}</p>
+                  <span className={`inline-block px-3 py-1 ${maturityStyle.badge} rounded-full text-xs font-semibold`}>
+                    {maturityStyle.icon} {maturityStyle.label}
+                  </span>
                 </div>
               );
             })}
           </div>
         </div>
 
-        {/* SDG-Specific Recommendations */}
+        {/* Recommendations by SDG */}
         <div className="mb-8">
           <h2 className="text-2xl font-bold text-gray-900 mb-6">
-            Detailed Recommendations by SDG
+            Recommendations by SDG
           </h2>
+          
           <div className="space-y-6">
-            {sdgAverages.map((sdgData) => {
-              const level = getPerformanceLevel(sdgData.avgScore);
-              const recommendationLevel = getRecommendationLevel(sdgData.avgScore);
-              const recommendation = getRecommendationFromJSON(
-                sector,
-                sdgData.sdg,
-                sdgData.dimension,
-                sdgData.avgScore
-              );
-
-              // Only show recommendations for SDGs that need improvement (score < 4)
-              if (sdgData.avgScore >= 4) return null;
+            {sdgData.map((sdgItem) => {
+              const sdgMaturityStyle = MATURITY_STYLES[sdgItem.maturityLevel as keyof typeof MATURITY_STYLES];
 
               return (
                 <div
-                  key={sdgData.sdg}
-                  className="border-2 border-gray-200 rounded-xl p-6"
+                  key={sdgItem.sdg}
+                  className={`${sdgMaturityStyle.bg} rounded-xl p-6 transition-shadow hover:shadow-lg`}
                 >
-                  <div className="flex items-start justify-between mb-4">
+                  {/* SDG Header */}
+                  <div className="flex items-start justify-between mb-6">
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-2">
-                        <span className="text-2xl">{level.icon}</span>
+                        <span className="text-2xl">{sdgMaturityStyle.icon}</span>
                         <h3 className="text-xl font-bold text-gray-900">
-                          SDG {sdgData.sdg}: {SDG_NAMES[sdgData.sdg]}
+                          SDG {sdgItem.sdg}: {sdgItem.sdgDescription}
                         </h3>
                       </div>
-                      <p className="text-sm text-gray-600">
-                        Dimension: {sdgData.dimension}
-                      </p>
+                      <span className={`inline-block px-3 py-1 ${sdgMaturityStyle.badge} rounded-full text-xs font-semibold`}>
+                        {sdgMaturityStyle.label}
+                      </span>
                     </div>
                     <div className="text-right">
-                      <div
-                        className="text-2xl font-bold"
-                        style={{ color: level.color }}
-                      >
-                        {sdgData.avgScore.toFixed(1)}
+                      <div className="text-2xl font-bold text-gray-900">
+                        {sdgItem.avgScore.toFixed(1)}
                       </div>
                       <div className="text-xs text-gray-600">/ 5.0</div>
                     </div>
                   </div>
 
-                  <div
-                    className="rounded-lg p-4 mb-4"
-                    style={{ backgroundColor: level.bgColor }}
-                  >
-                    <p
-                      className="font-semibold text-sm"
-                      style={{ color: level.color }}
-                    >
-                      {level.level} - {recommendationLevel} Stage
-                    </p>
-                  </div>
+                  {/* Dimensions and their recommendations */}
+                  <div className="space-y-4">
+                    {DIMENSIONS.map((dimension) => {
+                      const dimData = sdgItem.dimensions[dimension.key];
+                      if (!dimData) return null;
 
-                  <div className="space-y-3">
-                    <h4 className="font-semibold text-gray-900">
-                      Recommended Action:
-                    </h4>
-                    <div className="bg-gray-50 rounded-lg p-4">
-                      <p className="text-gray-700 leading-relaxed">
-                        {recommendation}
-                      </p>
-                    </div>
+                      const dimMaturityLevel = getMaturityLevel(dimData.score);
+                      const recommendation = dimData.recommendations?.[dimMaturityLevel as keyof typeof dimData.recommendations];
+
+                      if (!recommendation || !recommendation.text) return null;
+
+                      return (
+                        <div
+                          key={dimension.key}
+                          className="bg-white rounded-lg p-4"
+                        >
+                          {/* Dimension Header */}
+                          <div className="flex items-center justify-between mb-3">
+                            <div className="flex items-center gap-2">
+                              <div 
+                                className="w-3 h-3 rounded-full"
+                                style={{ backgroundColor: dimension.color }}
+                              />
+                              <h4 className="font-semibold text-gray-900">
+                                {dimension.shortKey}
+                              </h4>
+                              <span className="text-sm text-gray-600">
+                                {dimData.score.toFixed(1)} / 5.0
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Recommendation */}
+                          <div>
+                            <h5 className="font-medium text-gray-700 text-sm mb-2">
+                              Recommendations
+                            </h5>
+                            <p className="text-gray-800 text-sm leading-relaxed mb-2">
+                              {recommendation.text}
+                            </p>
+                            {recommendation.source && (
+                              <div className="mt-3 pt-3 border-t border-gray-200">
+                                <p className="text-xs text-gray-600 font-medium mb-1">📚 Sources:</p>
+                                <p className="text-xs text-gray-600 italic">
+                                  {recommendation.source}
+                                </p>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               );
@@ -413,7 +369,7 @@ export default function RecommendationsPage({ rows, sector }: Props) {
         <div className="flex flex-col sm:flex-row justify-between gap-4 pt-6 border-t border-gray-200">
           <button
             onClick={() => router.push("/visualization")}
-            className="px-6 py-3 border-2 border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-all duration-200 font-medium"
+            className="px-6 py-3 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition-all duration-200 font-medium"
           >
             ← Back to Visualization
           </button>

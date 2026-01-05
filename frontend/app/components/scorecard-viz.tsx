@@ -62,10 +62,10 @@ const SDG_DESCRIPTIONS: Record<number, string> = {
 
 // Updated colors: Economic-Blue, Social-Yellow, Environmental-Green, Circular-Orange
 const DIMENSIONS = [
-  { key: "Economic Performance", color: "#3b82f6", shortKey: "Economic" },
-  { key: "Social Performance", color: "#fbbf24", shortKey: "Social" },
-  { key: "Environmental Performance", color: "#22c55e", shortKey: "Environmental" },
-  { key: "Circular Performance", color: "#f97316", shortKey: "Circular" },
+  { key: "Economic Performance", color: "#3b82f6", shortKey: "Economic", number: 1 },
+  { key: "Social Performance", color: "#fbbf24", shortKey: "Social", number: 2 },
+  { key: "Environmental Performance", color: "#22c55e", shortKey: "Environmental", number: 3 },
+  { key: "Circular Performance", color: "#f97316", shortKey: "Circular", number: 4 },
 ] as const;
 
 const TOOLTIPS: Record<string, string> = {
@@ -141,7 +141,7 @@ function makeCells(rows: QuestionnaireRow[], sector: string): Cell[] {
   return out;
 }
 
-// -------------- Responsive Grid-based Roulette Visualization --------------
+// -------------- Responsive Grid-based Roulette Visualization WITH DIMENSION NUMBERS BELOW SDG ICONS --------------
 function useGridRoulette({
   cells,
   width,
@@ -166,9 +166,9 @@ function useGridRoulette({
     const innerRadius = 120;
 
     svg.attr("viewBox", `0 0 ${W} ${H}`)
-       .attr("role", "img")
-       .attr("aria-label", "SDG Performance Roulette Visualization showing scores across 17 Sustainable Development Goals and 4 dimensions");
-    
+      .attr("role", "img")
+      .attr("aria-label", "SDG Performance Roulette Visualization showing scores across 17 Sustainable Development Goals and 4 dimensions");
+
     const g = svg.append("g").attr("transform", `translate(${W / 2},${H / 2})`);
 
     const angleScale = d3
@@ -184,7 +184,7 @@ function useGridRoulette({
     });
     const deg2rad = (d: number) => (Math.PI / 180) * d;
 
-    // --- Draw segments ---
+    // --- Draw segments WITHOUT BLACK BORDERS ---
     for (let sdg = 1; sdg <= 17; sdg++) {
       const startAngle = angleScale(sdg)!;
       const endAngle = startAngle + angleScale.bandwidth();
@@ -212,23 +212,10 @@ function useGridRoulette({
           g.append("path")
             .attr("d", arc as any)
             .attr("fill", level <= score ? dim.color : "#f3f4f6")
-            .attr("stroke", "#000")
-            .attr("stroke-width", 0.5)
-            .attr("opacity", level <= score ? 0.9 : 0.4)
+            .attr("stroke", "none")
+            .attr("opacity", level <= score ? 0.9 : 0.3)
             .attr("role", "graphics-symbol")
             .attr("aria-label", `SDG ${sdg} ${dim.shortKey} dimension score level ${level} of 5${level <= score ? ' - achieved' : ' - not achieved'}`);
-        }
-
-        if (dimIndex > 0) {
-          const p1 = polar(innerRadius, dimStartAngle);
-          const p2 = polar(outerRadius, dimStartAngle);
-          g.append("line")
-            .attr("x1", p1.x)
-            .attr("y1", p1.y)
-            .attr("x2", p2.x)
-            .attr("y2", p2.y)
-            .attr("stroke", "#000")
-            .attr("stroke-width", 0.5);
         }
       });
 
@@ -245,32 +232,68 @@ function useGridRoulette({
         .attr("height", 70)
         .attr("preserveAspectRatio", "xMidYMid meet")
         .attr("aria-label", `SDG ${sdg}: ${SDG_DESCRIPTIONS[sdg]}`);
+
+      // --- Add dimension numbers as a HORIZONTAL mini-legend under the SDG icon ---
+      const iconCenterRadius = iconRadius + 25; // same radius used for icon positioning
+      const iconH = 70;
+      const gap = 30;
+
+      // Put the row just inside (toward center) so it sits under the icon visually
+      const legendRadius = iconCenterRadius - iconH / 2 - gap;
+
+      const bubbleR = 10;
+      const bubbleSpacing = 45; // distance between bubble centers
+      const n = DIMENSIONS.length;
+
+      // We need tangent direction (left-right) at this angle
+      // Your polar() uses (a - PI/2). Use the same here.
+      const a = iconAngle - Math.PI / 2;
+
+      // unit vectors
+      const ux = Math.cos(a), uy = Math.sin(a);          // radial outward
+      const tx = -Math.sin(a), ty = Math.cos(a);         // tangent (left/right)
+
+      // base point (center of the row)
+      const baseX = ux * legendRadius;
+      const baseY = uy * legendRadius;
+
+      // center the row around base point
+      const start = -((n - 1) / 2) * bubbleSpacing;
+
+      DIMENSIONS.forEach((dim, idx) => {
+        const off = start + idx * bubbleSpacing;
+        const x = baseX + tx * off;
+        const y = baseY + ty * off;
+
+        g.append("circle")
+          .attr("cx", x)
+          .attr("cy", y)
+          .attr("r", bubbleR)
+          .attr("fill", dim.color)
+          .attr("opacity", 0.95);
+
+        g.append("text")
+          .attr("x", x)
+          .attr("y", y)
+          .attr("text-anchor", "middle")
+          .attr("dominant-baseline", "middle")
+          .attr("font-size", 11)
+          .attr("font-weight", 800)
+          .attr("fill", "#ffffff")
+          .text(dim.number);
+      });
+
     }
 
-    // --- Draw ALL bold SDG separator lines AFTER segments ---
-    for (let sdg = 1; sdg <= 17; sdg++) {
-      const startAngle = angleScale(sdg)!;
-      const p1 = polar(innerRadius, startAngle);
-      const p2 = polar(outerRadius, startAngle);
-      g.append("line")
-        .attr("x1", p1.x)
-        .attr("y1", p1.y)
-        .attr("x2", p2.x)
-        .attr("y2", p2.y)
-        .attr("stroke", "#000")
-        .attr("stroke-width", 8)
-        .attr("opacity", 0.9);
-    }
-
-    // --- Concentric rings ---
+    // --- Concentric rings WITHOUT BLACK BORDERS (subtle white lines) ---
     for (let level = 0; level <= 5; level++) {
       const radius = innerRadius + level * scoreRadiusWidth;
       g.append("circle")
         .attr("r", radius)
         .attr("fill", "none")
-        .attr("stroke", "#000")
-        .attr("stroke-width", level === 0 || level === 5 ? 6 : 3)
-        .attr("opacity", level === 0 || level === 5 ? 1 : 0.8)
+        .attr("stroke", "#ffffff")
+        .attr("stroke-width", level === 0 || level === 5 ? 3 : 1)
+        .attr("opacity", 0.3)
         .attr("aria-label", level === 0 ? "Inner boundary" : level === 5 ? "Outer boundary" : `Score level ${level}`);
     }
 
@@ -312,12 +335,12 @@ function useGridRoulette({
       }
     }
 
-    // --- Center legend ---
+    // --- Center legend WITHOUT BLACK BORDER ---
     g.append("circle")
       .attr("r", innerRadius - 2)
       .attr("fill", "#fff")
-      .attr("stroke", "#000")
-      .attr("stroke-width", 2);
+      .attr("stroke", "none");
+
     g.append("text")
       .attr("y", -innerRadius + 45)
       .attr("text-anchor", "middle")
@@ -343,7 +366,7 @@ function useGridRoulette({
         .attr("font-weight", 700)
         .attr("fill", "#fff")
         .attr("aria-hidden", "true")
-        .text(i + 1);
+        .text(dim.number);
       g.append("text")
         .attr("x", -innerRadius + 100)
         .attr("y", yPos + 39)
@@ -361,7 +384,7 @@ function useGridRoulette({
 // ---------------- Tooltip Component ----------------
 const Tooltip = ({ text, children }: { text: string; children: React.ReactNode }) => {
   const [show, setShow] = useState(false);
-  
+
   return (
     <div className="relative inline-block">
       <span
@@ -391,7 +414,6 @@ export default function SdgGridRouletteVisualization({ rows, sector }: Props) {
   const [isDownloading, setIsDownloading] = useState(false);
   const cardRef = useRef<HTMLDivElement | null>(null);
 
-  // Ensure rows is always an array
   const safeRows = rows || [];
 
   useEffect(() => {
@@ -496,21 +518,21 @@ export default function SdgGridRouletteVisualization({ rows, sector }: Props) {
     try {
       const svgElement = ref.current.cloneNode(true) as SVGSVGElement;
       const images = svgElement.querySelectorAll("image");
-      
+
       const imagePromises = Array.from(images).map(async (imgEl) => {
         const href = imgEl.getAttribute("href");
         if (!href || href.startsWith("data:")) return;
-        
+
         try {
           const imgElement = new Image();
           imgElement.crossOrigin = "anonymous";
-          
+
           await new Promise<void>((resolve, reject) => {
             imgElement.onload = () => resolve();
             imgElement.onerror = () => reject(new Error("Failed to load"));
             imgElement.src = href;
           });
-          
+
           const canvas = document.createElement("canvas");
           canvas.width = imgElement.width;
           canvas.height = imgElement.height;
@@ -530,7 +552,7 @@ export default function SdgGridRouletteVisualization({ rows, sector }: Props) {
       const svgData = new XMLSerializer().serializeToString(svgElement);
       const canvas = document.createElement("canvas");
       const ctx = canvas.getContext("2d");
-      
+
       if (!ctx) {
         alert("Canvas not supported");
         setIsDownloading(false);
@@ -544,10 +566,10 @@ export default function SdgGridRouletteVisualization({ rows, sector }: Props) {
       img.onload = () => {
         canvas.width = size.w || 1000;
         canvas.height = size.h || 1000;
-        
+
         ctx.fillStyle = "#ffffff";
         ctx.fillRect(0, 0, canvas.width, canvas.height);
-        
+
         ctx.drawImage(img, 0, 0);
         URL.revokeObjectURL(url);
 
@@ -561,7 +583,7 @@ export default function SdgGridRouletteVisualization({ rows, sector }: Props) {
           const link = document.createElement("a");
           const timestamp = new Date().toISOString().split("T")[0];
           const filename = `SDG_Chart_${sector}_${timestamp}.png`;
-          
+
           const downloadUrl = URL.createObjectURL(blob);
           link.setAttribute("href", downloadUrl);
           link.setAttribute("download", filename);
@@ -594,17 +616,16 @@ export default function SdgGridRouletteVisualization({ rows, sector }: Props) {
   return (
     <div className="min-h-screen p-6 md:p-8" style={{ background: 'linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 50%, #d1fae5 100%)' }}>
       <div className="max-w-7xl mx-auto">
-        <div className="bg-white rounded-xl shadow-md border-2 border-green-200 p-4 md:p-6 mb-6">
+        <div className="bg-white rounded-xl shadow-md p-4 md:p-6 mb-6">
           <div className="flex justify-end mb-4">
             <button
               onClick={handleDownloadCSV}
               disabled={!safeRows || safeRows.length === 0}
               aria-label="Download SDG assessment scores as CSV file"
-              className={`px-4 py-2 bg-green-600 text-white rounded-lg transition flex items-center gap-2 shadow-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 ${
-                !safeRows || safeRows.length === 0
+              className={`px-4 py-2 bg-green-600 text-white rounded-lg transition flex items-center gap-2 shadow-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 ${!safeRows || safeRows.length === 0
                   ? "opacity-50 cursor-not-allowed"
                   : "hover:bg-green-700"
-              }`}
+                }`}
             >
               <svg
                 className="w-5 h-5"
@@ -638,11 +659,10 @@ export default function SdgGridRouletteVisualization({ rows, sector }: Props) {
               onClick={handleDownloadChart}
               disabled={!size.w || isDownloading}
               aria-label="Download SDG chart as PNG image"
-              className={`px-4 py-2 bg-green-600 text-white rounded-lg transition flex items-center gap-2 shadow-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 ${
-                !size.w || isDownloading
+              className={`px-4 py-2 bg-green-600 text-white rounded-lg transition flex items-center gap-2 shadow-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 ${!size.w || isDownloading
                   ? "opacity-50 cursor-not-allowed"
                   : "hover:bg-green-700"
-              }`}
+                }`}
             >
               {isDownloading ? (
                 <>
@@ -691,7 +711,7 @@ export default function SdgGridRouletteVisualization({ rows, sector }: Props) {
           </div>
         </div>
 
-        <section className="bg-white rounded-xl shadow-md border-2 border-green-200 p-6" aria-labelledby="performance-heading">
+        <section className="bg-white rounded-xl shadow-md p-6" aria-labelledby="performance-heading">
           <h2 id="performance-heading" className="text-2xl font-bold mb-6 text-gray-800">
             Performance Summary
           </h2>
@@ -707,16 +727,16 @@ export default function SdgGridRouletteVisualization({ rows, sector }: Props) {
                 return (
                   <div
                     key={d.key}
-                    className="rounded-lg p-4 bg-gradient-to-r from-green-50 to-white shadow-sm border border-green-100"
+                    className="rounded-lg p-4 bg-gradient-to-r from-green-50 to-white shadow-sm"
                     role="listitem"
                   >
                     <div className="flex items-center gap-2 mb-2">
                       <div
                         className="w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-bold shadow"
                         style={{ backgroundColor: d.color }}
-                        aria-label={`Dimension ${idx + 1}`}
+                        aria-label={`Dimension ${d.number}`}
                       >
-                        {idx + 1}
+                        {d.number}
                       </div>
                       <Tooltip text={TOOLTIPS[d.shortKey]}>
                         <span className="font-medium text-sm text-gray-800">
@@ -764,7 +784,7 @@ export default function SdgGridRouletteVisualization({ rows, sector }: Props) {
                   return (
                     <div
                       key={sdg.sdg}
-                      className="rounded-lg p-3 bg-gradient-to-r from-green-50 to-white shadow-sm border border-green-200"
+                      className="rounded-lg p-3 bg-gradient-to-r from-green-50 to-white shadow-sm"
                       role="listitem"
                     >
                       <div className="flex items-center gap-3 mb-2">
@@ -812,7 +832,7 @@ export default function SdgGridRouletteVisualization({ rows, sector }: Props) {
                   return (
                     <div
                       key={sdg.sdg}
-                      className="rounded-lg p-3 bg-gradient-to-r from-red-50 to-white shadow-sm border border-red-100"
+                      className="rounded-lg p-3 bg-gradient-to-r from-red-50 to-white shadow-sm"
                       role="listitem"
                     >
                       <div className="flex items-center gap-3 mb-2">
