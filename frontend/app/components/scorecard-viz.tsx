@@ -458,15 +458,6 @@ function useRadarChart({
         .attr("stroke", "#fff")
         .attr("stroke-width", 2);
     });
-
-    // title
-    g.append("text")
-      .attr("y", 0)
-      .attr("text-anchor", "middle")
-      .attr("font-size", 14)
-      .attr("font-weight", 700)
-      .attr("fill", dimension.color)
-      .text(dimension.shortKey);
   }, [cells, dimension, width, height]);
 
   return { ref };
