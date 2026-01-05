@@ -1,7 +1,7 @@
 {
-  "/recommendations/page": "app/recommendations/page.js",
-  "/form/page": "app/form/page.js",
   "/sector-picker/page": "app/sector-picker/page.js",
+  "/form/page": "app/form/page.js",
+  "/recommendations/page": "app/recommendations/page.js",
   "/visualization/page": "app/visualization/page.js",
-  "/page": "app/page.js"
+  "/favicon.ico/route": "app/favicon.ico/route.js"
 }

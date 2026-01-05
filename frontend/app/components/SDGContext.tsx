@@ -4,13 +4,16 @@
 import React, { createContext, useState, ReactNode, useEffect } from "react";
 
 type Question = {
+  id: string; // Added missing property
   sdg_number: number;
   sdg_description: string;
+  sdg_target: string; // Added missing property
   sustainability_dimension: string;
+  kpi: string; // Added missing property
   question: string;
   sector: string;
   score?: number;
-  recommendations?: {  // ← ADD THIS!
+  recommendations?: {
     awareness?: { text?: string; source?: string };
     developing?: { text?: string; source?: string };
     leading?: { text?: string; source?: string };
