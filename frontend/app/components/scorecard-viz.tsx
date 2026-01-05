@@ -69,12 +69,17 @@ const DIMENSIONS = [
 ] as const;
 
 const TOOLTIPS: Record<string, string> = {
-  "Economic": "Economic sustainability measures financial viability, cost efficiency, and economic growth",
-  "Social": "Social sustainability addresses labor practices, community impact, and social equity",
-  "Environmental": "Environmental sustainability focuses on ecological impact, resource conservation, and climate action",
-  "Circular": "Circular economy principles include waste reduction, material reuse, and closed-loop systems",
-  "SDG": "Sustainable Development Goals are 17 global objectives adopted by the UN to achieve a better future for all",
-  "Score": "Scores range from 0-5, where 5 represents full achievement of sustainability targets",
+  Economic:
+    "Economic sustainability measures financial viability, cost efficiency, and economic growth",
+  Social:
+    "Social sustainability addresses labor practices, community impact, and social equity",
+  Environmental:
+    "Environmental sustainability focuses on ecological impact, resource conservation, and climate action",
+  Circular:
+    "Circular economy principles include waste reduction, material reuse, and closed-loop systems",
+  SDG:
+    "Sustainable Development Goals are 17 global objectives adopted by the UN to achieve a better future for all",
+  Score: "Scores range from 0-5, where 5 represents full achievement of sustainability targets",
 };
 
 // ---------------- Helpers ----------------
@@ -109,13 +114,16 @@ type Cell = {
 function makeCells(rows: QuestionnaireRow[], sector: string): Cell[] {
   const keep = rows.filter((r) => canonicalSector(r.sector) === sector);
   const bucket = new Map<string, { sum: number; n: number; items: QuestionnaireRow[] }>();
+
   for (const r of keep) {
     const sdg = Number(r.sdg_number ?? 0);
     const dim = canonicalDim(r.sustainability_dimension);
     if (!sdg || !dim) continue;
+
     const k = `${sdg}|${dim}`;
     if (!bucket.has(k)) bucket.set(k, { sum: 0, n: 0, items: [] });
     const b = bucket.get(k)!;
+
     const s = r.score == null ? null : Number(r.score);
     if (Number.isFinite(s)) {
       b.sum += s!;
@@ -123,6 +131,7 @@ function makeCells(rows: QuestionnaireRow[], sector: string): Cell[] {
     }
     b.items.push(r);
   }
+
   const out: Cell[] = [];
   for (let sdg = 1; sdg <= 17; sdg++) {
     for (const d of DIMENSIONS) {
@@ -165,9 +174,13 @@ function useGridRoulette({
     const outerRadius = Math.min(W, H) / 2 - margin;
     const innerRadius = 120;
 
-    svg.attr("viewBox", `0 0 ${W} ${H}`)
+    svg
+      .attr("viewBox", `0 0 ${W} ${H}`)
       .attr("role", "img")
-      .attr("aria-label", "SDG Performance Roulette Visualization showing scores across 17 Sustainable Development Goals and 4 dimensions");
+      .attr(
+        "aria-label",
+        "SDG Performance Roulette Visualization showing scores across 17 Sustainable Development Goals and 4 dimensions"
+      );
 
     const g = svg.append("g").attr("transform", `translate(${W / 2},${H / 2})`);
 
@@ -215,7 +228,12 @@ function useGridRoulette({
             .attr("stroke", "none")
             .attr("opacity", level <= score ? 0.9 : 0.3)
             .attr("role", "graphics-symbol")
-            .attr("aria-label", `SDG ${sdg} ${dim.shortKey} dimension score level ${level} of 5${level <= score ? ' - achieved' : ' - not achieved'}`);
+            .attr(
+              "aria-label",
+              `SDG ${sdg} ${dim.shortKey} dimension score level ${level} of 5${
+                level <= score ? " - achieved" : " - not achieved"
+              }`
+            );
         }
       });
 
@@ -224,6 +242,7 @@ function useGridRoulette({
       const iconAngle = midAngle + deg2rad(0);
       const iconRadius = outerRadius + 64;
       const icon = polar(iconRadius + 25, iconAngle);
+
       g.append("image")
         .attr("href", SDG_IMAGE_MAP[sdg])
         .attr("x", icon.x - 30)
@@ -232,57 +251,6 @@ function useGridRoulette({
         .attr("height", 70)
         .attr("preserveAspectRatio", "xMidYMid meet")
         .attr("aria-label", `SDG ${sdg}: ${SDG_DESCRIPTIONS[sdg]}`);
-
-      // --- Add dimension numbers as a HORIZONTAL mini-legend under the SDG icon ---
-      const iconCenterRadius = iconRadius + 25; // same radius used for icon positioning
-      const iconH = 70;
-      const gap = 30;
-
-      // Put the row just inside (toward center) so it sits under the icon visually
-      const legendRadius = iconCenterRadius - iconH / 2 - gap;
-
-      const bubbleR = 10;
-      const bubbleSpacing = 45; // distance between bubble centers
-      const n = DIMENSIONS.length;
-
-      // We need tangent direction (left-right) at this angle
-      // Your polar() uses (a - PI/2). Use the same here.
-      const a = iconAngle - Math.PI / 2;
-
-      // unit vectors
-      const ux = Math.cos(a), uy = Math.sin(a);          // radial outward
-      const tx = -Math.sin(a), ty = Math.cos(a);         // tangent (left/right)
-
-      // base point (center of the row)
-      const baseX = ux * legendRadius;
-      const baseY = uy * legendRadius;
-
-      // center the row around base point
-      const start = -((n - 1) / 2) * bubbleSpacing;
-
-      DIMENSIONS.forEach((dim, idx) => {
-        const off = start + idx * bubbleSpacing;
-        const x = baseX + tx * off;
-        const y = baseY + ty * off;
-
-        g.append("circle")
-          .attr("cx", x)
-          .attr("cy", y)
-          .attr("r", bubbleR)
-          .attr("fill", dim.color)
-          .attr("opacity", 0.95);
-
-        g.append("text")
-          .attr("x", x)
-          .attr("y", y)
-          .attr("text-anchor", "middle")
-          .attr("dominant-baseline", "middle")
-          .attr("font-size", 11)
-          .attr("font-weight", 800)
-          .attr("fill", "#ffffff")
-          .text(dim.number);
-      });
-
     }
 
     // --- Concentric rings WITHOUT BLACK BORDERS (subtle white lines) ---
@@ -293,8 +261,11 @@ function useGridRoulette({
         .attr("fill", "none")
         .attr("stroke", "#ffffff")
         .attr("stroke-width", level === 0 || level === 5 ? 3 : 1)
-        .attr("opacity", 0.3)
-        .attr("aria-label", level === 0 ? "Inner boundary" : level === 5 ? "Outer boundary" : `Score level ${level}`);
+        .attr("opacity", 0)
+        .attr(
+          "aria-label",
+          level === 0 ? "Inner boundary" : level === 5 ? "Outer boundary" : `Score level ${level}`
+        );
     }
 
     // --- Score labels ONLY at SDG 1 ---
@@ -336,10 +307,7 @@ function useGridRoulette({
     }
 
     // --- Center legend WITHOUT BLACK BORDER ---
-    g.append("circle")
-      .attr("r", innerRadius - 2)
-      .attr("fill", "#fff")
-      .attr("stroke", "none");
+    g.append("circle").attr("r", innerRadius - 2).attr("fill", "#fff").attr("stroke", "none");
 
     g.append("text")
       .attr("y", -innerRadius + 45)
@@ -381,6 +349,129 @@ function useGridRoulette({
   return { ref };
 }
 
+// -------------- Radar Chart for Each Dimension (ADDED) --------------
+function useRadarChart({
+  cells,
+  dimension,
+  width,
+  height,
+}: {
+  cells: Cell[];
+  dimension: (typeof DIMENSIONS)[number];
+  width: number;
+  height: number;
+}) {
+  const ref = useRef<SVGSVGElement | null>(null);
+
+  useEffect(() => {
+    if (!width || !height) return;
+
+    const svg = d3.select(ref.current);
+    svg.selectAll("*").remove();
+
+    const W = width;
+    const H = height;
+    const centerX = W / 2;
+    const centerY = H / 2;
+    const radius = Math.min(W, H) / 2 - 60;
+
+    svg.attr("viewBox", `0 0 ${W} ${H}`);
+    const g = svg.append("g").attr("transform", `translate(${centerX},${centerY})`);
+
+    // scores for this dimension across all 17 SDGs
+    const data: Array<{ sdg: number; score: number }> = [];
+    for (let sdg = 1; sdg <= 17; sdg++) {
+      const cell = cells.find((c) => c.sdg === sdg && c.dim === dimension.key);
+      data.push({ sdg, score: cell ? cell.score : 0 });
+    }
+
+    const angleSlice = (Math.PI * 2) / 17;
+
+    // concentric circles (1-5)
+    for (let level = 1; level <= 5; level++) {
+      const r = (radius / 5) * level;
+      g.append("circle")
+        .attr("r", r)
+        .attr("fill", "none")
+        .attr("stroke", "#e5e7eb")
+        .attr("stroke-width", 1)
+        .attr("opacity", 0.5);
+    }
+
+    // axis lines + labels
+    for (let i = 0; i < 17; i++) {
+      const angle = angleSlice * i - Math.PI / 2;
+      const x = Math.cos(angle) * radius;
+      const y = Math.sin(angle) * radius;
+
+      g.append("line")
+        .attr("x1", 0)
+        .attr("y1", 0)
+        .attr("x2", x)
+        .attr("y2", y)
+        .attr("stroke", "#e5e7eb")
+        .attr("stroke-width", 1)
+        .attr("opacity", 0.5);
+
+      const labelRadius = radius + 25;
+      const lx = Math.cos(angle) * labelRadius;
+      const ly = Math.sin(angle) * labelRadius;
+
+      g.append("text")
+        .attr("x", lx)
+        .attr("y", ly)
+        .attr("text-anchor", "middle")
+        .attr("dominant-baseline", "middle")
+        .attr("font-size", 10)
+        .attr("font-weight", 600)
+        .attr("fill", dimension.color)
+        .text(i + 1);
+    }
+
+    const radarLine = d3
+      .lineRadial<{ sdg: number; score: number }>()
+      .angle((d, i) => angleSlice * i - Math.PI / 2)
+      .radius((d) => (radius / 5) * d.score)
+      .curve(d3.curveLinearClosed);
+
+    // area + stroke
+    g.append("path")
+      .datum(data)
+      .attr("d", radarLine as any)
+      .attr("fill", dimension.color)
+      .attr("fill-opacity", 0.3)
+      .attr("stroke", dimension.color)
+      .attr("stroke-width", 2);
+
+    // points
+    data.forEach((d, i) => {
+      const angle = angleSlice * i - Math.PI / 2;
+      const r = (radius / 5) * d.score;
+      const x = Math.cos(angle) * r;
+      const y = Math.sin(angle) * r;
+
+      g.append("circle")
+        .attr("cx", x)
+        .attr("cy", y)
+        .attr("r", 4)
+        .attr("fill", dimension.color)
+        .attr("stroke", "#fff")
+        .attr("stroke-width", 2);
+    });
+
+    // title
+    g.append("text")
+      .attr("y", 0)
+      .attr("text-anchor", "middle")
+      .attr("font-size", 14)
+      .attr("font-weight", 700)
+      .attr("fill", dimension.color)
+      .text(dimension.shortKey);
+  }, [cells, dimension, width, height]);
+
+  return { ref };
+}
+
 // ---------------- Tooltip Component ----------------
 const Tooltip = ({ text, children }: { text: string; children: React.ReactNode }) => {
   const [show, setShow] = useState(false);
@@ -411,8 +502,11 @@ type Props = { rows: QuestionnaireRow[]; sector: string };
 
 export default function SdgGridRouletteVisualization({ rows, sector }: Props) {
   const [size, setSize] = useState<{ w: number; h: number }>({ w: 0, h: 0 });
+  const [radarSize, setRadarSize] = useState<{ w: number; h: number }>({ w: 0, h: 0 }); // ADDED
   const [isDownloading, setIsDownloading] = useState(false);
+
   const cardRef = useRef<HTMLDivElement | null>(null);
+  const radarContainerRef = useRef<HTMLDivElement | null>(null); // ADDED
 
   const safeRows = rows || [];
 
@@ -431,15 +525,35 @@ export default function SdgGridRouletteVisualization({ rows, sector }: Props) {
     return () => ro.disconnect();
   }, []);
 
+  // ADDED: responsive radar sizing (same logic as your first file)
+  useEffect(() => {
+    if (!radarContainerRef.current) return;
+    const el = radarContainerRef.current;
+
+    const ro = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const cw = Math.floor(entry.contentRect.width / 4) - 20;
+        const target = Math.max(200, Math.min(300, cw));
+        setRadarSize({ w: target, h: target });
+      }
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
   const cells = useMemo(() => makeCells(safeRows, sector), [safeRows, sector]);
   const { ref } = useGridRoulette({ cells, width: size.w, height: size.h });
+
+  // ADDED: radar hooks
+  const economicRadar = useRadarChart({ cells, dimension: DIMENSIONS[0], width: radarSize.w, height: radarSize.h });
+  const socialRadar = useRadarChart({ cells, dimension: DIMENSIONS[1], width: radarSize.w, height: radarSize.h });
+  const environmentalRadar = useRadarChart({ cells, dimension: DIMENSIONS[2], width: radarSize.w, height: radarSize.h });
+  const circularRadar = useRadarChart({ cells, dimension: DIMENSIONS[3], width: radarSize.w, height: radarSize.h });
 
   const dimensionTotals = useMemo(() => {
     const totals: Record<string, number> = {};
     for (const d of DIMENSIONS) {
-      totals[d.key] = cells
-        .filter((c) => c.dim === d.key)
-        .reduce((sum, c) => sum + c.score, 0);
+      totals[d.key] = cells.filter((c) => c.dim === d.key).reduce((sum, c) => sum + c.score, 0);
     }
     return totals;
   }, [cells]);
@@ -447,9 +561,7 @@ export default function SdgGridRouletteVisualization({ rows, sector }: Props) {
   const sdgTotals = useMemo(() => {
     const totals: Array<{ sdg: number; score: number; description: string }> = [];
     for (let sdg = 1; sdg <= 17; sdg++) {
-      const score = cells
-        .filter((c) => c.sdg === sdg)
-        .reduce((sum, c) => sum + c.score, 0);
+      const score = cells.filter((c) => c.sdg === sdg).reduce((sum, c) => sum + c.score, 0);
       totals.push({
         sdg,
         score,
@@ -476,12 +588,7 @@ export default function SdgGridRouletteVisualization({ rows, sector }: Props) {
         const question = (row.question || "").replace(/"/g, '""');
         const score = row.score !== undefined ? row.score : "";
 
-        return [
-          `"${sdg}"`,
-          `"${dimension}"`,
-          `"${question}"`,
-          `"${score}"`,
-        ].join(",");
+        return [`"${sdg}"`, `"${dimension}"`, `"${question}"`, `"${score}"`].join(",");
       });
 
       const csvContent = [headers.join(","), ...csvRows].join("\n");
@@ -614,26 +721,25 @@ export default function SdgGridRouletteVisualization({ rows, sector }: Props) {
   };
 
   return (
-    <div className="min-h-screen p-6 md:p-8" style={{ background: 'linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 50%, #d1fae5 100%)' }}>
+    <div
+      className="min-h-screen p-6 md:p-8"
+      style={{
+        background: "linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 50%, #d1fae5 100%)",
+      }}
+    >
       <div className="max-w-7xl mx-auto">
+        {/* Main Roulette Chart */}
         <div className="bg-white rounded-xl shadow-md p-4 md:p-6 mb-6">
           <div className="flex justify-end mb-4">
             <button
               onClick={handleDownloadCSV}
               disabled={!safeRows || safeRows.length === 0}
               aria-label="Download SDG assessment scores as CSV file"
-              className={`px-4 py-2 bg-green-600 text-white rounded-lg transition flex items-center gap-2 shadow-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 ${!safeRows || safeRows.length === 0
-                  ? "opacity-50 cursor-not-allowed"
-                  : "hover:bg-green-700"
-                }`}
+              className={`px-4 py-2 bg-green-600 text-white rounded-lg transition flex items-center gap-2 shadow-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 ${
+                !safeRows || safeRows.length === 0 ? "opacity-50 cursor-not-allowed" : "hover:bg-green-700"
+              }`}
             >
-              <svg
-                className="w-5 h-5"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                aria-hidden="true"
-              >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -646,12 +752,7 @@ export default function SdgGridRouletteVisualization({ rows, sector }: Props) {
           </div>
 
           <div ref={cardRef}>
-            <svg
-              ref={ref}
-              width={size.w || "100%"}
-              height={size.h || 800}
-              style={{ display: "block", margin: "0 auto" }}
-            />
+            <svg ref={ref} width={size.w || "100%"} height={size.h || 800} style={{ display: "block", margin: "0 auto" }} />
           </div>
 
           <div className="flex justify-end mt-4">
@@ -659,27 +760,14 @@ export default function SdgGridRouletteVisualization({ rows, sector }: Props) {
               onClick={handleDownloadChart}
               disabled={!size.w || isDownloading}
               aria-label="Download SDG chart as PNG image"
-              className={`px-4 py-2 bg-green-600 text-white rounded-lg transition flex items-center gap-2 shadow-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 ${!size.w || isDownloading
-                  ? "opacity-50 cursor-not-allowed"
-                  : "hover:bg-green-700"
-                }`}
+              className={`px-4 py-2 bg-green-600 text-white rounded-lg transition flex items-center gap-2 shadow-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 ${
+                !size.w || isDownloading ? "opacity-50 cursor-not-allowed" : "hover:bg-green-700"
+              }`}
             >
               {isDownloading ? (
                 <>
-                  <svg
-                    className="w-5 h-5 animate-spin"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    aria-hidden="true"
-                  >
-                    <circle
-                      className="opacity-25"
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      strokeWidth="4"
-                    />
+                  <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                     <path
                       className="opacity-75"
                       fill="currentColor"
@@ -690,13 +778,7 @@ export default function SdgGridRouletteVisualization({ rows, sector }: Props) {
                 </>
               ) : (
                 <>
-                  <svg
-                    className="w-5 h-5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                    aria-hidden="true"
-                  >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                     <path
                       strokeLinecap="round"
                       strokeLinejoin="round"
@@ -711,6 +793,31 @@ export default function SdgGridRouletteVisualization({ rows, sector }: Props) {
           </div>
         </div>
 
+        {/* ADDED: Radar Charts section (same as your first code) */}
+        <div className="bg-white rounded-xl shadow-md p-4 md:p-6 mb-6">
+          <h2 className="text-2xl font-bold mb-6 text-gray-800 text-center">Dimension Performance Radars</h2>
+          <div ref={radarContainerRef} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="flex flex-col items-center">
+              <svg ref={economicRadar.ref} width={radarSize.w || 250} height={radarSize.h || 250} style={{ display: "block" }} />
+            </div>
+            <div className="flex flex-col items-center">
+              <svg ref={socialRadar.ref} width={radarSize.w || 250} height={radarSize.h || 250} style={{ display: "block" }} />
+            </div>
+            <div className="flex flex-col items-center">
+              <svg
+                ref={environmentalRadar.ref}
+                width={radarSize.w || 250}
+                height={radarSize.h || 250}
+                style={{ display: "block" }}
+              />
+            </div>
+            <div className="flex flex-col items-center">
+              <svg ref={circularRadar.ref} width={radarSize.w || 250} height={radarSize.h || 250} style={{ display: "block" }} />
+            </div>
+          </div>
+        </div>
+
+        {/* Performance Summary */}
         <section className="bg-white rounded-xl shadow-md p-6" aria-labelledby="performance-heading">
           <h2 id="performance-heading" className="text-2xl font-bold mb-6 text-gray-800">
             Performance Summary
@@ -721,15 +828,11 @@ export default function SdgGridRouletteVisualization({ rows, sector }: Props) {
               By <Tooltip text={TOOLTIPS.SDG}>Dimension</Tooltip>
             </h3>
             <div className="flex flex-col gap-4" role="list" aria-labelledby="dimension-heading">
-              {DIMENSIONS.map((d, idx) => {
+              {DIMENSIONS.map((d) => {
                 const score = dimensionTotals[d.key];
                 const percentage = Math.round((score / 85) * 100);
                 return (
-                  <div
-                    key={d.key}
-                    className="rounded-lg p-4 bg-gradient-to-r from-green-50 to-white shadow-sm"
-                    role="listitem"
-                  >
+                  <div key={d.key} className="rounded-lg p-4 bg-gradient-to-r from-green-50 to-white shadow-sm" role="listitem">
                     <div className="flex items-center gap-2 mb-2">
                       <div
                         className="w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-bold shadow"
@@ -739,9 +842,7 @@ export default function SdgGridRouletteVisualization({ rows, sector }: Props) {
                         {d.number}
                       </div>
                       <Tooltip text={TOOLTIPS[d.shortKey]}>
-                        <span className="font-medium text-sm text-gray-800">
-                          {d.shortKey}
-                        </span>
+                        <span className="font-medium text-sm text-gray-800">{d.shortKey}</span>
                       </Tooltip>
                     </div>
                     <div className="flex justify-between text-xs mb-1 text-gray-600">
@@ -758,10 +859,7 @@ export default function SdgGridRouletteVisualization({ rows, sector }: Props) {
                       aria-valuemax={100}
                       aria-label={`${d.shortKey} performance: ${percentage}%`}
                     >
-                      <div
-                        className="rounded-full h-2 transition-all duration-500"
-                        style={{ width: `${percentage}%`, backgroundColor: d.color }}
-                      />
+                      <div className="rounded-full h-2 transition-all duration-500" style={{ width: `${percentage}%`, backgroundColor: d.color }} />
                     </div>
                   </div>
                 );
@@ -782,17 +880,9 @@ export default function SdgGridRouletteVisualization({ rows, sector }: Props) {
                 {topSDGs.map((sdg) => {
                   const percentage = Math.round((sdg.score / 20) * 100);
                   return (
-                    <div
-                      key={sdg.sdg}
-                      className="rounded-lg p-3 bg-gradient-to-r from-green-50 to-white shadow-sm"
-                      role="listitem"
-                    >
+                    <div key={sdg.sdg} className="rounded-lg p-3 bg-gradient-to-r from-green-50 to-white shadow-sm" role="listitem">
                       <div className="flex items-center gap-3 mb-2">
-                        <img
-                          src={SDG_IMAGE_MAP[sdg.sdg]}
-                          alt={`SDG ${sdg.sdg}: ${sdg.description}`}
-                          className="w-10 h-10 rounded"
-                        />
+                        <img src={SDG_IMAGE_MAP[sdg.sdg]} alt={`SDG ${sdg.sdg}: ${sdg.description}`} className="w-10 h-10 rounded" />
                         <div className="flex-1">
                           <div className="font-semibold text-sm text-gray-800">
                             SDG {sdg.sdg}: {sdg.description}
@@ -811,10 +901,7 @@ export default function SdgGridRouletteVisualization({ rows, sector }: Props) {
                         aria-valuemax={100}
                         aria-label={`SDG ${sdg.sdg} ${sdg.description} performance: ${percentage}%`}
                       >
-                        <div
-                          className="rounded-full h-2 transition-all duration-500 bg-green-600"
-                          style={{ width: `${percentage}%` }}
-                        />
+                        <div className="rounded-full h-2 transition-all duration-500 bg-green-600" style={{ width: `${percentage}%` }} />
                       </div>
                     </div>
                   );
@@ -830,17 +917,9 @@ export default function SdgGridRouletteVisualization({ rows, sector }: Props) {
                 {bottomSDGs.map((sdg) => {
                   const percentage = Math.round((sdg.score / 20) * 100);
                   return (
-                    <div
-                      key={sdg.sdg}
-                      className="rounded-lg p-3 bg-gradient-to-r from-red-50 to-white shadow-sm"
-                      role="listitem"
-                    >
+                    <div key={sdg.sdg} className="rounded-lg p-3 bg-gradient-to-r from-red-50 to-white shadow-sm" role="listitem">
                       <div className="flex items-center gap-3 mb-2">
-                        <img
-                          src={SDG_IMAGE_MAP[sdg.sdg]}
-                          alt={`SDG ${sdg.sdg}: ${sdg.description}`}
-                          className="w-10 h-10 rounded"
-                        />
+                        <img src={SDG_IMAGE_MAP[sdg.sdg]} alt={`SDG ${sdg.sdg}: ${sdg.description}`} className="w-10 h-10 rounded" />
                         <div className="flex-1">
                           <div className="font-semibold text-sm text-gray-800">
                             SDG {sdg.sdg}: {sdg.description}
@@ -859,10 +938,7 @@ export default function SdgGridRouletteVisualization({ rows, sector }: Props) {
                         aria-valuemax={100}
                         aria-label={`SDG ${sdg.sdg} ${sdg.description} performance: ${percentage}%`}
                       >
-                        <div
-                          className="rounded-full h-2 transition-all duration-500 bg-red-600"
-                          style={{ width: `${percentage}%` }}
-                        />
+                        <div className="rounded-full h-2 transition-all duration-500 bg-red-600" style={{ width: `${percentage}%` }} />
                       </div>
                     </div>
                   );
