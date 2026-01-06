@@ -570,6 +570,7 @@ export default function SdgGridRouletteVisualization({ rows, sector }: Props) {
     }
   };
 
+
   const handleDownloadRadarCharts = async (radarIndex?: number) => {
     const radarNames = ["Economic", "Social", "Environmental", "Circular"];
     const indicesToDownload = radarIndex !== undefined ? [radarIndex] : [0, 1, 2, 3];
@@ -591,18 +592,27 @@ export default function SdgGridRouletteVisualization({ rows, sector }: Props) {
 
         if (!ctx) continue;
 
+        // High-resolution output
+        const scale = 3; // 3x resolution for crisp images
+        const baseSize = 600; // Export at 600x600 regardless of display size
+        canvas.width = baseSize * scale;
+        canvas.height = baseSize * scale;
+
         const img = new Image();
         const svgBlob = new Blob([svgData], { type: "image/svg+xml;charset=utf-8" });
         const url = URL.createObjectURL(svgBlob);
 
         await new Promise<void>((resolve, reject) => {
           img.onload = () => {
-            canvas.width = radarSize.w || 400;
-            canvas.height = radarSize.h || 400;
-
+            // Scale context for high-DPI rendering
+            ctx.scale(scale, scale);
+            
+            // White background
             ctx.fillStyle = "#ffffff";
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            ctx.drawImage(img, 0, 0);
+            ctx.fillRect(0, 0, baseSize, baseSize);
+            
+            // Draw image at base size (context is scaled)
+            ctx.drawImage(img, 0, 0, baseSize, baseSize);
             URL.revokeObjectURL(url);
 
             canvas.toBlob((blob) => {
