@@ -29,12 +29,12 @@ type Props = {
 };
 
 const DEFAULT_RUBRIC: Record<number, string> = {
-  0: "N/A",
-  1: "Issue identified, but no plans for further actions",
-  2: "Issue identified, starts planning further actions",
-  3: "Action plan with clear targets and deadlines in place",
-  4: "Action plan operational - some progress in established targets",
-  5: "Action plan operational - achieving the target set",
+  0: "Score Description: N/A",
+  1: "Score Description: Issue identified, but no plans for further actions",
+  2: "Score Description: Issue identified, starts planning further actions",
+  3: "Score Description: Action plan with clear targets and deadlines in place",
+  4: "Score Description: Action plan operational - some progress in established targets",
+  5: "Score Description: Action plan operational - achieving the target set",
 };
 
 const norm = (s: string) => (s || "").trim().toLowerCase();

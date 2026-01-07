@@ -208,11 +208,14 @@ export default function RecommendationsPage({ rows, sector }: Props) {
   }, [rows]);
 
   return (
-    <div className="w-full flex justify-center bg-gray-50 min-h-screen py-6 sm:py-8 md:py-12 px-4 sm:px-6 md:px-8">
-      <div className="w-full max-w-[95vw] sm:max-w-[90vw] md:max-w-4xl lg:max-w-5xl xl:max-w-6xl 2xl:max-w-7xl transition-all duration-300 bg-white rounded-2xl shadow-lg p-6 sm:p-8 md:p-10 mx-auto">
+    <div 
+      className="w-full flex justify-center min-h-screen py-6 sm:py-8 md:py-12 px-4 sm:px-6 md:px-8" 
+      style={{ background: 'linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 50%, #d1fae5 100%)' }}
+    >
+      <div className="w-full max-w-[95vw] sm:max-w-[90vw] md:max-w-4xl lg:max-w-5xl xl:max-w-6xl 2xl:max-w-7xl transition-all duration-300 bg-white rounded-2xl shadow-lg border-2 border-green-200 p-4 sm:p-6 md:p-8 mx-auto my-8">
         
         {/* Header */}
-        <div className="mb-8">
+        <div className="mb-8 pb-6 border-b-2 border-green-100">
           <div className="flex justify-center mb-6">
             <img
               src="https://www.bioradar.org/themes/custom/b5subtheme/logo.svg"
@@ -220,17 +223,31 @@ export default function RecommendationsPage({ rows, sector }: Props) {
               className="h-20 sm:h-24 object-contain"
             />
           </div>
-          <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-2 text-center">
+          <h1 className="text-3xl sm:text-4xl font-bold text-green-700 mb-2 text-center">
             Sustainability Recommendations
           </h1>
-          <p className="text-gray-600 text-center">
-            Sector: <span className="font-semibold">{sector}</span>
+          <p className="text-gray-600 text-sm text-center">
+            Sector: <span className="font-semibold text-green-700">{sector}</span>
           </p>
+        </div>
+
+        {/* Info Banner */}
+        <div className="mb-6 bg-gradient-to-r from-green-50 to-emerald-50 border-l-4 border-green-500 rounded-r-lg p-4">
+          <div className="flex items-start gap-3">
+            <svg className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <div className="flex-1">
+              <p className="text-sm text-gray-700">
+                <strong className="text-green-700">Priority Areas:</strong> Recommendations are prioritized by current maturity levels across all SDGs and dimensions.
+              </p>
+            </div>
+          </div>
         </div>
 
         {/* Dimension Summary Cards */}
         <div className="mb-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">
+          <h2 className="text-2xl font-bold text-green-700 mb-6">
             Performance by Dimension
           </h2>
           <div className="grid md:grid-cols-2 gap-6">
@@ -239,7 +256,7 @@ export default function RecommendationsPage({ rows, sector }: Props) {
               return (
                 <div
                   key={dim.dimension}
-                  className={`${maturityStyle.bg} rounded-xl p-5 transition-shadow hover:shadow-lg`}
+                  className={`${maturityStyle.bg} rounded-xl p-5 border-2 border-green-100 transition-all duration-200 hover:shadow-md`}
                 >
                   <div className="flex items-center justify-between mb-3">
                     <h3 className="font-bold text-lg" style={{ color: dim.color }}>
@@ -252,7 +269,7 @@ export default function RecommendationsPage({ rows, sector }: Props) {
                       </span>
                     </div>
                   </div>
-                  <div className="w-full bg-white rounded-full h-3 mb-2">
+                  <div className="w-full bg-white rounded-full h-3 mb-2 shadow-inner">
                     <div
                       className="h-3 rounded-full transition-all duration-500"
                       style={{
@@ -272,7 +289,7 @@ export default function RecommendationsPage({ rows, sector }: Props) {
 
         {/* Recommendations by SDG */}
         <div className="mb-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">
+          <h2 className="text-2xl font-bold text-green-700 mb-6">
             Recommendations by SDG
           </h2>
           
@@ -283,7 +300,7 @@ export default function RecommendationsPage({ rows, sector }: Props) {
               return (
                 <div
                   key={sdgItem.sdg}
-                  className={`${sdgMaturityStyle.bg} rounded-xl p-6 transition-shadow hover:shadow-lg`}
+                  className={`${sdgMaturityStyle.bg} rounded-xl p-6 border-2 border-green-100 transition-all duration-200 hover:shadow-md`}
                 >
                   {/* SDG Header */}
                   <div className="flex items-start justify-between mb-6">
@@ -299,7 +316,7 @@ export default function RecommendationsPage({ rows, sector }: Props) {
                       </span>
                     </div>
                     <div className="text-right">
-                      <div className="text-2xl font-bold text-gray-900">
+                      <div className="text-2xl font-bold text-green-700">
                         {sdgItem.avgScore.toFixed(1)}
                       </div>
                       <div className="text-xs text-gray-600">/ 5.0</div>
@@ -320,7 +337,7 @@ export default function RecommendationsPage({ rows, sector }: Props) {
                       return (
                         <div
                           key={dimension.key}
-                          className="bg-white rounded-lg p-4"
+                          className="bg-white rounded-lg p-4 border border-green-100"
                         >
                           {/* Dimension Header */}
                           <div className="flex items-center justify-between mb-3">
@@ -340,18 +357,28 @@ export default function RecommendationsPage({ rows, sector }: Props) {
 
                           {/* Recommendation */}
                           <div>
-                            <h5 className="font-medium text-gray-700 text-sm mb-2">
+                            <h5 className="font-medium text-green-700 text-sm mb-2 flex items-center gap-2">
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                              </svg>
                               Recommendations
                             </h5>
-                            <p className="text-gray-800 text-sm leading-relaxed mb-2">
+                            <p className="text-gray-700 text-sm leading-relaxed mb-2">
                               {recommendation.text}
                             </p>
                             {recommendation.source && (
-                              <div className="mt-3 pt-3 border-t border-gray-200">
-                                <p className="text-xs text-gray-600 font-medium mb-1">📚 Sources:</p>
-                                <p className="text-xs text-gray-600 italic">
-                                  {recommendation.source}
-                                </p>
+                              <div className="mt-3 pt-3 border-t border-green-100">
+                                <div className="flex items-start gap-2">
+                                  <svg className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                                  </svg>
+                                  <div className="flex-1">
+                                    <p className="text-xs text-green-700 font-medium mb-1">Sources</p>
+                                    <p className="text-xs text-gray-600 italic">
+                                      {recommendation.source}
+                                    </p>
+                                  </div>
+                                </div>
                               </div>
                             )}
                           </div>
@@ -366,18 +393,24 @@ export default function RecommendationsPage({ rows, sector }: Props) {
         </div>
 
         {/* Navigation */}
-        <div className="flex flex-col sm:flex-row justify-between gap-4 pt-6 border-t border-gray-200">
+        <div className="flex flex-col sm:flex-row justify-between gap-4 pt-6 border-t-2 border-green-100">
           <button
             onClick={() => router.push("/visualization")}
-            className="px-6 py-3 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition-all duration-200 font-medium"
+            className="px-6 py-3 border-2 border-green-300 rounded-lg text-green-700 font-medium transition-all flex items-center gap-2 hover:bg-green-50 hover:border-green-500"
           >
-            ← Back to Visualization
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+            Back to Visualization
           </button>
           <button
             onClick={() => window.print()}
-            className="px-6 py-3 bg-black text-white rounded-lg font-medium hover:opacity-90 transition-opacity duration-200"
+            className="px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-lg font-medium transition-all duration-200 flex items-center gap-2 shadow-md hover:from-green-700 hover:to-emerald-700 hover:shadow-lg"
           >
-            📄 Download Report
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+            </svg>
+            Download Report
           </button>
         </div>
       </div>

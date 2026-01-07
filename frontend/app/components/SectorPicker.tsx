@@ -4,7 +4,6 @@
 import React, { useContext, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { SDGContext } from "./SDGContext";
-import Image from "next/image";
 
 export default function SectorPickerPage() {
   const context = useContext(SDGContext);
@@ -151,16 +150,11 @@ export default function SectorPickerPage() {
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4 sm:p-6 lg:p-8" style={{ background: 'linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 50%, #d1fae5 100%)' }}>
-        <div className="bg-white rounded-2xl shadow-2xl p-8 sm:p-12 w-full max-w-md border-2 border-green-200">
+        <div className="bg-white rounded-2xl shadow-lg p-8 sm:p-12 w-full max-w-md border-2 border-green-200">
           <div className="text-center">
-            <div className="inline-block relative">
-              <div className="w-16 h-16 border-4 border-green-200 border-t-green-600 rounded-full animate-spin"></div>
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="w-8 h-8 bg-green-600 rounded-full opacity-20 animate-pulse"></div>
-              </div>
-            </div>
-            <p className="text-gray-700 font-medium mt-6 text-lg">Loading sectors...</p>
-            <p className="text-gray-500 text-sm mt-2">Please wait while we prepare your assessment</p>
+            <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-green-200 border-t-green-600 mb-4"></div>
+            <p className="text-gray-600 font-medium text-lg">Loading sectors...</p>
+            <p className="text-gray-600 text-sm mt-2">Please wait while we prepare your assessment</p>
           </div>
         </div>
       </div>
@@ -170,7 +164,7 @@ export default function SectorPickerPage() {
   if (availableSectors.length === 0) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4 sm:p-6 lg:p-8" style={{ background: 'linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 50%, #d1fae5 100%)' }}>
-        <div className="bg-white rounded-2xl shadow-2xl p-8 sm:p-12 w-full max-w-md border-2 border-green-200">
+        <div className="bg-white rounded-2xl shadow-lg p-8 sm:p-12 w-full max-w-md border-2 border-green-200">
           <div className="text-center">
             <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
               <svg className="w-10 h-10 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -178,10 +172,10 @@ export default function SectorPickerPage() {
               </svg>
             </div>
             <h3 className="text-xl font-bold text-gray-900 mb-2">No Sectors Found</h3>
-            <p className="text-gray-600 mb-8">Please upload an Excel file with valid sector data to begin your assessment.</p>
+            <p className="text-gray-600 text-sm mb-8">Please upload an Excel file with valid sector data to begin your assessment.</p>
             <button
               onClick={() => router.push("/upload-excel")}
-              className="w-full px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-700 text-white font-semibold rounded-xl hover:from-green-700 hover:to-emerald-800 transform hover:scale-105 transition-all duration-200 shadow-lg hover:shadow-xl"
+              className="w-full px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white font-medium rounded-lg transition-all duration-200 shadow-md hover:from-green-700 hover:to-emerald-700 hover:shadow-lg"
             >
               Upload Excel File
             </button>
@@ -208,8 +202,8 @@ export default function SectorPickerPage() {
           </div>
 
           {/* Title */}
-          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 mb-4 px-4">
-            Implementation Scorecard
+          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-green-700 mb-4 px-4">
+            BIORADAR – Implementation Scorecard
           </h1>
           <p className="text-base sm:text-lg text-gray-600 max-w-3xl mx-auto leading-relaxed px-4">
             Assess your company's sustainability performance and SDG contributions across <span className="font-semibold text-green-700">Environmental, Economic, Social, and Circular</span> dimensions.
@@ -217,15 +211,29 @@ export default function SectorPickerPage() {
         </div>
 
         {/* Main Card - Responsive Width */}
-        <div className="bg-white rounded-2xl sm:rounded-3xl shadow-2xl p-6 sm:p-8 lg:p-10 animate-[fadeIn_0.6s_ease-out] max-w-6xl mx-auto border-2 border-green-200">
+        <div className="bg-white rounded-2xl shadow-lg p-6 sm:p-8 lg:p-10 animate-[fadeIn_0.6s_ease-out] max-w-6xl mx-auto border-2 border-green-200">
           {/* Section Title */}
           <div className="mb-6 sm:mb-8 pb-4 sm:pb-6 border-b-2 border-green-100">
-            <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 mb-2">
+            <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-green-700 mb-2">
               Select Your Industry Sector
             </h2>
             <p className="text-sm sm:text-base text-gray-600">
               Choose your sector to start the sustainability assessment
             </p>
+          </div>
+
+          {/* Info Banner */}
+          <div className="mb-6 bg-gradient-to-r from-green-50 to-emerald-50 border-l-4 border-green-500 rounded-r-lg p-4">
+            <div className="flex items-start gap-3">
+              <svg className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <div className="flex-1">
+                <p className="text-sm text-gray-700">
+                  <strong className="text-green-700">Sector Selection:</strong> Each sector includes tailored questions specific to your industry's sustainability challenges and opportunities.
+                </p>
+              </div>
+            </div>
           </div>
 
           {/* Sector Cards Grid - Auto-sizing based on content */}
@@ -243,7 +251,7 @@ export default function SectorPickerPage() {
                 <button
                   key={sector}
                   onClick={() => handleSectorSelect(sector)}
-                  className="group relative bg-gradient-to-br from-white to-green-50 border-2 border-green-200 rounded-xl sm:rounded-2xl p-5 sm:p-6 hover:border-green-500 hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300 text-left animate-[fadeInUp_0.6s_ease-out_forwards]"
+                  className="group relative bg-gradient-to-br from-white to-green-50 border-2 border-green-200 rounded-xl p-5 sm:p-6 hover:border-green-500 hover:shadow-lg transform hover:-translate-y-1 transition-all duration-300 text-left animate-[fadeInUp_0.6s_ease-out_forwards]"
                   style={{ animationDelay: `${index * 100}ms` }}
                 >
                   {/* Icon */}
@@ -275,14 +283,14 @@ export default function SectorPickerPage() {
                   </div>
 
                   {/* Hover Gradient Border Effect */}
-                  <div className="absolute inset-0 rounded-xl sm:rounded-2xl bg-gradient-to-br from-green-600 to-emerald-700 opacity-0 group-hover:opacity-10 transition-opacity duration-300 pointer-events-none"></div>
+                  <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-green-600 to-emerald-700 opacity-0 group-hover:opacity-10 transition-opacity duration-300 pointer-events-none"></div>
                 </button>
               );
             })}
           </div>
 
           {/* Footer Actions */}
-          <div className="pt-4 sm:pt-6 border-t-2 border-green-100 flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4">
+          <div className="pt-4 sm:pt-6 border-t-2 border-green-100 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4">
             <div className="flex items-center gap-2 text-xs sm:text-sm text-gray-600">
               <svg className="w-4 h-4 sm:w-5 sm:h-5 text-green-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />

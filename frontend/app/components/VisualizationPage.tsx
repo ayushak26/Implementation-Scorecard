@@ -171,93 +171,134 @@ export default function VisualizationPage() {
   };
 
   return (
-    <div className="bg-white rounded-2xl shadow-lg p-6 animate-fadeIn">
-      {/* Header with Logo */}
-      <div className="mb-8">
-        <div className="flex justify-center mb-6">
-          <a href="https://www.bioradar.org" target="_blank" rel="noopener noreferrer">
-            <img
-              src="https://www.bioradar.org/themes/custom/b5subtheme/logo.svg"
-              alt="BIORADAR Logo"
-              className="h-20 sm:h-24 object-contain"
-            />
-          </a>
+    <div 
+      className="w-full flex justify-center min-h-screen"
+      style={{ background: 'linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 50%, #d1fae5 100%)' }}
+    >
+      <div className="w-full max-w-[95vw] sm:max-w-[90vw] md:max-w-4xl lg:max-w-5xl xl:max-w-6xl 2xl:max-w-7xl transition-all duration-300 bg-white rounded-2xl shadow-lg border-2 border-green-200 p-4 sm:p-6 md:p-8 mx-auto my-8">
+        
+        {/* Header with Logo */}
+        <div className="mb-8 pb-6 border-b-2 border-green-100">
+          <div className="flex justify-center mb-6">
+            <a href="https://www.bioradar.org" target="_blank" rel="noopener noreferrer">
+              <img
+                src="https://www.bioradar.org/themes/custom/b5subtheme/logo.svg"
+                alt="BIORADAR Logo"
+                className="h-20 sm:h-24 object-contain"
+              />
+            </a>
+          </div>
+          <h1 className="text-3xl sm:text-4xl font-bold text-green-700 mb-2 text-center">
+            Sustainability Assessment
+          </h1>
+          <p className="text-gray-600 text-sm text-center">
+            Sector: <span className="font-semibold text-green-700">{currentSector}</span>
+          </p>
         </div>
-        <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-2 text-center">
-          Sustainability Assessment
-        </h1>
-        <p className="text-gray-600 text-center">
-          Sector: <span className="font-semibold">{currentSector}</span>
-        </p>
-      </div>
 
-      {/* Error Message */}
-      {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg p-4 mb-6" role="alert">
-          <p className="font-medium">Error</p>
-          <p className="text-sm">{error}</p>
+        {/* Info Banner */}
+        <div className="mb-6 bg-gradient-to-r from-green-50 to-emerald-50 border-l-4 border-green-500 rounded-r-lg p-4">
+          <div className="flex items-start gap-3">
+            <svg className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+            </svg>
+            <div className="flex-1">
+              <p className="text-sm text-gray-700">
+                <strong className="text-green-700">Interactive Visualization:</strong> Your sustainability performance across all SDGs and dimensions. Click elements for detailed insights.
+              </p>
+            </div>
+          </div>
         </div>
-      )}
 
-      {/* Loading State */}
-      {isBusy ? (
-        <div className="text-center py-12">
-          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary mb-4"></div>
-          <p className="text-neutral">Loading visualization...</p>
-        </div>
-      ) : (
-        <>
-          {/* Visualization with Download Button */}
-          {rows.length > 0 ? (
-            <div className="mb-6">
-              {/* Visualization Component */}
-              <div className="border border-gray-200 rounded-xl overflow-hidden">
-                <SdgGridRouletteVisualization rows={rows} sector={currentSector} />
+        {/* Error Message */}
+        {error && (
+          <div className="bg-red-50 border-2 border-red-200 text-red-700 rounded-lg p-4 mb-6 animate-shake">
+            <div className="flex items-start gap-2">
+              <svg className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <div>
+                <p className="font-medium">Error</p>
+                <p className="text-sm">{error}</p>
               </div>
             </div>
-          ) : (
-            <div className="text-center text-neutral py-12">
-              No data available. Please submit the questionnaire again.
-            </div>
-          )}
-          {/* Bottom Navigation Row */}
-          <div className="flex justify-between items-center gap-4 mt-6">
-            {/* Left: Back to Sector Selection */}
-            <button
-              onClick={handleReset}
-              className="px-4 py-2 border-2 border-gray-300 rounded-lg text-gray-700 hover:bg-green-50 transition"
-            >
-              Back to Sector Selection
-            </button>
-
-            {/* Right: View Recommendations */}
-            <button
-              onClick={() => router.push("/recommendations")}
-              disabled={isBusy || !rows || rows.length === 0}
-              className={`px-4 py-2 bg-green-600 text-white rounded-lg transition flex items-center gap-2 ${
-                isBusy || !rows || rows.length === 0
-                  ? "opacity-50 cursor-not-allowed"
-                  : "hover:bg-green-700"
-              }`}
-            >
-              <svg
-                className="w-5 h-5"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                />
-              </svg>
-              View Recommendations
-            </button>
           </div>
-        </>
-      )}
+        )}
+
+        {/* Loading State */}
+        {isBusy ? (
+          <div className="text-center py-12">
+            <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-green-200 border-t-green-600 mb-4"></div>
+            <p className="text-gray-600 text-lg">Loading visualization...</p>
+          </div>
+        ) : (
+          <>
+            {/* Visualization with Download Button */}
+            {rows.length > 0 ? (
+              <div className="mb-6">
+                {/* Visualization Component */}
+                <div className="border-2 border-green-100 rounded-xl overflow-hidden bg-white shadow-inner">
+                  <SdgGridRouletteVisualization rows={rows} sector={currentSector} />
+                </div>
+              </div>
+            ) : (
+              <div className="text-center py-12">
+                <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <svg className="w-10 h-10 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                </div>
+                <p className="text-gray-600 text-lg font-semibold mb-2">
+                  No data available
+                </p>
+                <p className="text-sm text-gray-600">
+                  Please submit the questionnaire again.
+                </p>
+              </div>
+            )}
+            
+            {/* Bottom Navigation Row */}
+            <div className="flex flex-col sm:flex-row justify-between gap-4 pt-6 border-t-2 border-green-100">
+              {/* Left: Back to Sector Selection */}
+              <button
+                onClick={handleReset}
+                className="px-6 py-3 border-2 border-green-300 rounded-lg text-green-700 font-medium transition-all flex items-center gap-2 hover:bg-green-50 hover:border-green-500"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+                Back to Sector Selection
+              </button>
+
+              {/* Right: View Recommendations */}
+              <button
+                onClick={() => router.push("/recommendations")}
+                disabled={isBusy || !rows || rows.length === 0}
+                className={`px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-lg font-medium transition-all duration-200 flex items-center gap-2 shadow-md ${
+                  isBusy || !rows || rows.length === 0
+                    ? "opacity-50 cursor-not-allowed"
+                    : "hover:from-green-700 hover:to-emerald-700 hover:shadow-lg"
+                }`}
+              >
+                View Recommendations
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9 5l7 7-7 7"
+                  />
+                </svg>
+              </button>
+            </div>
+          </>
+        )}
+      </div>
     </div>
   );
 }

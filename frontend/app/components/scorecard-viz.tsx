@@ -1,5 +1,6 @@
 "use client";
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import * as d3 from "d3";
 
 // ---------------- Types ----------------
@@ -73,7 +74,7 @@ const TOOLTIPS: Record<string, string> = {
   Environmental: "Environmental sustainability focuses on ecological impact, resource conservation, and climate action",
   Circular: "Circular economy principles include waste reduction, material reuse, and closed-loop systems",
   SDG: "Sustainable Development Goals are 17 global objectives adopted by the UN to achieve a better future for all",
-  Score: "Scores range from 0-5, where 5 represents full achievement of sustainability targets",
+  Dimension: "The SDG dimension shows which part of sustainability a goal mainly strengthens: Economic, Social, Environmental, or Circular"
 };
 
 // ---------------- Helpers ----------------
@@ -316,21 +317,63 @@ function EnlargedRadar({ cells, dimension }: { cells: Cell[]; dimension: (typeof
 // ---------------- Tooltip Component ----------------
 const Tooltip = ({ text, children }: { text: string; children: React.ReactNode }) => {
   const [show, setShow] = useState(false);
+  const [position, setPosition] = useState({ top: 0, left: 0, flip: false });
+  const triggerRef = useRef<HTMLSpanElement>(null);
+
+  useEffect(() => {
+    if (show && triggerRef.current) {
+      const rect = triggerRef.current.getBoundingClientRect();
+      const tooltipHeight = 100; // Approximate tooltip height
+      const spaceAbove = rect.top;
+      const spaceBelow = window.innerHeight - rect.bottom;
+      
+      // Decide whether to show above or below
+      const shouldFlip = spaceAbove < tooltipHeight && spaceBelow > spaceAbove;
+      
+      setPosition({
+        top: shouldFlip ? rect.bottom + 10 : rect.top - 10,
+        left: rect.left + rect.width / 2,
+        flip: shouldFlip,
+      });
+    }
+  }, [show]);
 
   return (
-    <div className="relative inline-block">
-      <span onMouseEnter={() => setShow(true)} onMouseLeave={() => setShow(false)} className="cursor-help border-b border-dotted border-green-600">
+    <>
+      <span
+        ref={triggerRef}
+        onMouseEnter={() => setShow(true)}
+        onMouseLeave={() => setShow(false)}
+        className="cursor-help border-b border-dotted border-green-600 inline-block"
+      >
         {children}
       </span>
-      {show && (
-        <div className="absolute z-50 bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg shadow-lg w-64">
-          {text}
-          <div className="absolute top-full left-1/2 transform -translate-x-1/2 -mt-1">
-            <div className="border-4 border-transparent border-t-gray-900"></div>
-          </div>
-        </div>
-      )}
-    </div>
+      
+      {show && typeof window !== 'undefined' &&
+        createPortal(
+          <div
+            className="fixed z-[9999] px-3 py-2 bg-gray-900 text-white text-xs rounded-lg shadow-lg w-64 pointer-events-none"
+            style={{
+              top: `${position.top}px`,
+              left: `${position.left}px`,
+              transform: position.flip ? 'translate(-50%, 0%)' : 'translate(-50%, -100%)',
+            }}
+          >
+            {text}
+            {/* Arrow pointing up or down based on flip */}
+            {position.flip ? (
+              <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-0">
+                <div className="border-4 border-transparent border-b-gray-900"></div>
+              </div>
+            ) : (
+              <div className="absolute top-full left-1/2 transform -translate-x-1/2 -mt-1">
+                <div className="border-4 border-transparent border-t-gray-900"></div>
+              </div>
+            )}
+          </div>,
+          document.body
+        )}
+    </>
   );
 };
 
@@ -817,7 +860,7 @@ export default function SdgGridRouletteVisualization({ rows, sector }: Props) {
 
           <div className="mb-8">
             <h3 className="font-semibold mb-4 text-gray-800 text-lg flex items-center gap-2">
-              By <Tooltip text={TOOLTIPS.SDG}>Dimension</Tooltip>
+              By <Tooltip text={TOOLTIPS.Dimension}>Dimension</Tooltip>
             </h3>
             <div className="flex flex-col gap-4">
               {DIMENSIONS.map((d) => {
@@ -834,9 +877,7 @@ export default function SdgGridRouletteVisualization({ rows, sector }: Props) {
                       </Tooltip>
                     </div>
                     <div className="flex justify-between text-xs mb-1 text-gray-600">
-                      <Tooltip text={TOOLTIPS.Score}>
                         <span>Score: {score}/85</span>
-                      </Tooltip>
                       <span className="font-bold text-gray-700">{percentage}%</span>
                     </div>
                     <div className="w-full bg-green-100 rounded-full h-2 overflow-hidden">

@@ -7,7 +7,6 @@ import UploadExcelPage from "./UploadExcelPage";
 import FormPage from "./FormPage";
 import VisualizationPage from "./VisualizationPage";
 
-
 export default function SDGAssessmentTool() {
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -20,17 +19,35 @@ export default function SDGAssessmentTool() {
 
   return (
     <SDGProvider>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <header className="sticky top-0 bg-white/80 backdrop-blur-md shadow-sm rounded-lg p-6 mb-8 z-10">
-          <div className="flex items-center justify-center gap-4">
+      <div className="min-h-screen" style={{ background: 'linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 50%, #d1fae5 100%)' }}>
+        {/* Sticky Header */}
+        <header className="sticky top-0 bg-white/95 backdrop-blur-sm shadow-md border-b-2 border-green-200 z-50">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
+            <div className="flex flex-col items-center gap-3">
+              {/* Logo */}
+              <div className="flex justify-center">
+                <img
+                  src="https://www.bioradar.org/themes/custom/b5subtheme/logo.svg"
+                  alt="BIORADAR Logo"
+                  className="h-16 sm:h-20 object-contain"
+                />
+              </div>
+              
+              {/* Title */}
+              <h1 className="text-2xl sm:text-3xl font-bold text-center text-green-700">
+                BIORADAR – Implementation Scorecard
+              </h1>
+              
+              {/* Description */}
+              <p className="text-center text-gray-600 text-sm sm:text-base max-w-3xl mx-auto leading-relaxed">
+                Assess your company's sustainability performance and SDG contributions across{" "}
+                <span className="font-semibold text-green-700">Environmental, Economic, Social, and Circular</span> dimensions.
+              </p>
+            </div>
           </div>
-          <h1 className="text-3xl font-extrabold text-center text-primary mt-2">
-              BIORADAR - Implementation Scorecard
-          </h1>
-          <p className="text-center text-neutral mt-2 max-w-2xl mx-auto">
-              Assess your company's sustainability performance and SDG contributions across Environmental, Economic, Social, and Circular dimensions. Gain insights, identify gaps, and take action to enhance sustainability. Welcome!
-          </p>
         </header>
+
+        {/* Main Content */}
         <main>
           <Content />
         </main>

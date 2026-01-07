@@ -3,6 +3,7 @@
 
 import React, { useEffect, useMemo, useState, useContext, useRef } from "react";
 import { useRouter } from "next/navigation";
+import { createPortal } from "react-dom"; 
 import QuestionCard from "./QuestionCard";
 import { SDGContext } from "./SDGContext";
 
@@ -29,12 +30,12 @@ const DIM_SET = new Set(DIM_ORDER);
 const SECTOR_ORDER = ["Textiles", "Fertilizers", "Packaging"] as const;
 
 const DEFAULT_RUBRIC: Record<number, string> = {
-  0: "N/A",
-  1: "Issue identified, but no plans for further actions",
-  2: "Issue identified, starts planning further actions",
-  3: "Action plan with clear targets and deadlines in place",
-  4: "Action plan operational - some progress in established targets",
-  5: "Action plan operational - achieving the target set",
+  0: "Score Description: N/A",
+  1: "Score Description: Issue identified, but no plans for further actions",
+  2: "Score Description: Issue identified, starts planning further actions",
+  3: "Score Description: Action plan with clear targets and deadlines in place",
+  4: "Score Description: Action plan operational - some progress in established targets",
+  5: "Score Description: Action plan operational - achieving the target set",
 };
 
 // Tooltip definitions
@@ -122,28 +123,66 @@ const buildPages = (questions: Question[], activeSector: string): Question[][] =
   return pages;
 };
 
-// Tooltip Component - Appears below on hover
+// ---------------- Tooltip Component ----------------
 const Tooltip = ({ text, children }: { text: string; children: React.ReactNode }) => {
   const [show, setShow] = useState(false);
-  
+  const [position, setPosition] = useState({ top: 0, left: 0, flip: false });
+  const triggerRef = useRef<HTMLSpanElement>(null);
+
+  useEffect(() => {
+    if (show && triggerRef.current) {
+      const rect = triggerRef.current.getBoundingClientRect();
+      const tooltipHeight = 100; // Approximate tooltip height
+      const spaceAbove = rect.top;
+      const spaceBelow = window.innerHeight - rect.bottom;
+      
+      // Decide whether to show above or below
+      const shouldFlip = spaceAbove < tooltipHeight && spaceBelow > spaceAbove;
+      
+      setPosition({
+        top: shouldFlip ? rect.bottom + 10 : rect.top - 10,
+        left: rect.left + rect.width / 2,
+        flip: shouldFlip,
+      });
+    }
+  }, [show]);
+
   return (
-    <span className="relative inline-block">
+    <>
       <span
+        ref={triggerRef}
         onMouseEnter={() => setShow(true)}
         onMouseLeave={() => setShow(false)}
-        className="cursor-help border-b border-dotted border-green-600"
+        className="cursor-help border-b border-dotted border-green-600 inline-block"
       >
         {children}
       </span>
-      {show && (
-        <div className="absolute z-50 top-full left-1/2 transform -translate-x-1/2 mt-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg shadow-lg w-64 pointer-events-none">
-          <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-0">
-            <div className="border-4 border-transparent border-b-gray-900"></div>
-          </div>
-          {text}
-        </div>
-      )}
-    </span>
+      
+      {show && typeof window !== 'undefined' &&
+        createPortal(
+          <div
+            className="fixed z-[9999] px-3 py-2 bg-gray-900 text-white text-xs rounded-lg shadow-lg w-64 pointer-events-none"
+            style={{
+              top: `${position.top}px`,
+              left: `${position.left}px`,
+              transform: position.flip ? 'translate(-50%, 0%)' : 'translate(-50%, -100%)',
+            }}
+          >
+            {text}
+            {/* Arrow pointing up or down based on flip */}
+            {position.flip ? (
+              <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-0">
+                <div className="border-4 border-transparent border-b-gray-900"></div>
+              </div>
+            ) : (
+              <div className="absolute top-full left-1/2 transform -translate-x-1/2 -mt-1">
+                <div className="border-4 border-transparent border-t-gray-900"></div>
+              </div>
+            )}
+          </div>,
+          document.body
+        )}
+    </>
   );
 };
 
@@ -416,9 +455,8 @@ export default function FormPage() {
             </svg>
             <div className="flex-1">
               <p className="text-sm text-gray-700">
-                <Tooltip text={TOOLTIPS.SDG}>
                   <strong className="text-green-700">SDG Questions:</strong>
-                </Tooltip>{" "}
+                  {" "}
                 Answer all questions for each{" "}
                 <Tooltip text={TOOLTIPS.Score}>
                   <span className="font-medium">sustainability dimension</span>
