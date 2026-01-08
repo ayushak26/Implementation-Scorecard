@@ -446,26 +446,6 @@ export default function FormPage() {
             </div>
           </div>
         </div>
-
-        {/* Info Banner */}
-        <div className="mb-6 bg-gradient-to-r from-green-50 to-emerald-50 border-l-4 border-green-500 rounded-r-lg p-4">
-          <div className="flex items-start gap-3">
-            <svg className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <div className="flex-1">
-              <p className="text-sm text-gray-700">
-                  <strong className="text-green-700">SDG Questions:</strong>
-                  {" "}
-                Answer all questions for each{" "}
-                <Tooltip text={TOOLTIPS.Score}>
-                  <span className="font-medium">sustainability dimension</span>
-                </Tooltip>
-                . Hover over underlined terms for more information.
-              </p>
-            </div>
-          </div>
-        </div>
   
         {error && (
           <div className="bg-red-50 border-2 border-red-200 text-red-700 rounded-lg p-4 mb-6 animate-shake">

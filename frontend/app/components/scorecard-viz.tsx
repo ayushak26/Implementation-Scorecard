@@ -3,7 +3,9 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import * as d3 from "d3";
 
-// ---------------- Types ----------------
+// ============================================================================
+// TYPES
+// ============================================================================
 export type QuestionnaireRow = {
   sdg_number?: number | null;
   sdg_description?: string | null;
@@ -20,7 +22,17 @@ export type QuestionnaireRow = {
   comment?: string | null;
 };
 
-// ---------------- Constants ----------------
+type Cell = {
+  sdg: number;
+  dim: (typeof DIMENSIONS)[number]["key"];
+  score: number;
+  count: number;
+  items: QuestionnaireRow[];
+};
+
+// ============================================================================
+// CONSTANTS
+// ============================================================================
 const SDG_IMAGE_MAP: Record<number, string> = {
   1: "/sdg-icons/sdg-1.png",
   2: "/sdg-icons/sdg-2.png",
@@ -77,8 +89,10 @@ const TOOLTIPS: Record<string, string> = {
   Dimension: "The SDG dimension shows which part of sustainability a goal mainly strengthens: Economic, Social, Environmental, or Circular"
 };
 
-// ---------------- Helpers ----------------
-function canonicalSector(s?: string | null) {
+// ============================================================================
+// HELPER FUNCTIONS
+// ============================================================================
+function canonicalSector(s?: string | null): string | null {
   if (!s) return null;
   const t = s.toLowerCase();
   if (t.includes("textile")) return "Textiles";
@@ -97,14 +111,6 @@ function canonicalDim(s?: string | null): (typeof DIMENSIONS)[number]["key"] | n
   const m = DIMENSIONS.find((d) => d.key.toLowerCase() === t);
   return m ? m.key : null;
 }
-
-type Cell = {
-  sdg: number;
-  dim: (typeof DIMENSIONS)[number]["key"];
-  score: number;
-  count: number;
-  items: QuestionnaireRow[];
-};
 
 function makeCells(rows: QuestionnaireRow[], sector: string): Cell[] {
   const keep = rows.filter((r) => canonicalSector(r.sector) === sector);
@@ -145,7 +151,9 @@ function makeCells(rows: QuestionnaireRow[], sector: string): Cell[] {
   return out;
 }
 
-// -------------- Responsive Grid-based Roulette Visualization --------------
+// ============================================================================
+// MAIN ROULETTE VISUALIZATION
+// ============================================================================
 function useGridRoulette({ cells, width, height }: { cells: Cell[]; width: number; height: number }) {
   const ref = useRef<SVGSVGElement | null>(null);
 
@@ -169,11 +177,10 @@ function useGridRoulette({ cells, width, height }: { cells: Cell[]; width: numbe
     const g = svg.append("g").attr("transform", `translate(${W / 2},${H / 2})`);
 
     const angleScale = d3.scaleBand<number>().domain(d3.range(1, 18)).range([0, 2 * Math.PI]).paddingInner(0.01);
-
     const scoreRadiusWidth = (outerRadius - innerRadius) / 5;
     const polar = (r: number, a: number) => ({ x: Math.cos(a - Math.PI / 2) * r, y: Math.sin(a - Math.PI / 2) * r });
-    const deg2rad = (d: number) => (Math.PI / 180) * d;
 
+    // Draw dimension cells
     for (let sdg = 1; sdg <= 17; sdg++) {
       const startAngle = angleScale(sdg)!;
       const endAngle = startAngle + angleScale.bandwidth();
@@ -189,7 +196,11 @@ function useGridRoulette({ cells, width, height }: { cells: Cell[]; width: numbe
         for (let level = 1; level <= 5; level++) {
           const levelInnerRadius = innerRadius + (level - 1) * scoreRadiusWidth;
           const levelOuterRadius = levelInnerRadius + scoreRadiusWidth;
-          const arc = d3.arc().innerRadius(levelInnerRadius).outerRadius(levelOuterRadius).startAngle(dimStartAngle).endAngle(dimEndAngle);
+          const arc = d3.arc()
+            .innerRadius(levelInnerRadius)
+            .outerRadius(levelOuterRadius)
+            .startAngle(dimStartAngle)
+            .endAngle(dimEndAngle);
 
           g.append("path")
             .attr("d", arc as any)
@@ -199,6 +210,7 @@ function useGridRoulette({ cells, width, height }: { cells: Cell[]; width: numbe
         }
       });
 
+      // Add SDG icons
       const midAngle = (startAngle + endAngle) / 2;
       const iconRadius = outerRadius + 64;
       const icon = polar(iconRadius + 25, midAngle);
@@ -211,48 +223,126 @@ function useGridRoulette({ cells, width, height }: { cells: Cell[]; width: numbe
         .attr("height", 70);
     }
 
+    // Draw 17 radial border lines to separate SDGs
+    for (let sdg = 1; sdg <= 17; sdg++) {
+      const startAngle = angleScale(sdg)!;
+      const angle = startAngle;
+      const innerPoint = polar(innerRadius, angle);
+      const outerPoint = polar(outerRadius + 50, angle);
+
+      g.append("line")
+        .attr("x1", innerPoint.x)
+        .attr("y1", innerPoint.y)
+        .attr("x2", outerPoint.x)
+        .attr("y2", outerPoint.y)
+        .attr("stroke", "#000000")
+        .attr("stroke-width", 2)
+        .attr("opacity", 0.6);
+    }
+
+    // Draw concentric circles
     for (let level = 0; level <= 5; level++) {
       const radius = innerRadius + level * scoreRadiusWidth;
-      g.append("circle").attr("r", radius).attr("fill", "none").attr("stroke", "#ffffff").attr("stroke-width", level === 0 || level === 5 ? 3 : 1).attr("opacity", 0);
+      g.append("circle")
+        .attr("r", radius)
+        .attr("fill", "none")
+        .attr("stroke", "#ffffff")
+        .attr("stroke-width", level === 0 || level === 5 ? 3 : 1)
+        .attr("opacity", 0);
     }
 
-    const labelOffsetOutward = scoreRadiusWidth * 0.35;
-    const rightShift = deg2rad(5.5);
-    const labelSDGs = [1];
+    // Add score labels on the first radial line (SDG 1's border line)
+    const firstLineAngle = angleScale(1)!;
 
-    for (const sdg of labelSDGs) {
-      const startAngle = angleScale(sdg)!;
-      const labelAngle = startAngle + rightShift;
-      const deg = (labelAngle * 180) / Math.PI;
-      const labelGroup = g.append("g").attr("transform", `rotate(${deg})`);
+    for (let scoreLabel = 1; scoreLabel <= 5; scoreLabel++) {
+      const ringInnerRadius = innerRadius + (scoreLabel - 1) * scoreRadiusWidth;
+      const ringOuterRadius = ringInnerRadius + scoreRadiusWidth;
+      const ringCenterRadius = (ringInnerRadius + ringOuterRadius) / 2;
 
-      for (let scoreLabel = 1; scoreLabel <= 5; scoreLabel++) {
-        const ringInnerRadius = innerRadius + (scoreLabel - 1) * scoreRadiusWidth;
-        const ringOuterRadius = ringInnerRadius + scoreRadiusWidth;
-        const ringCenterRadius = (ringInnerRadius + ringOuterRadius) / 2;
-        const r = ringCenterRadius + labelOffsetOutward;
+      const labelPosition = polar(ringCenterRadius, firstLineAngle);
 
-        labelGroup.append("circle").attr("cx", 0).attr("cy", -r).attr("r", 10).attr("fill", "#000").attr("opacity", 0.9);
-        labelGroup.append("text").attr("x", 0).attr("y", -r).attr("text-anchor", "middle").attr("dominant-baseline", "middle").attr("font-size", 12).attr("fill", "#fff").attr("font-weight", 700).text(scoreLabel);
-      }
+      g.append("circle")
+        .attr("cx", labelPosition.x)
+        .attr("cy", labelPosition.y)
+        .attr("r", 14)
+        .attr("fill", "#000")
+        .attr("opacity", 0.95);
+
+      g.append("text")
+        .attr("x", labelPosition.x)
+        .attr("y", labelPosition.y)
+        .attr("text-anchor", "middle")
+        .attr("dominant-baseline", "middle")
+        .attr("font-size", 14)
+        .attr("fill", "#fff")
+        .attr("font-weight", 700)
+        .text(scoreLabel);
     }
 
-    g.append("circle").attr("r", innerRadius - 2).attr("fill", "#fff").attr("stroke", "none");
-    g.append("text").attr("y", -innerRadius + 45).attr("text-anchor", "middle").attr("font-size", 16).attr("font-weight", 700).attr("fill", "#1e293b").text("DIMENSIONS");
+    // Central legend
+    g.append("circle")
+      .attr("r", innerRadius - 2)
+      .attr("fill", "#fff")
+      .attr("stroke", "none");
+
+    g.append("text")
+      .attr("y", -innerRadius + 45)
+      .attr("text-anchor", "middle")
+      .attr("font-size", 16)
+      .attr("font-weight", 700)
+      .attr("fill", "#1e293b")
+      .text("DIMENSIONS");
 
     DIMENSIONS.forEach((dim, i) => {
       const yPos = -innerRadius + 50 + i * 30;
-      g.append("circle").attr("cx", -innerRadius + 80).attr("cy", yPos + 35).attr("r", 12).attr("fill", dim.color).attr("opacity", 0.9);
-      g.append("text").attr("x", -innerRadius + 80).attr("y", yPos + 35).attr("text-anchor", "middle").attr("dominant-baseline", "middle").attr("font-size", 15).attr("font-weight", 700).attr("fill", "#fff").text(dim.number);
-      g.append("text").attr("x", -innerRadius + 100).attr("y", yPos + 39).attr("text-anchor", "start").attr("font-size", 15).attr("font-weight", 600).attr("fill", dim.color).text(dim.shortKey);
+
+      g.append("circle")
+        .attr("cx", -innerRadius + 80)
+        .attr("cy", yPos + 35)
+        .attr("r", 12)
+        .attr("fill", dim.color)
+        .attr("opacity", 0.9);
+
+      g.append("text")
+        .attr("x", -innerRadius + 80)
+        .attr("y", yPos + 35)
+        .attr("text-anchor", "middle")
+        .attr("dominant-baseline", "middle")
+        .attr("font-size", 15)
+        .attr("font-weight", 700)
+        .attr("fill", "#fff")
+        .text(dim.number);
+
+      g.append("text")
+        .attr("x", -innerRadius + 100)
+        .attr("y", yPos + 39)
+        .attr("text-anchor", "start")
+        .attr("font-size", 15)
+        .attr("font-weight", 600)
+        .attr("fill", dim.color)
+        .text(dim.shortKey);
     });
   }, [cells, width, height]);
 
   return { ref };
 }
 
-// -------------- Radar Chart --------------
-function useRadarChart({ cells, dimension, width, height }: { cells: Cell[]; dimension: (typeof DIMENSIONS)[number]; width: number; height: number }) {
+// ============================================================================
+// RADIAL COLUMN CHART
+// ============================================================================
+function useRadialColumnChart({
+  cells,
+  dimension,
+  width,
+  height,
+  showScoreLabels = false
+}: {
+  cells: Cell[];
+  dimension: (typeof DIMENSIONS)[number];
+  width: number;
+  height: number;
+  showScoreLabels?: boolean;
+}) {
   const ref = useRef<SVGSVGElement | null>(null);
 
   useEffect(() => {
@@ -275,46 +365,94 @@ function useRadarChart({ cells, dimension, width, height }: { cells: Cell[]; dim
     }
 
     const angleSlice = (Math.PI * 2) / 17;
+    const barWidth = angleSlice * 0.7;
 
+    // Draw concentric circles
     for (let level = 1; level <= 5; level++) {
       const r = (radius / 5) * level;
-      g.append("circle").attr("r", r).attr("fill", "none").attr("stroke", "#e5e7eb").attr("stroke-width", 1).attr("opacity", 0.5);
+      g.append("circle")
+        .attr("r", r)
+        .attr("fill", "none")
+        .attr("stroke", "#e5e7eb")
+        .attr("stroke-width", 1)
+        .attr("opacity", 0.5);
     }
 
-    for (let i = 0; i < 17; i++) {
-      const angle = angleSlice * i - Math.PI / 2;
-      const x = Math.cos(angle) * radius;
-      const y = Math.sin(angle) * radius;
-      g.append("line").attr("x1", 0).attr("y1", 0).attr("x2", x).attr("y2", y).attr("stroke", "#e5e7eb").attr("stroke-width", 1).attr("opacity", 0.5);
-
-      const labelRadius = radius + 25;
-      const lx = Math.cos(angle) * labelRadius;
-      const ly = Math.sin(angle) * labelRadius;
-      g.append("text").attr("x", lx).attr("y", ly).attr("text-anchor", "middle").attr("dominant-baseline", "middle").attr("font-size", 10).attr("font-weight", 600).attr("fill", dimension.color).text(i + 1);
-    }
-
-    const radarLine = d3.lineRadial<{ sdg: number; score: number }>().angle((d, i) => angleSlice * i - Math.PI / 2).radius((d) => (radius / 5) * d.score).curve(d3.curveLinearClosed);
-
-    g.append("path").datum(data).attr("d", radarLine as any).attr("fill", dimension.color).attr("fill-opacity", 0.3).attr("stroke", dimension.color).attr("stroke-width", 2);
-
+    // Draw radial columns
     data.forEach((d, i) => {
       const angle = angleSlice * i - Math.PI / 2;
-      const r = (radius / 5) * d.score;
-      const x = Math.cos(angle) * r;
-      const y = Math.sin(angle) * r;
-      g.append("circle").attr("cx", x).attr("cy", y).attr("r", 4).attr("fill", dimension.color).attr("stroke", "#fff").attr("stroke-width", 2);
+      const barHeight = (radius / 5) * d.score;
+
+      const arc = d3.arc()
+        .innerRadius(0)
+        .outerRadius(barHeight)
+        .startAngle(angle - barWidth / 2)
+        .endAngle(angle + barWidth / 2);
+
+      g.append("path")
+        .attr("d", arc as any)
+        .attr("fill", dimension.color)
+        .attr("fill-opacity", 0.8)
+        .attr("stroke", dimension.color)
+        .attr("stroke-width", 1);
+
+      // Add SDG labels - shifted counter-clockwise (to the left)
+      const labelAngle = angle - (angleSlice * 0.2);
+      const labelRadius = radius + 25;
+      const lx = Math.cos(labelAngle) * labelRadius;
+      const ly = Math.sin(labelAngle) * labelRadius;
+      g.append("text")
+        .attr("x", lx)
+        .attr("y", ly)
+        .attr("text-anchor", "middle")
+        .attr("dominant-baseline", "middle")
+        .attr("font-size", 10)
+        .attr("font-weight", 600)
+        .attr("fill", dimension.color)
+        .text(d.sdg);
     });
-  }, [cells, dimension, width, height]);
+
+    // Add score labels on the first radial line (vertical alignment) - only if showScoreLabels is true
+    if (showScoreLabels) {
+      const firstLineAngle = -Math.PI / 2;
+
+      for (let scoreLabel = 1; scoreLabel <= 5; scoreLabel++) {
+        const ringRadius = (radius / 5) * scoreLabel;
+
+        const labelX = Math.cos(firstLineAngle) * ringRadius;
+        const labelY = Math.sin(firstLineAngle) * ringRadius;
+
+        g.append("circle")
+          .attr("cx", labelX)
+          .attr("cy", labelY)
+          .attr("r", 12)
+          .attr("fill", "#000")
+          .attr("opacity", 0.95);
+
+        g.append("text")
+          .attr("x", labelX)
+          .attr("y", labelY)
+          .attr("text-anchor", "middle")
+          .attr("dominant-baseline", "middle")
+          .attr("font-size", 12)
+          .attr("fill", "#fff")
+          .attr("font-weight", 700)
+          .text(scoreLabel);
+      }
+    }
+  }, [cells, dimension, width, height, showScoreLabels]);
 
   return { ref };
 }
 
-function EnlargedRadar({ cells, dimension }: { cells: Cell[]; dimension: (typeof DIMENSIONS)[number] }) {
-  const { ref } = useRadarChart({ cells, dimension, width: 600, height: 600 });
+function EnlargedRadialColumn({ cells, dimension }: { cells: Cell[]; dimension: (typeof DIMENSIONS)[number] }) {
+  const { ref } = useRadialColumnChart({ cells, dimension, width: 600, height: 600, showScoreLabels: true });
   return <svg ref={ref} width={600} height={600} style={{ display: "block" }} />;
 }
 
-// ---------------- Tooltip Component ----------------
+// ============================================================================
+// TOOLTIP COMPONENT
+// ============================================================================
 const Tooltip = ({ text, children }: { text: string; children: React.ReactNode }) => {
   const [show, setShow] = useState(false);
   const [position, setPosition] = useState({ top: 0, left: 0, flip: false });
@@ -323,13 +461,12 @@ const Tooltip = ({ text, children }: { text: string; children: React.ReactNode }
   useEffect(() => {
     if (show && triggerRef.current) {
       const rect = triggerRef.current.getBoundingClientRect();
-      const tooltipHeight = 100; // Approximate tooltip height
+      const tooltipHeight = 100;
       const spaceAbove = rect.top;
       const spaceBelow = window.innerHeight - rect.bottom;
-      
-      // Decide whether to show above or below
+
       const shouldFlip = spaceAbove < tooltipHeight && spaceBelow > spaceAbove;
-      
+
       setPosition({
         top: shouldFlip ? rect.bottom + 10 : rect.top - 10,
         left: rect.left + rect.width / 2,
@@ -348,7 +485,7 @@ const Tooltip = ({ text, children }: { text: string; children: React.ReactNode }
       >
         {children}
       </span>
-      
+
       {show && typeof window !== 'undefined' &&
         createPortal(
           <div
@@ -360,7 +497,6 @@ const Tooltip = ({ text, children }: { text: string; children: React.ReactNode }
             }}
           >
             {text}
-            {/* Arrow pointing up or down based on flip */}
             {position.flip ? (
               <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-0">
                 <div className="border-4 border-transparent border-b-gray-900"></div>
@@ -377,22 +513,25 @@ const Tooltip = ({ text, children }: { text: string; children: React.ReactNode }
   );
 };
 
-// ---------------- Main Component ----------------
+// ============================================================================
+// MAIN COMPONENT
+// ============================================================================
 type Props = { rows: QuestionnaireRow[]; sector: string };
 
 export default function SdgGridRouletteVisualization({ rows, sector }: Props) {
   const [size, setSize] = useState<{ w: number; h: number }>({ w: 0, h: 0 });
-  const [radarSize, setRadarSize] = useState<{ w: number; h: number }>({ w: 0, h: 0 });
+  const [chartSize, setChartSize] = useState<{ w: number; h: number }>({ w: 0, h: 0 });
   const [isDownloading, setIsDownloading] = useState(false);
-  const [isDownloadingRadar, setIsDownloadingRadar] = useState(false);
-  const [selectedRadar, setSelectedRadar] = useState<number | null>(null);
-  const [showRadarDownloadMenu, setShowRadarDownloadMenu] = useState(false);
+  const [isDownloadingChart, setIsDownloadingChart] = useState(false);
+  const [selectedChart, setSelectedChart] = useState<number | null>(null);
+  const [showChartDownloadMenu, setShowChartDownloadMenu] = useState(false);
 
   const cardRef = useRef<HTMLDivElement | null>(null);
-  const radarContainerRef = useRef<HTMLDivElement | null>(null);
+  const chartContainerRef = useRef<HTMLDivElement | null>(null);
 
   const safeRows = rows || [];
 
+  // Resize observer for main roulette
   useEffect(() => {
     if (!cardRef.current) return;
     const el = cardRef.current;
@@ -407,14 +546,15 @@ export default function SdgGridRouletteVisualization({ rows, sector }: Props) {
     return () => ro.disconnect();
   }, []);
 
+  // Resize observer for dimension charts
   useEffect(() => {
-    if (!radarContainerRef.current) return;
-    const el = radarContainerRef.current;
+    if (!chartContainerRef.current) return;
+    const el = chartContainerRef.current;
     const ro = new ResizeObserver((entries) => {
       for (const entry of entries) {
         const cw = Math.floor(entry.contentRect.width / 4) - 20;
         const target = Math.max(200, Math.min(300, cw));
-        setRadarSize({ w: target, h: target });
+        setChartSize({ w: target, h: target });
       }
     });
     ro.observe(el);
@@ -424,13 +564,14 @@ export default function SdgGridRouletteVisualization({ rows, sector }: Props) {
   const cells = useMemo(() => makeCells(safeRows, sector), [safeRows, sector]);
   const { ref } = useGridRoulette({ cells, width: size.w, height: size.h });
 
-  const economicRadar = useRadarChart({ cells, dimension: DIMENSIONS[0], width: radarSize.w, height: radarSize.h });
-  const socialRadar = useRadarChart({ cells, dimension: DIMENSIONS[1], width: radarSize.w, height: radarSize.h });
-  const environmentalRadar = useRadarChart({ cells, dimension: DIMENSIONS[2], width: radarSize.w, height: radarSize.h });
-  const circularRadar = useRadarChart({ cells, dimension: DIMENSIONS[3], width: radarSize.w, height: radarSize.h });
+  const economicChart = useRadialColumnChart({ cells, dimension: DIMENSIONS[0], width: chartSize.w, height: chartSize.h });
+  const socialChart = useRadialColumnChart({ cells, dimension: DIMENSIONS[1], width: chartSize.w, height: chartSize.h });
+  const environmentalChart = useRadialColumnChart({ cells, dimension: DIMENSIONS[2], width: chartSize.w, height: chartSize.h });
+  const circularChart = useRadialColumnChart({ cells, dimension: DIMENSIONS[3], width: chartSize.w, height: chartSize.h });
 
-  const radarRefs = [economicRadar.ref, socialRadar.ref, environmentalRadar.ref, circularRadar.ref];
+  const chartRefs = [economicChart.ref, socialChart.ref, environmentalChart.ref, circularChart.ref];
 
+  // Calculate totals
   const dimensionTotals = useMemo(() => {
     const totals: Record<string, number> = {};
     for (const d of DIMENSIONS) {
@@ -451,6 +592,9 @@ export default function SdgGridRouletteVisualization({ rows, sector }: Props) {
   const topSDGs = useMemo(() => sdgTotals.slice(0, 2), [sdgTotals]);
   const bottomSDGs = useMemo(() => [...sdgTotals].slice(-2).reverse(), [sdgTotals]);
 
+  // ============================================================================
+  // DOWNLOAD HANDLERS
+  // ============================================================================
   const handleDownloadCSV = () => {
     if (!safeRows || safeRows.length === 0) {
       alert("No data available to download");
@@ -490,7 +634,7 @@ export default function SdgGridRouletteVisualization({ rows, sector }: Props) {
     }
   };
 
-  const handleDownloadChart = async () => {
+  const handleDownloadMainChart = async () => {
     if (!ref.current) {
       alert("Chart not available");
       return;
@@ -499,7 +643,6 @@ export default function SdgGridRouletteVisualization({ rows, sector }: Props) {
     setIsDownloading(true);
 
     try {
-      // Clone the SVG
       const svgElement = ref.current.cloneNode(true) as SVGSVGElement;
       const images = svgElement.querySelectorAll("image");
 
@@ -509,19 +652,17 @@ export default function SdgGridRouletteVisualization({ rows, sector }: Props) {
         if (!href || href.startsWith("data:")) return;
 
         try {
-          // Load the image
           const img = new Image();
           img.crossOrigin = "anonymous";
-          
-          await new Promise<void>((resolve, reject) => {
+
+          await new Promise<void>((resolve) => {
             img.onload = () => {
               try {
-                // Convert to base64
                 const canvas = document.createElement("canvas");
                 canvas.width = img.naturalWidth || 148;
                 canvas.height = img.naturalHeight || 148;
                 const ctx = canvas.getContext("2d");
-                
+
                 if (ctx) {
                   ctx.drawImage(img, 0, 0);
                   const dataUrl = canvas.toDataURL("image/png");
@@ -530,15 +671,15 @@ export default function SdgGridRouletteVisualization({ rows, sector }: Props) {
                 resolve();
               } catch (e) {
                 console.warn("Failed to convert image:", href, e);
-                resolve(); // Continue even if one fails
+                resolve();
               }
             };
-            
+
             img.onerror = () => {
               console.warn("Failed to load image:", href);
-              resolve(); // Continue even if one fails
+              resolve();
             };
-            
+
             img.src = href;
           });
         } catch (err) {
@@ -546,17 +687,16 @@ export default function SdgGridRouletteVisualization({ rows, sector }: Props) {
         }
       });
 
-      // Wait for all images to be converted
       await Promise.all(imagePromises);
 
-      // Now serialize the SVG with base64 images
       const svgData = new XMLSerializer().serializeToString(svgElement);
-      
+
       const canvas = document.createElement("canvas");
-      const scale = 2; // Higher resolution
-      canvas.width = (size.w || 1000) * scale;
-      canvas.height = (size.h || 1000) * scale;
-      
+      const scale = 2;
+      const padding = 100;
+      canvas.width = ((size.w || 1000) + padding * 2) * scale;
+      canvas.height = ((size.h || 1000) + padding * 2) * scale;
+
       const ctx = canvas.getContext("2d");
       if (!ctx) {
         alert("Canvas not supported");
@@ -571,8 +711,8 @@ export default function SdgGridRouletteVisualization({ rows, sector }: Props) {
       img.onload = () => {
         ctx.scale(scale, scale);
         ctx.fillStyle = "#ffffff";
-        ctx.fillRect(0, 0, size.w || 1000, size.h || 1000);
-        ctx.drawImage(img, 0, 0);
+        ctx.fillRect(0, 0, (size.w || 1000) + padding * 2, (size.h || 1000) + padding * 2);
+        ctx.drawImage(img, padding, padding);
         URL.revokeObjectURL(url);
 
         canvas.toBlob((blob) => {
@@ -613,33 +753,32 @@ export default function SdgGridRouletteVisualization({ rows, sector }: Props) {
     }
   };
 
+  const handleDownloadDimensionCharts = async (chartIndex?: number) => {
+    const chartNames = ["Economic", "Social", "Environmental", "Circular"];
+    const indicesToDownload = chartIndex !== undefined ? [chartIndex] : [0, 1, 2, 3];
 
-  const handleDownloadRadarCharts = async (radarIndex?: number) => {
-    const radarNames = ["Economic", "Social", "Environmental", "Circular"];
-    const indicesToDownload = radarIndex !== undefined ? [radarIndex] : [0, 1, 2, 3];
-
-    setIsDownloadingRadar(true);
-    setShowRadarDownloadMenu(false);
+    setIsDownloadingChart(true);
+    setShowChartDownloadMenu(false);
 
     try {
       for (const i of indicesToDownload) {
-        const radarRef = radarRefs[i];
-        const radarName = radarNames[i];
+        const chartRef = chartRefs[i];
+        const chartName = chartNames[i];
 
-        if (!radarRef.current) continue;
+        if (!chartRef.current) continue;
 
-        const svgElement = radarRef.current.cloneNode(true) as SVGSVGElement;
+        const svgElement = chartRef.current.cloneNode(true) as SVGSVGElement;
         const svgData = new XMLSerializer().serializeToString(svgElement);
         const canvas = document.createElement("canvas");
         const ctx = canvas.getContext("2d");
 
         if (!ctx) continue;
 
-        // High-resolution output
-        const scale = 3; // 3x resolution for crisp images
-        const baseSize = 600; // Export at 600x600 regardless of display size
-        canvas.width = baseSize * scale;
-        canvas.height = baseSize * scale;
+        const scale = 3;
+        const baseSize = 600;
+        const padding = 80;
+        canvas.width = (baseSize + padding * 2) * scale;
+        canvas.height = (baseSize + padding * 2) * scale;
 
         const img = new Image();
         const svgBlob = new Blob([svgData], { type: "image/svg+xml;charset=utf-8" });
@@ -647,15 +786,10 @@ export default function SdgGridRouletteVisualization({ rows, sector }: Props) {
 
         await new Promise<void>((resolve, reject) => {
           img.onload = () => {
-            // Scale context for high-DPI rendering
             ctx.scale(scale, scale);
-            
-            // White background
             ctx.fillStyle = "#ffffff";
-            ctx.fillRect(0, 0, baseSize, baseSize);
-            
-            // Draw image at base size (context is scaled)
-            ctx.drawImage(img, 0, 0, baseSize, baseSize);
+            ctx.fillRect(0, 0, baseSize + padding * 2, baseSize + padding * 2);
+            ctx.drawImage(img, padding, padding, baseSize, baseSize);
             URL.revokeObjectURL(url);
 
             canvas.toBlob((blob) => {
@@ -666,7 +800,7 @@ export default function SdgGridRouletteVisualization({ rows, sector }: Props) {
 
               const link = document.createElement("a");
               const timestamp = new Date().toISOString().split("T")[0];
-              const filename = `${radarName}_Dimension_Radar_${sector}_${timestamp}.png`;
+              const filename = `${chartName}_Dimension_Chart_${sector}_${timestamp}.png`;
 
               const downloadUrl = URL.createObjectURL(blob);
               link.setAttribute("href", downloadUrl);
@@ -685,7 +819,7 @@ export default function SdgGridRouletteVisualization({ rows, sector }: Props) {
 
           img.onerror = () => {
             URL.revokeObjectURL(url);
-            reject(new Error("Failed to load radar chart"));
+            reject(new Error("Failed to load chart"));
           };
 
           img.src = url;
@@ -696,25 +830,29 @@ export default function SdgGridRouletteVisualization({ rows, sector }: Props) {
         }
       }
 
-      setIsDownloadingRadar(false);
+      setIsDownloadingChart(false);
     } catch (error) {
-      console.error("Radar charts download error:", error);
-      alert("Failed to download radar charts. Please try again.");
-      setIsDownloadingRadar(false);
+      console.error("Dimension charts download error:", error);
+      alert("Failed to download charts. Please try again.");
+      setIsDownloadingChart(false);
     }
   };
 
+  // ============================================================================
+  // RENDER
+  // ============================================================================
   return (
     <div className="min-h-screen p-6 md:p-8" style={{ background: "linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 50%, #d1fae5 100%)" }}>
       <div className="max-w-7xl mx-auto">
+
+        {/* Main Roulette Chart */}
         <div className="bg-white rounded-xl shadow-md p-4 md:p-6 mb-6">
           <div className="flex justify-end mb-4">
             <button
               onClick={handleDownloadCSV}
               disabled={!safeRows || safeRows.length === 0}
-              className={`px-4 py-2 bg-green-600 text-white rounded-lg transition flex items-center gap-2 shadow-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 ${
-                !safeRows || safeRows.length === 0 ? "opacity-50 cursor-not-allowed" : "hover:bg-green-700"
-              }`}
+              className={`px-4 py-2 bg-green-600 text-white rounded-lg transition flex items-center gap-2 shadow-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 ${!safeRows || safeRows.length === 0 ? "opacity-50 cursor-not-allowed" : "hover:bg-green-700"
+                }`}
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -729,11 +867,10 @@ export default function SdgGridRouletteVisualization({ rows, sector }: Props) {
 
           <div className="flex justify-end mt-4">
             <button
-              onClick={handleDownloadChart}
+              onClick={handleDownloadMainChart}
               disabled={!size.w || isDownloading}
-              className={`px-4 py-2 bg-green-600 text-white rounded-lg transition flex items-center gap-2 shadow-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 ${
-                !size.w || isDownloading ? "opacity-50 cursor-not-allowed" : "hover:bg-green-700"
-              }`}
+              className={`px-4 py-2 bg-green-600 text-white rounded-lg transition flex items-center gap-2 shadow-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 ${!size.w || isDownloading ? "opacity-50 cursor-not-allowed" : "hover:bg-green-700"
+                }`}
             >
               {isDownloading ? (
                 <>
@@ -746,12 +883,7 @@ export default function SdgGridRouletteVisualization({ rows, sector }: Props) {
               ) : (
                 <>
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-                    />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                   </svg>
                   Download Chart
                 </>
@@ -760,39 +892,39 @@ export default function SdgGridRouletteVisualization({ rows, sector }: Props) {
           </div>
         </div>
 
+        {/* Dimension Performance Charts */}
         <div className="bg-white rounded-xl shadow-md p-4 md:p-6 mb-6">
-          <h2 className="text-2xl font-bold mb-6 text-gray-800 text-center">Dimension Performance Radars</h2>
-          <div ref={radarContainerRef} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <h2 className="text-2xl font-bold mb-6 text-gray-800 text-center">Dimension Performance Charts</h2>
+          <div ref={chartContainerRef} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {DIMENSIONS.map((dim, index) => (
               <div key={dim.key} className="flex flex-col items-center">
-                <div 
+                <div
                   className="cursor-pointer hover:opacity-80 transition-opacity"
-                  onClick={() => setSelectedRadar(index)}
+                  onClick={() => setSelectedChart(index)}
                   role="button"
                   tabIndex={0}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' || e.key === ' ') {
-                      setSelectedRadar(index);
+                      setSelectedChart(index);
                     }
                   }}
                 >
-                  <svg ref={radarRefs[index]} width={radarSize.w || 250} height={radarSize.h || 250} style={{ display: "block" }} />
+                  <svg ref={chartRefs[index]} width={chartSize.w || 250} height={chartSize.h || 250} style={{ display: "block" }} />
                 </div>
                 <p className="text-sm font-semibold mt-2" style={{ color: dim.color }}>{dim.shortKey}</p>
               </div>
             ))}
           </div>
-          
+
           <div className="flex justify-end mt-6">
             <div className="relative">
               <button
-                onClick={() => setShowRadarDownloadMenu(!showRadarDownloadMenu)}
-                disabled={!radarSize.w || isDownloadingRadar}
-                className={`px-4 py-2 bg-green-600 text-white rounded-lg transition flex items-center gap-2 shadow-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 ${
-                  !radarSize.w || isDownloadingRadar ? "opacity-50 cursor-not-allowed" : "hover:bg-green-700"
-                }`}
+                onClick={() => setShowChartDownloadMenu(!showChartDownloadMenu)}
+                disabled={!chartSize.w || isDownloadingChart}
+                className={`px-4 py-2 bg-green-600 text-white rounded-lg transition flex items-center gap-2 shadow-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 ${!chartSize.w || isDownloadingChart ? "opacity-50 cursor-not-allowed" : "hover:bg-green-700"
+                  }`}
               >
-                {isDownloadingRadar ? (
+                {isDownloadingChart ? (
                   <>
                     <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
@@ -813,15 +945,15 @@ export default function SdgGridRouletteVisualization({ rows, sector }: Props) {
                 )}
               </button>
 
-              {showRadarDownloadMenu && !isDownloadingRadar && (
+              {showChartDownloadMenu && !isDownloadingChart && (
                 <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-xl border border-gray-200 z-10">
                   <div className="py-1">
-                    <button onClick={() => handleDownloadRadarCharts()} className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-green-50 hover:text-green-700 transition">
+                    <button onClick={() => handleDownloadDimensionCharts()} className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-green-50 hover:text-green-700 transition">
                       Download All Charts
                     </button>
                     <div className="border-t border-gray-200 my-1"></div>
                     {DIMENSIONS.map((dim, index) => (
-                      <button key={dim.key} onClick={() => handleDownloadRadarCharts(index)} className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-green-50 transition flex items-center gap-2">
+                      <button key={dim.key} onClick={() => handleDownloadDimensionCharts(index)} className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-green-50 transition flex items-center gap-2">
                         <div className="w-3 h-3 rounded-full" style={{ backgroundColor: dim.color }}></div>
                         {dim.shortKey} Chart
                       </button>
@@ -833,28 +965,30 @@ export default function SdgGridRouletteVisualization({ rows, sector }: Props) {
           </div>
         </div>
 
-        {showRadarDownloadMenu && (
-          <div className="fixed inset-0 z-0" onClick={() => setShowRadarDownloadMenu(false)}></div>
+        {showChartDownloadMenu && (
+          <div className="fixed inset-0 z-0" onClick={() => setShowChartDownloadMenu(false)}></div>
         )}
 
-        {selectedRadar !== null && (
-          <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4" onClick={() => setSelectedRadar(null)}>
+        {/* Enlarged Chart Modal */}
+        {selectedChart !== null && (
+          <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4" onClick={() => setSelectedChart(null)}>
             <div className="bg-white rounded-xl p-6 max-w-3xl w-full relative" onClick={(e) => e.stopPropagation()}>
-              <button onClick={() => setSelectedRadar(null)} className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-green-500 rounded-full p-2">
+              <button onClick={() => setSelectedChart(null)} className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-green-500 rounded-full p-2">
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
-              <h3 className="text-2xl font-bold mb-4 text-center" style={{ color: DIMENSIONS[selectedRadar].color }}>
-                {DIMENSIONS[selectedRadar].shortKey} Performance
+              <h3 className="text-2xl font-bold mb-4 text-center" style={{ color: DIMENSIONS[selectedChart].color }}>
+                {DIMENSIONS[selectedChart].shortKey} Performance
               </h3>
               <div className="flex justify-center">
-                <EnlargedRadar cells={cells} dimension={DIMENSIONS[selectedRadar]} />
+                <EnlargedRadialColumn cells={cells} dimension={DIMENSIONS[selectedChart]} />
               </div>
             </div>
           </div>
         )}
 
+        {/* Performance Summary */}
         <section className="bg-white rounded-xl shadow-md p-6">
           <h2 className="text-2xl font-bold mb-6 text-gray-800">Performance Summary</h2>
 
@@ -877,7 +1011,7 @@ export default function SdgGridRouletteVisualization({ rows, sector }: Props) {
                       </Tooltip>
                     </div>
                     <div className="flex justify-between text-xs mb-1 text-gray-600">
-                        <span>Score: {score}/85</span>
+                      <span>Score: {score}/85</span>
                       <span className="font-bold text-gray-700">{percentage}%</span>
                     </div>
                     <div className="w-full bg-green-100 rounded-full h-2 overflow-hidden">

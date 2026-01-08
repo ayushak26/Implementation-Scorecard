@@ -222,20 +222,6 @@ export default function SectorPickerPage() {
             </p>
           </div>
 
-          {/* Info Banner */}
-          <div className="mb-6 bg-gradient-to-r from-green-50 to-emerald-50 border-l-4 border-green-500 rounded-r-lg p-4">
-            <div className="flex items-start gap-3">
-              <svg className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <div className="flex-1">
-                <p className="text-sm text-gray-700">
-                  <strong className="text-green-700">Sector Selection:</strong> Each sector includes tailored questions specific to your industry's sustainability challenges and opportunities.
-                </p>
-              </div>
-            </div>
-          </div>
-
           {/* Sector Cards Grid - Auto-sizing based on content */}
           <div className={`grid gap-4 sm:gap-6 mb-6 sm:mb-8 ${
             availableSectors.length === 1 ? 'grid-cols-1 max-w-2xl mx-auto' :

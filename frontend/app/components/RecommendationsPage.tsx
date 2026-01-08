@@ -231,20 +231,6 @@ export default function RecommendationsPage({ rows, sector }: Props) {
           </p>
         </div>
 
-        {/* Info Banner */}
-        <div className="mb-6 bg-gradient-to-r from-green-50 to-emerald-50 border-l-4 border-green-500 rounded-r-lg p-4">
-          <div className="flex items-start gap-3">
-            <svg className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <div className="flex-1">
-              <p className="text-sm text-gray-700">
-                <strong className="text-green-700">Priority Areas:</strong> Recommendations are prioritized by current maturity levels across all SDGs and dimensions.
-              </p>
-            </div>
-          </div>
-        </div>
-
         {/* Dimension Summary Cards */}
         <div className="mb-8">
           <h2 className="text-2xl font-bold text-green-700 mb-6">

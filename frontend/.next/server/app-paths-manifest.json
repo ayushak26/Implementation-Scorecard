@@ -2,5 +2,6 @@
   "/sector-picker/page": "app/sector-picker/page.js",
   "/form/page": "app/form/page.js",
   "/visualization/page": "app/visualization/page.js",
-  "/recommendations/page": "app/recommendations/page.js"
+  "/recommendations/page": "app/recommendations/page.js",
+  "/page": "app/page.js"
 }
