@@ -16,7 +16,7 @@ type Question = {
   kpi: string;
   question: string;
   sector: string;
-  recommendations?: {  // ← ADD THIS!
+  recommendations?: {
     awareness?: { text?: string; source?: string };
     developing?: { text?: string; source?: string };
     leading?: { text?: string; source?: string };
@@ -132,11 +132,10 @@ const Tooltip = ({ text, children }: { text: string; children: React.ReactNode }
   useEffect(() => {
     if (show && triggerRef.current) {
       const rect = triggerRef.current.getBoundingClientRect();
-      const tooltipHeight = 100; // Approximate tooltip height
+      const tooltipHeight = 100;
       const spaceAbove = rect.top;
       const spaceBelow = window.innerHeight - rect.bottom;
       
-      // Decide whether to show above or below
       const shouldFlip = spaceAbove < tooltipHeight && spaceBelow > spaceAbove;
       
       setPosition({
@@ -169,7 +168,6 @@ const Tooltip = ({ text, children }: { text: string; children: React.ReactNode }
             }}
           >
             {text}
-            {/* Arrow pointing up or down based on flip */}
             {position.flip ? (
               <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-0">
                 <div className="border-4 border-transparent border-b-gray-900"></div>

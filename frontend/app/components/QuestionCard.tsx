@@ -10,7 +10,7 @@ type Question = {
   kpi: string;
   question: string;
   sector: string;
-  recommendations?: {  // ← ADD THIS!
+  recommendations?: {
     awareness?: { text?: string; source?: string };
     developing?: { text?: string; source?: string };
     leading?: { text?: string; source?: string };
@@ -18,29 +18,24 @@ type Question = {
 };
 
 type Props = {
-  /** Exactly 4 questions (one per dimension) for a single SDG card */
   questions: Question[];
-  /** Map of compositeKey -> selected score */
   selectedScores: Record<string, number | undefined>;
-  /** Called when a score changes for a specific compositeKey */
   onScoreSelect: (compositeKey: string, score: number) => void;
-  /** Optional: 0..5 -> description */
   scoreRubric?: Record<number, string>;
 };
 
 const DEFAULT_RUBRIC: Record<number, string> = {
-  0: "Score Description: N/A",
-  1: "Score Description: Issue identified, but no plans for further actions",
-  2: "Score Description: Issue identified, starts planning further actions",
-  3: "Score Description: Action plan with clear targets and deadlines in place",
-  4: "Score Description: Action plan operational - some progress in established targets",
-  5: "Score Description: Action plan operational - achieving the target set",
+  0: "N/A",
+  1: "Issue identified, but no plans for further actions",
+  2: "Issue identified, starts planning further actions",
+  3: "Action plan with clear targets and deadlines in place",
+  4: "Action plan operational - some progress in established targets",
+  5: "Action plan operational - achieving the target set",
 };
 
 const norm = (s: string) => (s || "").trim().toLowerCase();
 const makeKey = (q: Question) => `${norm(q.sector)}|${q.sdg_number}|${norm(q.sustainability_dimension)}`;
 
-// === SDG IMAGE MAP (1 to 17) ===
 const SDG_IMAGE_MAP: Record<number, string> = {
   1: "https://www.un.org/sustainabledevelopment/wp-content/uploads/2018/05/E_SDG-goals_icons-individual-rgb-01.png?resize=148%2C148&ssl=1",
   2: "https://www.un.org/sustainabledevelopment/wp-content/uploads/2018/05/E_SDG-goals_icons-individual-rgb-02.png?resize=148%2C148&ssl=1",
@@ -61,7 +56,6 @@ const SDG_IMAGE_MAP: Record<number, string> = {
   17: "https://www.un.org/sustainabledevelopment/wp-content/uploads/2018/05/E_SDG-goals_icons-individual-rgb-17.png?resize=148%2C148&ssl=1",
 };
 
-// Dimension color mapping
 const DIMENSION_COLORS: Record<string, { bg: string; text: string; badge: string }> = {
   economic: { bg: "bg-blue-50", text: "text-blue-800", badge: "bg-blue-100" },
   social: { bg: "bg-yellow-50", text: "text-yellow-800", badge: "bg-yellow-100" },
@@ -88,7 +82,7 @@ export default function QuestionCard({
 
   return (
     <div className="bg-white rounded-2xl shadow-lg border border-green-200 overflow-hidden">
-      {/* Header - Light green theme inspired by BIORADAR */}
+      {/* Header */}
       <div className="px-8 py-6 bg-gradient-to-r from-green-50 via-emerald-50 to-green-50 border-b-2 border-green-200 flex items-center gap-6">
         <div className="flex-1">
           <div className="inline-block px-3 py-1 bg-green-600 text-white text-xs font-bold rounded-full mb-2 shadow-sm">
@@ -115,7 +109,7 @@ export default function QuestionCard({
           <table className="w-full">
             <thead>
               <tr className="bg-gradient-to-r from-green-700 to-emerald-700">
-                <th className="px-6 py-4 text-left text-sm font-bold text-white uppercase tracking-wider w-[40%]">
+                <th className="px-6 py-4 text-left text-sm font-bold text-white uppercase tracking-wider w-[40%] align-top">
                   <div className="flex items-center gap-2">
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -124,26 +118,22 @@ export default function QuestionCard({
                   </div>
                 </th>
                 {scores.map((score) => (
-                  <th
-                    key={score}
-                    className="px-3 py-4 text-center w-[10%] relative group"
-                  >
+                  <th key={score} className="px-3 py-4 text-center w-[10%] align-top">
                     <div className="flex flex-col items-center gap-2">
-                      <div className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-white text-gray-900 font-bold shadow-md text-sm">
-                        {score}
+                      {/* Score number - fixed height container */}
+                      <div className="h-10 flex items-center justify-center">
+                        <div className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-white text-gray-900 font-bold shadow-md text-sm">
+                          {score}
+                        </div>
                       </div>
-                      
-                      {/* Tooltip - appears below on hover, aligned based on position */}
-                      <div className={`
-                        absolute top-full mt-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg shadow-lg 
-                        opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-10 w-48 text-center
-                        ${score === 0 ? 'left-0' : score === 5 ? 'right-0' : 'left-1/2 transform -translate-x-1/2'}
-                      `}>
-                        <div className={`
-                          absolute -top-1 w-2 h-2 bg-gray-900 rotate-45
-                          ${score === 0 ? 'left-4' : score === 5 ? 'right-4' : 'left-1/2 transform -translate-x-1/2'}
-                        `}></div>
-                        {scoreRubric[score as 0 | 1 | 2 | 3 | 4 | 5]}
+                      {/* Score description below number */}
+                      <div className="text-[10px] leading-tight text-white font-normal px-2 text-center max-w-[120px]">
+                        {score === 0 && "Not applicable"}
+                        {score === 1 && "Issue identified, no action planned"}
+                        {score === 2 && "Initial planning underway"}
+                        {score === 3 && "Action plan with targets defined"}
+                        {score === 4 && "Action plan implemented, progress achieved"}
+                        {score === 5 && "Targets achieved, leading practice"}
                       </div>
                     </div>
                   </th>
@@ -186,10 +176,7 @@ export default function QuestionCard({
                     {scores.map((score) => {
                       const isChecked = selected === score;
                       return (
-                        <td
-                          key={score}
-                          className="px-3 py-5 text-center"
-                        >
+                        <td key={score} className="px-3 py-5 text-center">
                           <label className={`
                             flex items-center justify-center cursor-pointer
                             transition-all duration-200
@@ -217,7 +204,7 @@ export default function QuestionCard({
         </div>
       </div>
 
-      {/* Legend Footer - Light green theme */}
+      {/* Legend Footer */}
       <div className="px-8 py-5 bg-gradient-to-r from-green-50 to-emerald-50 border-t border-green-200">
         <div className="flex items-center gap-2">
           <div className="flex items-center justify-center w-6 h-6 rounded-full bg-green-600 text-white text-sm font-bold">

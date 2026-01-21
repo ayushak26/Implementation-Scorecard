@@ -151,8 +151,8 @@ export default function RecommendationsPage({ rows, sector }: Props) {
         sdgMap[sdg].totalCount += 1;
 
         // Keep first non-empty recommendations for this dimension
-        if (row.recommendations && Object.keys(row.recommendations).length > 0 && 
-            Object.keys(sdgMap[sdg].dimensions[dim].recommendations || {}).length === 0) {
+        if (row.recommendations && Object.keys(row.recommendations).length > 0 &&
+          Object.keys(sdgMap[sdg].dimensions[dim].recommendations || {}).length === 0) {
           sdgMap[sdg].dimensions[dim].recommendations = row.recommendations;
         }
       }
@@ -208,12 +208,12 @@ export default function RecommendationsPage({ rows, sector }: Props) {
   }, [rows]);
 
   return (
-    <div 
-      className="w-full flex justify-center min-h-screen py-6 sm:py-8 md:py-12 px-4 sm:px-6 md:px-8" 
+    <div
+      className="w-full flex justify-center min-h-screen py-6 sm:py-8 md:py-12 px-4 sm:px-6 md:px-8"
       style={{ background: 'linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 50%, #d1fae5 100%)' }}
     >
       <div className="w-full max-w-[95vw] sm:max-w-[90vw] md:max-w-4xl lg:max-w-5xl xl:max-w-6xl 2xl:max-w-7xl transition-all duration-300 bg-white rounded-2xl shadow-lg border-2 border-green-200 p-4 sm:p-6 md:p-8 mx-auto my-8">
-        
+
         {/* Header */}
         <div className="mb-8 pb-6 border-b-2 border-green-100">
           <div className="flex justify-center mb-6">
@@ -226,9 +226,27 @@ export default function RecommendationsPage({ rows, sector }: Props) {
           <h1 className="text-3xl sm:text-4xl font-bold text-green-700 mb-2 text-center">
             Sustainability Recommendations
           </h1>
-          <p className="text-gray-600 text-sm text-center">
+          <p className="text-gray-600 text-sm text-center mb-4">
             Sector: <span className="font-semibold text-green-700">{sector}</span>
           </p>
+
+          {/* Assessment Platform Link */}
+          <div className="flex justify-center mt-6">
+            <a
+              href="https://bioradar.iris-eng.com/overview"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-lg font-medium transition-all duration-200 shadow-md hover:from-green-700 hover:to-emerald-700 hover:shadow-lg"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+              </svg>
+              <span className="font-bold">BIORADAR LOGIN</span>
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+              </svg>
+            </a>
+          </div>
         </div>
 
         {/* Dimension Summary Cards */}
@@ -278,7 +296,7 @@ export default function RecommendationsPage({ rows, sector }: Props) {
           <h2 className="text-2xl font-bold text-green-700 mb-6">
             Recommendations by SDG
           </h2>
-          
+
           <div className="space-y-6">
             {sdgData.map((sdgItem) => {
               const sdgMaturityStyle = MATURITY_STYLES[sdgItem.maturityLevel as keyof typeof MATURITY_STYLES];
@@ -328,7 +346,7 @@ export default function RecommendationsPage({ rows, sector }: Props) {
                           {/* Dimension Header */}
                           <div className="flex items-center justify-between mb-3">
                             <div className="flex items-center gap-2">
-                              <div 
+                              <div
                                 className="w-3 h-3 rounded-full"
                                 style={{ backgroundColor: dimension.color }}
                               />
