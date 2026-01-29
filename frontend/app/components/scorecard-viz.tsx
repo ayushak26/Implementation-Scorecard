@@ -80,15 +80,6 @@ const DIMENSIONS = [
   { key: "Circular Performance", color: "#f97316", shortKey: "Circular", number: 4 },
 ] as const;
 
-const TOOLTIPS: Record<string, string> = {
-  Economic: "Economic sustainability measures financial viability, cost efficiency, and economic growth",
-  Social: "Social sustainability addresses labor practices, community impact, and social equity",
-  Environmental: "Environmental sustainability focuses on ecological impact, resource conservation, and climate action",
-  Circular: "Circular economy principles include waste reduction, material reuse, and closed-loop systems",
-  SDG: "Sustainable Development Goals are 17 global objectives adopted by the UN to achieve a better future for all",
-  Dimension: "The SDG dimension shows which part of sustainability a goal mainly strengthens: Economic, Social, Environmental, or Circular"
-};
-
 // ============================================================================
 // HELPER FUNCTIONS
 // ============================================================================
@@ -994,7 +985,7 @@ export default function SdgGridRouletteVisualization({ rows, sector }: Props) {
 
           <div className="mb-8">
             <h3 className="font-semibold mb-4 text-gray-800 text-lg flex items-center gap-2">
-              By <Tooltip text={TOOLTIPS.Dimension}>Dimension</Tooltip>
+              By Dimension
             </h3>
             <div className="flex flex-col gap-4">
               {DIMENSIONS.map((d) => {
@@ -1006,9 +997,6 @@ export default function SdgGridRouletteVisualization({ rows, sector }: Props) {
                       <div className="w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-bold shadow" style={{ backgroundColor: d.color }}>
                         {d.number}
                       </div>
-                      <Tooltip text={TOOLTIPS[d.shortKey]}>
-                        <span className="font-medium text-sm text-gray-800">{d.shortKey}</span>
-                      </Tooltip>
                     </div>
                     <div className="flex justify-between text-xs mb-1 text-gray-600">
                       <span>Score: {score}/85</span>
@@ -1025,7 +1013,7 @@ export default function SdgGridRouletteVisualization({ rows, sector }: Props) {
 
           <div>
             <h3 className="font-semibold mb-4 text-gray-800 text-lg flex items-center gap-2">
-              By <Tooltip text={TOOLTIPS.SDG}>SDG</Tooltip>
+              By SDG
             </h3>
 
             <div className="mb-6">

@@ -3,7 +3,6 @@
 
 import React, { useEffect, useMemo, useState, useContext, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { createPortal } from "react-dom"; 
 import QuestionCard from "./QuestionCard";
 import { SDGContext } from "./SDGContext";
 
@@ -36,14 +35,6 @@ const DEFAULT_RUBRIC: Record<number, string> = {
   3: "Score Description: Action plan with clear targets and deadlines in place",
   4: "Score Description: Action plan operational - some progress in established targets",
   5: "Score Description: Action plan operational - achieving the target set",
-};
-
-// Tooltip definitions
-const TOOLTIPS: Record<string, string> = {
-  "Implementation Scorecard": "A comprehensive assessment tool to evaluate your organization's sustainability performance across multiple dimensions and SDGs",
-  "Sector": "The industry category your organization belongs to, which determines the relevant sustainability questions",
-  "SDG": "Sustainable Development Goals - 17 global objectives adopted by the UN to achieve a better future for all by 2030",
-  "Score": "Rating from 0-5 indicating your organization's level of action and achievement on sustainability targets",
 };
 
 const norm = (s: string) => (s || "").trim().toLowerCase();
@@ -121,67 +112,6 @@ const buildPages = (questions: Question[], activeSector: string): Question[][] =
     if (four) pages.push(four);
   }
   return pages;
-};
-
-// ---------------- Tooltip Component ----------------
-const Tooltip = ({ text, children }: { text: string; children: React.ReactNode }) => {
-  const [show, setShow] = useState(false);
-  const [position, setPosition] = useState({ top: 0, left: 0, flip: false });
-  const triggerRef = useRef<HTMLSpanElement>(null);
-
-  useEffect(() => {
-    if (show && triggerRef.current) {
-      const rect = triggerRef.current.getBoundingClientRect();
-      const tooltipHeight = 100;
-      const spaceAbove = rect.top;
-      const spaceBelow = window.innerHeight - rect.bottom;
-      
-      const shouldFlip = spaceAbove < tooltipHeight && spaceBelow > spaceAbove;
-      
-      setPosition({
-        top: shouldFlip ? rect.bottom + 10 : rect.top - 10,
-        left: rect.left + rect.width / 2,
-        flip: shouldFlip,
-      });
-    }
-  }, [show]);
-
-  return (
-    <>
-      <span
-        ref={triggerRef}
-        onMouseEnter={() => setShow(true)}
-        onMouseLeave={() => setShow(false)}
-        className="cursor-help border-b border-dotted border-green-600 inline-block"
-      >
-        {children}
-      </span>
-      
-      {show && typeof window !== 'undefined' &&
-        createPortal(
-          <div
-            className="fixed z-[9999] px-3 py-2 bg-gray-900 text-white text-xs rounded-lg shadow-lg w-64 pointer-events-none"
-            style={{
-              top: `${position.top}px`,
-              left: `${position.left}px`,
-              transform: position.flip ? 'translate(-50%, 0%)' : 'translate(-50%, -100%)',
-            }}
-          >
-            {text}
-            {position.flip ? (
-              <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-0">
-                <div className="border-4 border-transparent border-b-gray-900"></div>
-              </div>
-            ) : (
-              <div className="absolute top-full left-1/2 transform -translate-x-1/2 -mt-1">
-                <div className="border-4 border-transparent border-t-gray-900"></div>
-              </div>
-            )}
-          </div>,
-          document.body
-        )}
-    </>
-  );
 };
 
 export default function FormPage() {
@@ -415,14 +345,10 @@ export default function FormPage() {
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-3 pb-4 border-b-2 border-green-100">
           <div>
             <h2 className="text-2xl font-bold text-green-700 flex items-center gap-2">
-              <Tooltip text={TOOLTIPS["Implementation Scorecard"]}>
-                BIORADAR – Implementation Scorecard
-              </Tooltip>
+              BIORADAR – Implementation Scorecard
             </h2>
             <p className="text-gray-600 text-sm mt-1">
-              <Tooltip text={TOOLTIPS.Sector}>
-                <span className="font-medium">Sector:</span>
-              </Tooltip>{" "}
+              <span className="font-medium">Sector:</span>{" "}
               <span className="font-semibold text-green-700">{activeSector}</span>
               {" | "}
               {filteredQuestions.length} Questions
