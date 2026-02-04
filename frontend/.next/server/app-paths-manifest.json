@@ -1,6 +1,4 @@
 {
-  "/form/page": "app/form/page.js",
-  "/visualization/page": "app/visualization/page.js",
   "/sector-picker/page": "app/sector-picker/page.js",
-  "/recommendations/page": "app/recommendations/page.js"
+  "/form/page": "app/form/page.js"
 }
