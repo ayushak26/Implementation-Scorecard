@@ -1,23 +1,26 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
-    remotePatterns: [{
-      hostname: "implementationscorecard.com"
-    }],
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'bioradarimplementationscorecard.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'implementationscorecard.com',
+      },
+    ],
   },
-  
+
   async rewrites() {
-    const isDev = process.env.NODE_ENV === 'development';
-    
-    console.log('🔧 Rewrites function called!');
-    console.log('Environment:', process.env.NODE_ENV);
-    
     return [
       {
         source: '/api/:path*',
-        destination: isDev 
-        ? 'http://localhost:8000/api/:path*'
-        : 'https://bioradarimplementationscorecard.com/api/:path*',
+        destination:
+          process.env.BACKEND_URL
+            ? `${process.env.BACKEND_URL}/api/:path*`
+            : 'http://127.0.0.1:8000/api/:path*',
       },
     ];
   },
