@@ -2,7 +2,7 @@
 const nextConfig = {
   images: {
     remotePatterns: [{
-      hostname: "implementation-scorecard.com"
+      hostname: "implementationscorecard.com"
     }],
   },
   
@@ -17,7 +17,7 @@ const nextConfig = {
         source: '/api/:path*',
         destination: isDev 
         ? 'http://localhost:8000/api/:path*'
-        : 'https://bioradar-implementation-scorecard.com/api/:path*',
+        : 'https://bioradarimplementationscorecard.com/api/:path*',
       },
     ];
   },
